@@ -1,7 +1,8 @@
 package com.marshall;
 
 import java.math.BigDecimal;
-import java.util.function.ToIntFunction;
+import java.math.MathContext;
+import java.math.RoundingMode;
 
 public class Utils {
 	public static final BigDecimal TWO = new BigDecimal(2);
@@ -9,17 +10,16 @@ public class Utils {
 	public static String intervalToString(BigDecimal a, BigDecimal b) {
 		if (a == null || b == null)
 			return "NaN";
-		String strA = a.toString(), strB = b.toString();
+		BigDecimal difference = a.subtract(b, new MathContext(1, RoundingMode.UP)).abs();
+		a = a.round(new MathContext(difference.scale(), RoundingMode.FLOOR));
+		b = b.round(new MathContext(difference.scale(), RoundingMode.CEILING));
+
+		String strA = a.toPlainString(), strB = b.toPlainString();
 		int s = 0;
 		while (s < strA.length() && s < strB.length() && strA.charAt(s) == strB.charAt(s))
 			s++;
-		final int l = s;
-		ToIntFunction<String> last = (str -> str.length() > l ? Integer.parseInt(str.substring(l, l + 1)) : 0);
-		try {
-			return strA.substring(0, s) + "[" + last.applyAsInt(strA) + "," + (last.applyAsInt(strB) + 1) + "]";
-		} catch (NumberFormatException e) {
-			return "[" + strA + "," + strB + "]";
-		}
+
+		return strA.substring(0, s) + "[" + strA.substring(s) + "," + strB.substring(s) + "]";
 	}
 
 	public static BigDecimal[] splitInterval(BigDecimal a, BigDecimal b, RoundingContext context)
