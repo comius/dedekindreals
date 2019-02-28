@@ -47,6 +47,10 @@ object Real {
     Const(x)
   }
 
+  implicit def int2Const(x: Int): Const = {
+    Const(new BigDecimal(x))
+  }
+  
   implicit def symbol2Var(name: Symbol): Var = {
     Var(name)
   }  

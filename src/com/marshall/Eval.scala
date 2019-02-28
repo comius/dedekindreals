@@ -12,15 +12,15 @@ object Eval {
     def +(p: (Symbol, Interval)) = copy(vars = vars + p)
   }
 
-    def upper(formula: Formula)(implicit ctx: Context): Boolean = formula match {
+  def upper(formula: Formula)(implicit ctx: Context): Boolean = formula match {
     case Less(x: Real, y: Real) =>
-      val (_, xi) = upper(x)(ctx)
-      val (yi, _) = upper(y)(ctx)      
+      val (_, xi) = upper(x)
+      val (yi, _) = upper(y)
       xi.compareTo(yi) < 0
 
     // TODO
     case Exists(x: Symbol, a: BigDecimal, b: BigDecimal, phi: Formula) =>
-      
+
       upper(phi)(ctx + (x -> (b, a)))
 
     // case ExistsR(x: Symbol, phi: Formula)                              => false
@@ -50,23 +50,21 @@ object Eval {
       val (x1, x2) = upper(x)
       val (y1, y2) = upper(y)
       (
-          x1.multiply(y1, ctx.roundingContext.up).max(x1.multiply(y2, ctx.roundingContext.up)).max(x2.multiply(y1, ctx.roundingContext.up)).max(x2.multiply(y2, ctx.roundingContext.up)),
-        x1.multiply(y1, ctx.roundingContext.down).min(x1.multiply(y2, ctx.roundingContext.down)).min(x2.multiply(y1, ctx.roundingContext.down)).min(x2.multiply(y2, ctx.roundingContext.down))
-        ) //TODO
+        x1.multiply(y1, ctx.roundingContext.up).max(x1.multiply(y2, ctx.roundingContext.up)).max(x2.multiply(y1, ctx.roundingContext.up)).max(x2.multiply(y2, ctx.roundingContext.up)),
+        x1.multiply(y1, ctx.roundingContext.down).min(x1.multiply(y2, ctx.roundingContext.down)).min(x2.multiply(y1, ctx.roundingContext.down)).min(x2.multiply(y2, ctx.roundingContext.down))) //TODO
     case Div(x, y) =>
       val (x1, x2) = upper(x)
       val (y1, y2) = upper(y)
       (x1.divide(y2, ctx.roundingContext.up), x2.divide(y1, ctx.roundingContext.down)) //TODO
-    case Var(name) => 
-      val (a,b) = ctx.vars.get(name).get
-      (b,a)
+    case Var(name) =>
+      val (a, b) = ctx.vars.get(name).get
+      (b, a)
   }
-  
-  
+
   def lower(formula: Formula)(implicit ctx: Context): Boolean = formula match {
     case Less(x: Real, y: Real) =>
-      val (_, xi) = lower(x)(ctx)
-      val (yi, _) = lower(y)(ctx)      
+      val (_, xi) = lower(x)
+      val (yi, _) = lower(y)
       xi.compareTo(yi) < 0
 
     // TODO
@@ -110,9 +108,9 @@ object Eval {
   }
 
   def refine(formula: Formula)(implicit ctx: Context): Formula = {
-    if (lower(formula)(ctx)) {
+    if (lower(formula)) {
       ConstFormula(true)
-    } else if (!upper(formula)(ctx)) { 
+    } else if (!upper(formula)) {
       ConstFormula(false)
     } else {
       formula match {
@@ -136,26 +134,26 @@ object Eval {
             And(Forall(x, a, m, phi), Forall(x, m, b, phi))
 
         case And(x: Formula, y: Formula) =>
-          val a = refine(x)(ctx)
-          val b = refine(y)(ctx)
-          (a,b) match { 
-            case (ConstFormula(true), b) => b
+          val a = refine(x)
+          val b = refine(y)
+          (a, b) match {
+            case (ConstFormula(true), b)  => b
             case (ConstFormula(false), b) => ConstFormula(false)
-            case (a, ConstFormula(true)) => a
+            case (a, ConstFormula(true))  => a
             case (a, ConstFormula(false)) => ConstFormula(false)
-            case (a,b) => And(a,b)
+            case (a, b)                   => And(a, b)
           }
-        case Or(x: Formula, y: Formula)  =>
-          val a = refine(x)(ctx)
-          val b = refine(y)(ctx)
-          (a,b) match { 
-            case (ConstFormula(true), b) => ConstFormula(true)
+        case Or(x: Formula, y: Formula) =>
+          val a = refine(x)
+          val b = refine(y)
+          (a, b) match {
+            case (ConstFormula(true), b)  => ConstFormula(true)
             case (ConstFormula(false), b) => b
-            case (a, ConstFormula(true)) => ConstFormula(true)
+            case (a, ConstFormula(true))  => ConstFormula(true)
             case (a, ConstFormula(false)) => a
-            case (a,b) => Or(a,b)
+            case (a, b)                   => Or(a, b)
           }
-        case c: ConstFormula             => c
+        case c: ConstFormula => c
       }
     }
   }
@@ -179,7 +177,7 @@ object Eval {
     var rexpr = expr
     var dprec = 200 // precision *2
     var stime = System.currentTimeMillis()
-    
+
     for (i <- 0 to 200) {
       val context = Context(new RoundingContext(0, dprec))
       val prec = new BigDecimal(BigInteger.ONE, precision, context.roundingContext.down);
@@ -188,7 +186,7 @@ object Eval {
 
       val width = l._2.subtract(l._1, context.roundingContext.up)
       val ctime = System.currentTimeMillis()
-      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${Utils.intervalToString(l._1, l._2)}, expr ${rexpr.toString.length}, time ${ctime-stime}")
+      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${Utils.intervalToString(l._1, l._2)}, expr ${rexpr.toString.length}, time ${ctime - stime}")
       stime = ctime
       if (width.compareTo(prec) < 0) {
         println(Utils.intervalToString(l._1, l._2))
@@ -201,9 +199,10 @@ object Eval {
 
   def main(args: Array[String]) = {
     //   eval(Cut('x, 0, 2, 'x * 'x < Const(2), Const(2) < 'x * 'x), 10)
-    
+
     println(upper(Exists('x, new BigDecimal("0.4999"), new BigDecimal("0.5001"), 'y < 'x * (Const(1) - 'x)))(Context(new RoundingContext(0, 200), Map('y -> (new BigDecimal(0.26), new BigDecimal(0.24))))))
 
+    eval(Cut('x, 1, 2, 'x * 'x < 2, 2 < 'x * 'x), 10)
     eval(Cut('y, -1, 2, Exists('x, 0, 1, 'y < 'x * (Const(1) - 'x)), Forall('x, 0, 1, 'x * (Const(1) - 'x) < 'y)), 10)
   }
 }
