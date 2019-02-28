@@ -135,8 +135,26 @@ object Eval {
           else
             And(Forall(x, a, m, phi), Forall(x, m, b, phi))
 
-        case And(x: Formula, y: Formula) => And(refine(x)(ctx), refine(y)(ctx))
-        case Or(x: Formula, y: Formula)  => Or(refine(x)(ctx), refine(y)(ctx))
+        case And(x: Formula, y: Formula) =>
+          val a = refine(x)(ctx)
+          val b = refine(y)(ctx)
+          (a,b) match { 
+            case (ConstFormula(true), b) => b
+            case (ConstFormula(false), b) => ConstFormula(false)
+            case (a, ConstFormula(true)) => a
+            case (a, ConstFormula(false)) => ConstFormula(false)
+            case (a,b) => And(a,b)
+          }
+        case Or(x: Formula, y: Formula)  =>
+          val a = refine(x)(ctx)
+          val b = refine(y)(ctx)
+          (a,b) match { 
+            case (ConstFormula(true), b) => ConstFormula(true)
+            case (ConstFormula(false), b) => b
+            case (a, ConstFormula(true)) => ConstFormula(true)
+            case (a, ConstFormula(false)) => a
+            case (a,b) => Or(a,b)
+          }
         case c: ConstFormula             => c
       }
     }
@@ -160,7 +178,8 @@ object Eval {
   def eval(expr: Real, precision: Int): Unit = {
     var rexpr = expr
     var dprec = 200 // precision *2
-
+    var stime = System.currentTimeMillis()
+    
     for (i <- 0 to 200) {
       val context = Context(new RoundingContext(0, dprec))
       val prec = new BigDecimal(BigInteger.ONE, precision, context.roundingContext.down);
@@ -168,7 +187,9 @@ object Eval {
       val l = lower(rexpr)(context)
 
       val width = l._2.subtract(l._1, context.roundingContext.up)
-      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${Utils.intervalToString(l._1, l._2)}, expr ${rexpr}")
+      val ctime = System.currentTimeMillis()
+      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${Utils.intervalToString(l._1, l._2)}, expr ${rexpr.toString.length}, time ${ctime-stime}")
+      stime = ctime
       if (width.compareTo(prec) < 0) {
         println(Utils.intervalToString(l._1, l._2))
         return ;
