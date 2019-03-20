@@ -11,107 +11,74 @@ object Eval {
     def +(p: (Symbol, Interval)) = copy(vars = vars + p)
   }  
   
-  def upper(formula: Formula)(implicit ctx: Context): Boolean = formula match {
+  def approximate(formula: Formula)(lowerCtx: Context, upperCtx: Context): (Boolean, Boolean) = formula match {
     case Less(x: Real, y: Real) =>
-      val Interval(_, xi) = upper(x)
-      val Interval(yi, _) = upper(y)
-      xi.compareTo(yi) < 0
+      val (li1, ui1) = approximate(x)(lowerCtx, upperCtx)
+      val (li2, ui2) = approximate(y)(lowerCtx, upperCtx)
+      (li1._2.compareTo(li2._1) < 0, ui1._2.compareTo(ui2._1) < 0)
 
     // TODO
     case Exists(x: Symbol, a: BigDecimal, b: BigDecimal, phi: Formula) =>
-
-      upper(phi)(ctx + (x -> Interval(b, a)))
+      val m = Utils.splitInterval(a, b, lowerCtx.roundingContext)(0)
+      approximate(phi)(lowerCtx + (x -> Interval(m,m)), upperCtx + (x -> Interval(a, b)))
 
     // case ExistsR(x: Symbol, phi: Formula)                              => false
     case Forall(x: Symbol, a: BigDecimal, b: BigDecimal, phi: Formula) =>
-      val m = Utils.splitInterval(a, b, ctx.roundingContext)(0)
-      upper(phi)(ctx + (x -> Interval(m, m)))
+      val m = Utils.splitInterval(a, b, upperCtx.roundingContext)(0)
+      approximate(phi)(lowerCtx + (x -> Interval(a, b)) , upperCtx + (x -> Interval(m, m)))
 
-    case And(x: Formula, y: Formula) => upper(x) && upper(y)
-    case Or(x: Formula, y: Formula)  => upper(x) || upper(y)
-    case ConstFormula(a: Boolean)    => a
+    case And(x: Formula, y: Formula) => 
+      val (l1,u1) = approximate(x)(lowerCtx, upperCtx)
+      val (l2,u2) = approximate(y)(lowerCtx, upperCtx)
+      (l1 && l2, u1 && u2)
+      
+    case Or(x: Formula, y: Formula)  =>
+      val (l1,u1) = approximate(x)(lowerCtx, upperCtx)
+      val (l2,u2) = approximate(y)(lowerCtx, upperCtx)
+      (l1 || l2, u1 || u2)
+    case ConstFormula(a: Boolean)    => (a, a)
   }
 
-  def upper(expr: Real)(implicit ctx: Context): Interval = expr match {
-    case Cut(_, a, b, _, _) => Interval(b, a)
-    case CutR(_, _, _)      => Interval(null, null) // TODO
+  def approximate(expr: Real)(lowerCtx: Context, upperCtx: Context): (Interval, Interval) = expr match {
+    case Cut(_, a, b, _, _) => (Interval(a, b), Interval(b, a))
+    case CutR(_, _, _)      => (Interval(null, null),Interval(null, null)) // TODO
 
-    case Const(a)           => Interval(a, a)
+    case Const(a)           => (Interval(a, a), Interval(a, a))
     case Add(x, y) =>
-       val Interval(x1, x2) = upper(x)
-       val Interval(y1, y2) = upper(y)
-       Interval(x1.add(y1, ctx.roundingContext.up), x2.add(y2, ctx.roundingContext.down))
+       val (Interval(lx1, lx2), Interval(ux1, ux2)) = approximate(x)(lowerCtx, upperCtx)
+       val (Interval(ly1, ly2), Interval(uy1, uy2)) = approximate(y)(lowerCtx, upperCtx)
+       (Interval(lx1.add(ly1, lowerCtx.roundingContext.down), lx2.add(ly2, lowerCtx.roundingContext.up)),
+           Interval(ux1.add(uy1, upperCtx.roundingContext.up), ux2.add(uy2, upperCtx.roundingContext.down)))
     case Sub(x, y) =>
-      val Interval(x1, x2) = upper(x)
-      val Interval(y1, y2) = upper(y)
-      Interval(x1.subtract(y1, ctx.roundingContext.up), x2.subtract(y2, ctx.roundingContext.down))
+      val (Interval(lx1, lx2), Interval(ux1, ux2)) = approximate(x)(lowerCtx, upperCtx)
+       val (Interval(ly1, ly2), Interval(uy1, uy2)) = approximate(y)(lowerCtx, upperCtx)
+       (Interval(lx1.subtract(ly2, lowerCtx.roundingContext.down), lx2.subtract(ly1, lowerCtx.roundingContext.up)), // TODO fix
+           Interval(ux1.subtract(uy2, upperCtx.roundingContext.up), ux2.subtract(uy1, upperCtx.roundingContext.down)))
     case Mul(x, y) =>
-      val Interval(x1, x2) = upper(x)
-      val Interval(y1, y2) = upper(y)
+      val (Interval(lx1, lx2), Interval(ux1, ux2)) = approximate(x)(lowerCtx, upperCtx)
+       val (Interval(ly1, ly2), Interval(uy1, uy2)) = approximate(y)(lowerCtx, upperCtx)
+       
+      (Interval(
+        lx1.multiply(ly1, lowerCtx.roundingContext.down).min(lx1.multiply(ly2, lowerCtx.roundingContext.down)).min(lx2.multiply(ly1, lowerCtx.roundingContext.down)).min(lx2.multiply(ly2, lowerCtx.roundingContext.down)),
+        lx1.multiply(ly1, lowerCtx.roundingContext.up).max(lx1.multiply(ly2, lowerCtx.roundingContext.up)).max(lx2.multiply(ly1, lowerCtx.roundingContext.up)).max(lx2.multiply(ly2, lowerCtx.roundingContext.up))), //TODO
+      
       Interval(
-        x1.multiply(y1, ctx.roundingContext.up).max(x1.multiply(y2, ctx.roundingContext.up)).max(x2.multiply(y1, ctx.roundingContext.up)).max(x2.multiply(y2, ctx.roundingContext.up)),
-        x1.multiply(y1, ctx.roundingContext.down).min(x1.multiply(y2, ctx.roundingContext.down)).min(x2.multiply(y1, ctx.roundingContext.down)).min(x2.multiply(y2, ctx.roundingContext.down))) //TODO
-    case Div(x, y) =>
+        ux1.multiply(uy1, upperCtx.roundingContext.up).max(ux1.multiply(uy2, upperCtx.roundingContext.up)).max(ux2.multiply(uy1, upperCtx.roundingContext.up)).max(ux2.multiply(uy2, upperCtx.roundingContext.up)),
+        ux1.multiply(uy1, upperCtx.roundingContext.down).min(ux1.multiply(uy2, upperCtx.roundingContext.down)).min(ux2.multiply(uy1, upperCtx.roundingContext.down)).min(ux2.multiply(uy2, upperCtx.roundingContext.down)))) //TODO
+    /*case Div(x, y) =>
       val Interval(x1, x2) = upper(x)
       val Interval(y1, y2) = upper(y)
-      Interval(x1.divide(y2, ctx.roundingContext.up), x2.divide(y1, ctx.roundingContext.down)) //TODO
+      Interval(x1.divide(y2, ctx.roundingContext.up), x2.divide(y1, ctx.roundingContext.down)) */
     case Var(name) =>
-      val Interval(a, b) = ctx.vars.get(name).get
-      Interval(b, a)
-  }
-
-  def lower(formula: Formula)(implicit ctx: Context): Boolean = formula match {
-    case Less(x: Real, y: Real) =>
-      val Interval(_, xi) = lower(x)
-      val Interval(yi, _) = lower(y)
-      xi.compareTo(yi) < 0
-
-    // TODO
-    case Exists(x: Symbol, a: BigDecimal, b: BigDecimal, phi: Formula) =>
-      val m = Utils.splitInterval(a, b, ctx.roundingContext)(0)
-      lower(phi)(ctx + (x -> Interval(m, m)))
-
-    // case ExistsR(x: Symbol, phi: Formula)                              => false
-    case Forall(x: Symbol, a: BigDecimal, b: BigDecimal, phi: Formula) =>
-      lower(phi)(ctx + (x -> Interval(a, b)))
-
-    case And(x: Formula, y: Formula) => lower(x) && lower(y)
-    case Or(x: Formula, y: Formula)  => lower(x) || lower(y)
-    case ConstFormula(a: Boolean)    => a
-  }
-
-  def lower(expr: Real)(implicit ctx: Context): Interval = expr match {
-    case Cut(_, a, b, _, _) => Interval(a, b)
-    case CutR(_, _, _)      => Interval(null, null) // TODO
-
-    case Const(a)           => Interval(a, a)
-    case Add(x, y) =>
-      val Interval(x1, x2) = lower(x)
-      val Interval(y1, y2) = lower(y)
-      Interval(x1.add(y1, ctx.roundingContext.down), x2.add(y2, ctx.roundingContext.up))
-    case Sub(x, y) =>
-      val Interval(x1, x2) = lower(x)
-      val Interval(y1, y2) = lower(y)
-      Interval(x1.subtract(y1, ctx.roundingContext.down), x2.subtract(y2, ctx.roundingContext.up))
-    case Mul(x, y) =>
-      val Interval(x1, x2) = lower(x)
-      val Interval(y1, y2) = lower(y)
-      Interval(
-        x1.multiply(y1, ctx.roundingContext.down).min(x1.multiply(y2, ctx.roundingContext.down)).min(x2.multiply(y1, ctx.roundingContext.down)).min(x2.multiply(y2, ctx.roundingContext.down)),
-        x1.multiply(y1, ctx.roundingContext.up).max(x1.multiply(y2, ctx.roundingContext.up)).max(x2.multiply(y1, ctx.roundingContext.up)).max(x2.multiply(y2, ctx.roundingContext.up))) //TODO
-    case Div(x, y) =>
-      val Interval(x1, x2) = lower(x)
-      val Interval(y1, y2) = lower(y)
-      Interval(x1.divide(y2, ctx.roundingContext.down), x2.divide(y1, ctx.roundingContext.up)) //TODO
-    case Var(name) => ctx.vars.get(name).get
+      val Interval(u1,u2) = upperCtx.vars.get(name).get
+      (lowerCtx.vars.get(name).get, Interval(u2,u1))      
   }
 
   def refine(formula: Formula)(implicit ctx: Context): Formula = {
-    if (lower(formula)) {
-      ConstFormula(true)
-    } else if (!upper(formula)) {
-      ConstFormula(false)
-    } else {
+    approximate(formula)(ctx, ctx) match {
+      case (true, _) => ConstFormula(true)
+      case (_, false) => ConstFormula(false)
+      case _ =>   
       formula match {
 
         case Less(x: Real, y: Real) => Less(refine(x), refine(y))
@@ -162,8 +129,8 @@ object Eval {
       val m: Array[BigDecimal] = Utils.splitInterval(a, b, ctx.roundingContext)
       val m1 = m(0)
       val m2 = m(1)
-      val a2 = if (lower(l)(ctx + (x -> Interval(m1, m1)))) m1 else a
-      val b2 = if (lower(u)(ctx + (x -> Interval(m2, m2)))) m2 else b
+      val a2 = if (approximate(l)(ctx + (x -> Interval(m1, m1)), ctx + (x -> Interval(m1, m1)))._1) m1 else a
+      val b2 = if (approximate(u)(ctx + (x -> Interval(m2, m2)), ctx + (x -> Interval(m2, m2)))._1) m2 else b
       Cut(x, a2, b2, refine(l)(ctx + (x -> Interval(a2, b2))), refine(u)(ctx + (x -> Interval(a2, b2))))
     case Add(x, y) => Add(refine(x), refine(y))
     case Sub(x, y) => Sub(refine(x), refine(y))
@@ -181,7 +148,7 @@ object Eval {
       val context = Context(new RoundingContext(0, dprec))
       val prec = new BigDecimal(BigInteger.ONE, precision, context.roundingContext.down);
 
-      val l = lower(rexpr)(context)
+      val l = approximate(rexpr)(context, context)._1
 
       val width = l._2.subtract(l._1, context.roundingContext.up)
       val ctime = System.currentTimeMillis()
@@ -214,7 +181,7 @@ object Eval {
     println("e = " +Utils.intervalToString(yl, yu))
     
     
-    println(upper(Exists('x, new BigDecimal("0.4999"), new BigDecimal("0.5001"), 'y < 'x * (Const(1) - 'x)))(Context(new RoundingContext(0, 200), Map('y -> Interval(new BigDecimal(0.26), new BigDecimal(0.24))))))
+    //println(upper(Exists('x, new BigDecimal("0.4999"), new BigDecimal("0.5001"), 'y < 'x * (Const(1) - 'x)))(Context(new RoundingContext(0, 200), Map('y -> Interval(new BigDecimal(0.26), new BigDecimal(0.24))))))
 
     eval(Cut('x, 1, 2, 'x * 'x < 2, 2 < 'x * 'x), 10)
     eval(Cut('y, -1, 2, Exists('x, 0, 1, 'y < 'x * (Const(1) - 'x)), Forall('x, 0, 1, 'x * (Const(1) - 'x) < 'y)), 10)
