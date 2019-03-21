@@ -47,30 +47,24 @@ object Eval {
 
     case Const(a)           => Approximation(Interval(a, a), Interval(a, a))
     case Add(x, y) =>
-       val Approximation(Interval(lx1, lx2), Interval(ux1, ux2)) = approximate(x)(ctx)
-       val Approximation(Interval(ly1, ly2), Interval(uy1, uy2)) = approximate(y)(ctx)
-       Approximation(Interval(lx1.add(ly1, ctx.roundingContext.down), lx2.add(ly2, ctx.roundingContext.up)),
-           Interval(ux1.add(uy1, ctx.roundingContext.swap.up), ux2.add(uy2, ctx.roundingContext.swap.down)))
+       val Approximation(l1, u1) = approximate(x)(ctx)
+       val Approximation(l2, u2) = approximate(y)(ctx)
+       Approximation(l1.add(l2, ctx.roundingContext), u1.add(u2, ctx.roundingContext.swap))
     case Sub(x, y) =>
-      val Approximation(Interval(lx1, lx2), Interval(ux1, ux2)) = approximate(x)(ctx)
-       val Approximation(Interval(ly1, ly2), Interval(uy1, uy2)) = approximate(y)(ctx)
-       Approximation(Interval(lx1.subtract(ly2, ctx.roundingContext.down), lx2.subtract(ly1, ctx.roundingContext.up)), // TODO fix
-           Interval(ux1.subtract(uy2, ctx.roundingContext.swap.up), ux2.subtract(uy1, ctx.roundingContext.swap.down)))
-    case Mul(x, y) =>
-      val Approximation(Interval(lx1, lx2), Interval(ux1, ux2)) = approximate(x)(ctx)
-       val Approximation(Interval(ly1, ly2), Interval(uy1, uy2)) = approximate(y)(ctx)
+      val Approximation(l1, u1) = approximate(x)(ctx)
+      val Approximation(l2, u2) = approximate(y)(ctx)
+      Approximation(l1.subtract(l2, ctx.roundingContext), u1.subtract(u2, ctx.roundingContext.swap))
        
-      Approximation(Interval(
-        lx1.multiply(ly1, ctx.roundingContext.down).min(lx1.multiply(ly2, ctx.roundingContext.down)).min(lx2.multiply(ly1, ctx.roundingContext.down)).min(lx2.multiply(ly2, ctx.roundingContext.down)),
-        lx1.multiply(ly1, ctx.roundingContext.up).max(lx1.multiply(ly2, ctx.roundingContext.up)).max(lx2.multiply(ly1, ctx.roundingContext.up)).max(lx2.multiply(ly2, ctx.roundingContext.up))), //TODO
+    case Mul(x, y) =>
+      val Approximation(l1, u1) = approximate(x)(ctx)
+      val Approximation(l2, u2) = approximate(y)(ctx)
+      Approximation(l1.multiply(l2, ctx.roundingContext), u1.swap.multiply(u2.swap, ctx.roundingContext).swap)
+
+    case Div(x, y) =>
+      val Approximation(l1, u1) = approximate(x)(ctx)
+      val Approximation(l2, u2) = approximate(y)(ctx)
+      Approximation(l1.divide(l2, ctx.roundingContext), u1.swap.divide(u2.swap, ctx.roundingContext).swap)
       
-      Interval(
-        ux1.multiply(uy1, ctx.roundingContext.swap.up).max(ux1.multiply(uy2, ctx.roundingContext.swap.up)).max(ux2.multiply(uy1, ctx.roundingContext.swap.up)).max(ux2.multiply(uy2, ctx.roundingContext.swap.up)),
-        ux1.multiply(uy1, ctx.roundingContext.swap.down).min(ux1.multiply(uy2, ctx.roundingContext.swap.down)).min(ux2.multiply(uy1, ctx.roundingContext.swap.down)).min(ux2.multiply(uy2, ctx.roundingContext.swap.down)))) //TODO
-    /*case Div(x, y) =>
-      val Interval(x1, x2) = upper(x)
-      val Interval(y1, y2) = upper(y)
-      Interval(x1.divide(y2, ctx.roundingContext.up), x2.divide(y1, ctx.roundingContext.down)) */
     case Var(name) =>
       ctx.vars.get(name).get
   }
