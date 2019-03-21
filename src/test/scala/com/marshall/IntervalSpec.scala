@@ -1,18 +1,18 @@
 package com.marshall
 import java.math.BigDecimal
 
+import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.BooleanOperators
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
-import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
 
-@RunWith(classOf[JUnitRunner])
+
+@RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class IntervalSpec extends Properties("Interval") {
   val r = new RoundingContext(0, 10)
-
+  
   implicit def arbInterval: Arbitrary[Interval] =
     Arbitrary {
       for {
@@ -27,7 +27,7 @@ class IntervalSpec extends Properties("Interval") {
         {
           val c = a.add(b, r)
           val lower = a.x.add(b.x, r.down)
-          val upper = a.y.add(b.y, r.up)
+          val upper = a.y.add(b.y, r.up)          
           in(lower, c) :| s"lower ${lower} not in ${c}" &&
             in(upper, c) :| s"upper ${upper} not in ${c}"
         }

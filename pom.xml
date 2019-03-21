@@ -15,37 +15,65 @@
 
   <build>
     <plugins>
-
       <plugin>
-        <groupId>org.scala-tools</groupId>
-        <artifactId>maven-scala-plugin</artifactId>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+        <version>3.3.1</version>
+        <configuration>
+          <args>
+            <arg>-Xmax-classfile-name</arg>
+            <arg>140</arg>
+            <arg>-deprecation</arg>
+            <arg>-unchecked</arg>
+            <arg>-Xlint</arg>
+            <arg>-Xverify</arg>
+          </args>
+        </configuration>
         <executions>
           <execution>
+            <id>scala-compile-first</id>
+            <phase>process-resources</phase>
             <goals>
+              <goal>add-source</goal>
               <goal>compile</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>scala-test-compile</id>
+            <phase>process-test-resources</phase>
+            <goals>
               <goal>testCompile</goal>
             </goals>
           </execution>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>doc-jar</goal>
+            </goals>
+          </execution>
         </executions>
-        <configuration>
-          <scalaVersion>${scala.version}</scalaVersion>
+      </plugin>
 
-          <launchers>
-            <!-- this should allow us to execute the ScalaCheck tests -->
-            <launcher>
-              <id>test</id>
-              <mainClass>com.company.scalacheck.Runner</mainClass>
-            </launcher>
-          </launchers>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.12.4</version>
+        <configuration>
+          <includes>
+            <include>**/*Test.class</include>
+            <include>**/*Spec.class</include>
+          </includes>
         </configuration>
       </plugin>
     </plugins>
   </build>
+
   <dependencies>
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
-      <version>2.12.3</version>
+      <version>${scala.version}</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -55,15 +83,10 @@
     </dependency>
     <dependency>
       <groupId>org.scalacheck</groupId>
-      <artifactId>scalacheck_2.12</artifactId>
+      <artifactId>scalacheck_${scala.compat.version}</artifactId>
       <version>1.14.0</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.scalatest</groupId>
-      <artifactId>scalatest_2.12</artifactId>
-      <version>3.0.5</version>
-      <scope>test</scope>
-    </dependency>
+
   </dependencies>
 </project>
