@@ -92,24 +92,24 @@ object Eval {
               And(Forall(x, a, m, phi), Forall(x, m, b, phi))
 
           case And(x: Formula, y: Formula) =>
-            val a = refine(x)
-            val b = refine(y)
-            (a, b) match {
-              case (ConstFormula(true), b)  => b
-              case (ConstFormula(false), b) => ConstFormula(false)
-              case (a, ConstFormula(true))  => a
-              case (a, ConstFormula(false)) => ConstFormula(false)
-              case (a, b)                   => And(a, b)
+            refine(x) match {
+              case ConstFormula(true)  => refine(y)
+              case ConstFormula(false) => ConstFormula(false)
+              case a => refine(y) match {
+                case ConstFormula(true)  => a
+                case ConstFormula(false) => ConstFormula(false)
+                case b                   => And(a, b)
+              }
             }
           case Or(x: Formula, y: Formula) =>
-            val a = refine(x)
-            val b = refine(y)
-            (a, b) match {
-              case (ConstFormula(true), b)  => ConstFormula(true)
-              case (ConstFormula(false), b) => b
-              case (a, ConstFormula(true))  => ConstFormula(true)
-              case (a, ConstFormula(false)) => a
-              case (a, b)                   => Or(a, b)
+            refine(x) match {
+              case ConstFormula(true)  => ConstFormula(true)
+              case ConstFormula(false) => refine(y)
+              case a => refine(y) match {
+                case ConstFormula(true)  => ConstFormula(true)
+                case ConstFormula(false) => a
+                case b                   => Or(a, b)
+              }
             }
           case c: ConstFormula => c
         }
