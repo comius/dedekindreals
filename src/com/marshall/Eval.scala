@@ -7,15 +7,17 @@ import java.math.BigInteger
 
 object Eval {
   
+  case class Approximation[T](lower: T, upper: T)
+  
   case class Context(roundingContext: RoundingContext, vars: Map[Symbol, Interval] = Map()) {
     def +(p: (Symbol, Interval)) = copy(vars = vars + p)
   }  
   
-  def approximate(formula: Formula)(lowerCtx: Context, upperCtx: Context): (Boolean, Boolean) = formula match {
+  def approximate(formula: Formula)(lowerCtx: Context, upperCtx: Context): Approximation[Boolean] = formula match {
     case Less(x: Real, y: Real) =>
-      val (li1, ui1) = approximate(x)(lowerCtx, upperCtx)
-      val (li2, ui2) = approximate(y)(lowerCtx, upperCtx)
-      (li1._2.compareTo(li2._1) < 0, ui1._2.compareTo(ui2._1) < 0)
+      val Approximation(li1, ui1) = approximate(x)(lowerCtx, upperCtx)
+      val Approximation(li2, ui2) = approximate(y)(lowerCtx, upperCtx)
+      Approximation(li1._2.compareTo(li2._1) < 0, ui1._2.compareTo(ui2._1) < 0)
 
     // TODO
     case Exists(x: Symbol, a: BigDecimal, b: BigDecimal, phi: Formula) =>
@@ -28,37 +30,37 @@ object Eval {
       approximate(phi)(lowerCtx + (x -> Interval(a, b)) , upperCtx + (x -> Interval(m, m)))
 
     case And(x: Formula, y: Formula) => 
-      val (l1,u1) = approximate(x)(lowerCtx, upperCtx)
-      val (l2,u2) = approximate(y)(lowerCtx, upperCtx)
-      (l1 && l2, u1 && u2)
+      val Approximation(l1,u1) = approximate(x)(lowerCtx, upperCtx)
+      val Approximation(l2,u2) = approximate(y)(lowerCtx, upperCtx)
+      Approximation(l1 && l2, u1 && u2)
       
     case Or(x: Formula, y: Formula)  =>
-      val (l1,u1) = approximate(x)(lowerCtx, upperCtx)
-      val (l2,u2) = approximate(y)(lowerCtx, upperCtx)
-      (l1 || l2, u1 || u2)
-    case ConstFormula(a: Boolean)    => (a, a)
+      val Approximation(l1,u1) = approximate(x)(lowerCtx, upperCtx)
+      val Approximation(l2,u2) = approximate(y)(lowerCtx, upperCtx)
+      Approximation(l1 || l2, u1 || u2)
+    case ConstFormula(a: Boolean)    => Approximation(a, a)
   }
 
-  def approximate(expr: Real)(lowerCtx: Context, upperCtx: Context): (Interval, Interval) = expr match {
-    case Cut(_, a, b, _, _) => (Interval(a, b), Interval(b, a))
-    case CutR(_, _, _)      => (Interval(null, null),Interval(null, null)) // TODO
+  def approximate(expr: Real)(lowerCtx: Context, upperCtx: Context): Approximation[Interval] = expr match {
+    case Cut(_, a, b, _, _) => Approximation(Interval(a, b), Interval(b, a))
+    case CutR(_, _, _)      => Approximation(Interval(null, null),Interval(null, null)) // TODO
 
-    case Const(a)           => (Interval(a, a), Interval(a, a))
+    case Const(a)           => Approximation(Interval(a, a), Interval(a, a))
     case Add(x, y) =>
-       val (Interval(lx1, lx2), Interval(ux1, ux2)) = approximate(x)(lowerCtx, upperCtx)
-       val (Interval(ly1, ly2), Interval(uy1, uy2)) = approximate(y)(lowerCtx, upperCtx)
-       (Interval(lx1.add(ly1, lowerCtx.roundingContext.down), lx2.add(ly2, lowerCtx.roundingContext.up)),
+       val Approximation(Interval(lx1, lx2), Interval(ux1, ux2)) = approximate(x)(lowerCtx, upperCtx)
+       val Approximation(Interval(ly1, ly2), Interval(uy1, uy2)) = approximate(y)(lowerCtx, upperCtx)
+       Approximation(Interval(lx1.add(ly1, lowerCtx.roundingContext.down), lx2.add(ly2, lowerCtx.roundingContext.up)),
            Interval(ux1.add(uy1, upperCtx.roundingContext.up), ux2.add(uy2, upperCtx.roundingContext.down)))
     case Sub(x, y) =>
-      val (Interval(lx1, lx2), Interval(ux1, ux2)) = approximate(x)(lowerCtx, upperCtx)
-       val (Interval(ly1, ly2), Interval(uy1, uy2)) = approximate(y)(lowerCtx, upperCtx)
-       (Interval(lx1.subtract(ly2, lowerCtx.roundingContext.down), lx2.subtract(ly1, lowerCtx.roundingContext.up)), // TODO fix
+      val Approximation(Interval(lx1, lx2), Interval(ux1, ux2)) = approximate(x)(lowerCtx, upperCtx)
+       val Approximation(Interval(ly1, ly2), Interval(uy1, uy2)) = approximate(y)(lowerCtx, upperCtx)
+       Approximation(Interval(lx1.subtract(ly2, lowerCtx.roundingContext.down), lx2.subtract(ly1, lowerCtx.roundingContext.up)), // TODO fix
            Interval(ux1.subtract(uy2, upperCtx.roundingContext.up), ux2.subtract(uy1, upperCtx.roundingContext.down)))
     case Mul(x, y) =>
-      val (Interval(lx1, lx2), Interval(ux1, ux2)) = approximate(x)(lowerCtx, upperCtx)
-       val (Interval(ly1, ly2), Interval(uy1, uy2)) = approximate(y)(lowerCtx, upperCtx)
+      val Approximation(Interval(lx1, lx2), Interval(ux1, ux2)) = approximate(x)(lowerCtx, upperCtx)
+       val Approximation(Interval(ly1, ly2), Interval(uy1, uy2)) = approximate(y)(lowerCtx, upperCtx)
        
-      (Interval(
+      Approximation(Interval(
         lx1.multiply(ly1, lowerCtx.roundingContext.down).min(lx1.multiply(ly2, lowerCtx.roundingContext.down)).min(lx2.multiply(ly1, lowerCtx.roundingContext.down)).min(lx2.multiply(ly2, lowerCtx.roundingContext.down)),
         lx1.multiply(ly1, lowerCtx.roundingContext.up).max(lx1.multiply(ly2, lowerCtx.roundingContext.up)).max(lx2.multiply(ly1, lowerCtx.roundingContext.up)).max(lx2.multiply(ly2, lowerCtx.roundingContext.up))), //TODO
       
@@ -71,13 +73,13 @@ object Eval {
       Interval(x1.divide(y2, ctx.roundingContext.up), x2.divide(y1, ctx.roundingContext.down)) */
     case Var(name) =>
       val Interval(u1,u2) = upperCtx.vars.get(name).get
-      (lowerCtx.vars.get(name).get, Interval(u2,u1))      
+      Approximation(lowerCtx.vars.get(name).get, Interval(u2,u1))      
   }
 
   def refine(formula: Formula)(implicit ctx: Context): Formula = {
     approximate(formula)(ctx, ctx) match {
-      case (true, _) => ConstFormula(true)
-      case (_, false) => ConstFormula(false)
+      case Approximation(true, _) => ConstFormula(true)
+      case Approximation(_, false) => ConstFormula(false)
       case _ =>   
       formula match {
 
@@ -129,8 +131,8 @@ object Eval {
       val m: Array[BigDecimal] = Utils.splitInterval(a, b, ctx.roundingContext)
       val m1 = m(0)
       val m2 = m(1)
-      val a2 = if (approximate(l)(ctx + (x -> Interval(m1, m1)), ctx + (x -> Interval(m1, m1)))._1) m1 else a
-      val b2 = if (approximate(u)(ctx + (x -> Interval(m2, m2)), ctx + (x -> Interval(m2, m2)))._1) m2 else b
+      val a2 = if (approximate(l)(ctx + (x -> Interval(m1, m1)), ctx + (x -> Interval(m1, m1))).lower) m1 else a
+      val b2 = if (approximate(u)(ctx + (x -> Interval(m2, m2)), ctx + (x -> Interval(m2, m2))).lower) m2 else b
       Cut(x, a2, b2, refine(l)(ctx + (x -> Interval(a2, b2))), refine(u)(ctx + (x -> Interval(a2, b2))))
     case Add(x, y) => Add(refine(x), refine(y))
     case Sub(x, y) => Sub(refine(x), refine(y))
@@ -148,7 +150,7 @@ object Eval {
       val context = Context(new RoundingContext(0, dprec))
       val prec = new BigDecimal(BigInteger.ONE, precision, context.roundingContext.down);
 
-      val l = approximate(rexpr)(context, context)._1
+      val l = approximate(rexpr)(context, context).lower
 
       val width = l._2.subtract(l._1, context.roundingContext.up)
       val ctime = System.currentTimeMillis()
