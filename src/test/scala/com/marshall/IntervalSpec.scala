@@ -7,6 +7,9 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.BooleanOperators
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
+import org.scalacheck.Gen
+import org.scalacheck.Shrink
+import org.scalacheck.Test.Parameters
 
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class IntervalSpec extends Properties("Interval") {
@@ -31,7 +34,7 @@ class IntervalSpec extends Properties("Interval") {
             in(upper, c) :| s"upper ${upper} not in ${c}"
         }
   }
-  
+
   property("subEndpointsIn") = forAll {
     (a: Interval, b: Interval) =>
       (a.x.compareTo(a.y) <= 0 && b.x.compareTo(b.y) <= 0) ==>
@@ -47,13 +50,24 @@ class IntervalSpec extends Properties("Interval") {
   property("multiplyComutative") = forAll {
     (a: Interval, b: Interval) => (a.multiply(b, r) == b.multiply(a, r)) :| s"${a.multiply(b, r)} != ${b.multiply(a, r)}"
   }
+  
+  
+  property("multiplyKaucherComutative") = forAll {
+    (a: Interval, b: Interval) => (a.multiplyKaucher(b, r) == b.multiplyKaucher(a, r)) :| s"${a.multiplyKaucher(b, r)} != ${b.multiplyKaucher(a, r)}"
+  }
 
   property("multiplyDuality") = forAll {
     (a: Interval, b: Interval) => (a.swap.multiply(b.swap, r.swap()).swap == a.multiply(b, r))
   }
-   
+
+  property("multiplyKaucherEqualsLakayev") = forAll {
+    (a: Interval, b: Interval) => (a.multiply(b, r) == a.multiplyKaucher(b, r)) :| s"${a.multiply(b, r)} != ${a.multiplyKaucher(b, r)}"
+  }
+
   def in(a: BigDecimal, i: Interval): Boolean = {
     a.compareTo(i.x) >= 0 && i.y.compareTo(a) >= 0
   }
 
+  
+  
 }

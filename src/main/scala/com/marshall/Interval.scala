@@ -33,7 +33,7 @@ case class Interval(x: BigDecimal, y: BigDecimal) extends Product2[BigDecimal, B
     if (x.compareTo(y) < 0) Interval(lower, upper) else Interval(upper, lower)
   }
 
-  def multiply(i2: Interval, r: RoundingContext) = {
+  def multiplyKaucher(i2: Interval, r: RoundingContext) = {
     val i1 = this
     val d = i1.x
     val u = i1.y
@@ -67,6 +67,30 @@ case class Interval(x: BigDecimal, y: BigDecimal) extends Product2[BigDecimal, B
     }
   }
 
+  def multiply(i2: Interval, r: RoundingContext) = {
+    val i1 = this
+    
+    def pm(x: BigDecimal): (BigDecimal, BigDecimal) = {
+      x.signum() match {
+        case 1 => (x, BigDecimal.ZERO)
+        case -1 => (BigDecimal.ZERO, x.negate())
+        case _ => (BigDecimal.ZERO, BigDecimal.ZERO)
+      }
+    }
+    
+    val (lxp, lxm) = pm(i1.x)
+    val (uxp, uxm) = pm(i1.y)
+    val (lyp, lym) = pm(i2.x)
+    val (uyp, uym) = pm(i2.y)
+       
+    
+    Interval(
+        lxp.multiply(lyp,r.down).max(uxm.multiply(uym,r.down)).subtract(
+            uxp.multiply(lym,r.up).max(lxm.multiply(uyp,r.up)), r.down),
+        uxp.multiply(uyp,r.up).max(lxm.multiply(lym,r.up)).subtract(
+            lxp.multiply(uym,r.down).max(uxm.multiply(lyp,r.down)), r.up))
+  }
+  
   def divide(i2: Interval, r: RoundingContext) = {
     multiply(Interval(BigDecimal.ONE.divide(i2.y, r.down), BigDecimal.ONE.divide(i2.x, r.down)), r)
   }

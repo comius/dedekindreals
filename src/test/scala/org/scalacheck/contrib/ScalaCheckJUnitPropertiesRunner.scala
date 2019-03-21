@@ -6,6 +6,7 @@ import org.junit.runner.notification.RunNotifier
 import org.scalacheck.Properties
 import org.scalacheck.Test
 import org.scalacheck.util.ConsoleReporter
+import org.scalacheck.rng.Seed
 
 /**
  * This a JUnit runner that allows to run ScalaCheck properties (created into an object that implements
@@ -73,6 +74,7 @@ class ScalaCheckJUnitPropertiesRunner(suiteClass: java.lang.Class[Properties]) e
           val descObj = Description.createTestDescription(properties.getClass, desc)
 
           notifier.fireTestStarted(descObj)
+          //.withMinSuccessfulTests(1000000).withInitialSeed(123123213)
           Test.check(prop)(_.withTestCallback(consoleReporter chain (new CustomTestCallback(notifier, descObj))))
 
           notifier.fireTestFinished(descObj)
