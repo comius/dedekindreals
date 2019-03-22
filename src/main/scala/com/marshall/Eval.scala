@@ -4,6 +4,7 @@ package com.marshall
 import Real._
 import java.math.BigDecimal
 import java.math.BigInteger
+import com.marshall.dyadic.DyadicDecimal
 
 object Eval {
 
@@ -21,24 +22,24 @@ object Eval {
     }
 
   def approximate(formula: Formula)(implicit ctx: Context[Approximation[Interval]]): Approximation[Boolean] = formula match {
-    case Less(x: Real, y: Real) =>
+    case Less(x, y) =>
       val Approximation(li1, ui1) = approximate(x)
       val Approximation(li2, ui2) = approximate(y)
       Approximation(li1._2.compareTo(li2._1) < 0, ui1._2.compareTo(ui2._1) < 0)
 
     // TODO
-    case Exists(x: Symbol, a: BigDecimal, b: BigDecimal, phi: Formula) =>
-      val m = Utils.splitInterval(a, b, ctx.roundingContext)(0)
+    case Exists(x, a, b, phi) =>
+      val m = a.split(b) //Utils.splitInterval(a, b, ctx.roundingContext)(0)
       approximate(phi)(ctx + (x -> Approximation(Interval(m, m), Interval(a, b))))
 
     // case ExistsR(x: Symbol, phi: Formula)                              => false
-    case Forall(x: Symbol, a: BigDecimal, b: BigDecimal, phi: Formula) =>
-      val m = Utils.splitInterval(a, b, ctx.roundingContext.swap)(0)
+    case Forall(x, a, b, phi) =>
+      val m = a.split(b) //Utils.splitInterval(a, b, ctx.roundingContext.swap)(0)
       approximate(phi)(ctx + (x -> Approximation(Interval(a, b), Interval(m, m))))
 
-    case And(x: Formula, y: Formula) => lift(_ && _)(x, y)
+    case And(x, y) => lift(_ && _)(x, y)
 
-    case Or(x: Formula, y: Formula)  => lift(_ || _)(x, y)
+    case Or(x, y)  => lift(_ || _)(x, y)
 
     case ConstFormula(a: Boolean)    => Approximation(a, a)
   }
@@ -73,25 +74,25 @@ object Eval {
       case _ =>
         formula match {
 
-          case Less(x: Real, y: Real) => Less(refine(x), refine(y))
+          case Less(x, y) => Less(refine(x), refine(y))
 
           // TODO existsR
-          case Exists(x: Symbol, a: BigDecimal, b: BigDecimal, phi: Formula) =>
-            val m = Utils.splitInterval(a, b, ctx.roundingContext)(0)
+          case Exists(x, a, b, phi) =>
+            val m = a.split(b) //Utils.splitInterval(a, b, ctx.roundingContext)(0)
             val phi2 = refine(phi)(ctx + (x -> Interval(a, b)))
             if (phi2.isInstanceOf[ConstFormula])
               phi2
             else
               Or(Exists(x, a, m, phi), Exists(x, m, b, phi))
-          case Forall(x: Symbol, a: BigDecimal, b: BigDecimal, phi: Formula) =>
-            val m = Utils.splitInterval(a, b, ctx.roundingContext)(0)
+          case Forall(x, a, b, phi) =>
+            val m = a.split(b) //Utils.splitInterval(a, b, ctx.roundingContext)(0)
             val phi2 = refine(phi)(ctx + (x -> Interval(a, b)))
             if (phi2.isInstanceOf[ConstFormula])
               phi2
             else
               And(Forall(x, a, m, phi), Forall(x, m, b, phi))
 
-          case And(x: Formula, y: Formula) =>
+          case And(x, y) =>
             refine(x) match {
               case ConstFormula(true)  => refine(y)
               case ConstFormula(false) => ConstFormula(false)
@@ -101,7 +102,7 @@ object Eval {
                 case b                   => And(a, b)
               }
             }
-          case Or(x: Formula, y: Formula) =>
+          case Or(x, y) =>
             refine(x) match {
               case ConstFormula(true)  => ConstFormula(true)
               case ConstFormula(false) => refine(y)
@@ -118,9 +119,7 @@ object Eval {
 
   def refine(expr: Real)(implicit ctx: Context[Interval]): Real = expr match {
     case Cut(x, a, b, l, u) =>
-      val m: Array[BigDecimal] = Utils.splitInterval(a, b, ctx.roundingContext)
-      val m1 = m(0)
-      val m2 = m(1)
+      val (m1,m2) = a.trisect(b, ctx.roundingContext)
       val a2 = if (approximate(l)(extendContext(ctx) + (x -> Approximation(Interval(m1, m1), Interval(m1, m1)))).lower) m1 else a
       val b2 = if (approximate(u)(extendContext(ctx) + (x -> Approximation(Interval(m1, m1), Interval(m2, m2)))).lower) m2 else b
       Cut(x, a2, b2, refine(l)(ctx + (x -> Interval(a2, b2))), refine(u)(ctx + (x -> Interval(a2, b2))))
@@ -138,16 +137,16 @@ object Eval {
 
     for (i <- 0 to 200) {
       val context = Context[Approximation[Interval]](new RoundingContext(0, dprec))
-      val prec = new BigDecimal(BigInteger.ONE, precision, context.roundingContext.down);
+      val prec = DyadicDecimal.valueOf(new BigDecimal(BigInteger.ONE, precision, context.roundingContext.down))
 
       val l = approximate(rexpr)(context).lower
 
       val width = l._2.subtract(l._1, context.roundingContext.up)
       val ctime = System.currentTimeMillis()
-      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${Utils.intervalToString(l._1, l._2)}, expr ${rexpr.toString.length}, time ${ctime - stime}")
+      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString.length}, time ${ctime - stime}")
       stime = ctime
       if (width.compareTo(prec) < 0) {
-        println(Utils.intervalToString(l._1, l._2))
+        println(l)
         return ;
       }
       rexpr = refine(rexpr)(Context[Interval](new RoundingContext(0, dprec)))
@@ -160,17 +159,17 @@ object Eval {
 
     val rc = new RoundingContext(0, 200)
     val N = 100
-    var dx = BigDecimal.ONE.divide(N, rc.down)
-    var yl = new BigDecimal(1)
-    var yu = new BigDecimal(1)
-    var x = BigDecimal.ZERO
-    while (x.compareTo(BigDecimal.ONE) < 0) {
+    var dx = DyadicDecimal.ONE.divide(N, rc.down)
+    var yl = DyadicDecimal.valueOf(1)
+    var yu = DyadicDecimal.valueOf(1)
+    var x = DyadicDecimal.ZERO
+    while (x.compareTo(DyadicDecimal.ONE) < 0) {
       yl = yl.add(yl.multiply(dx, rc.down), rc.down)
-      yu = yu.divide(BigDecimal.ONE.subtract(dx, rc.up), rc.up)
+      yu = yu.divide(DyadicDecimal.ONE.subtract(dx, rc.up), rc.up)
       x = x.add(dx, rc.up)
       //dx = dx.multiply(new BigDecimal(0.90), rc.up)
     }
-    println("e = " + Utils.intervalToString(yl, yu))
+    println("e = " + Interval(yl, yu))
 
     //println(upper(Exists('x, new BigDecimal("0.4999"), new BigDecimal("0.5001"), 'y < 'x * (Const(1) - 'x)))(Context(new RoundingContext(0, 200), Map('y -> Interval(new BigDecimal(0.26), new BigDecimal(0.24))))))
 

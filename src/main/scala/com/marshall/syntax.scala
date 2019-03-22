@@ -1,6 +1,6 @@
 package com.marshall
 
-import java.math.BigDecimal
+import com.marshall.dyadic.DyadicDecimal
 
 
 sealed trait Real {
@@ -12,9 +12,9 @@ sealed trait Real {
 
 sealed trait Formula
 
-case class Cut(x: Symbol, a: BigDecimal, b: BigDecimal, lower: Formula, upper: Formula) extends Real {
+case class Cut(x: Symbol, a: DyadicDecimal, b: DyadicDecimal, lower: Formula, upper: Formula) extends Real {
   override def toString: String = {
-    s"Cut(${x},${Utils.intervalToString(a,b)},${lower},${upper})"
+    s"Cut(${x},${Interval(a,b)},${lower},${upper})"
   }
 }
 case class CutR(x: Symbol, lower: Formula, upper: Formula) extends Real
@@ -22,7 +22,7 @@ case class Add(x: Real, y: Real) extends Real
 case class Sub(x: Real, y: Real) extends Real
 case class Mul(x: Real, y: Real) extends Real
 case class Div(x: Real, y: Real) extends Real
-case class Const(a: BigDecimal) extends Real {
+case class Const(a: DyadicDecimal) extends Real {
   override def toString: String = a.toString
 }
 
@@ -34,21 +34,21 @@ case class ConstFormula(b: Boolean) extends Formula
 case class Less(x: Real, y: Real) extends Formula
 case class And(x: Formula, y: Formula) extends Formula
 case class Or(x: Formula, y: Formula) extends Formula
-case class Forall(x: Symbol, a: BigDecimal, b: BigDecimal, phi: Formula) extends Formula
-case class Exists(x: Symbol, a: BigDecimal, b: BigDecimal, phi: Formula) extends Formula
+case class Forall(x: Symbol, a: DyadicDecimal, b: DyadicDecimal, phi: Formula) extends Formula
+case class Exists(x: Symbol, a: DyadicDecimal, b: DyadicDecimal, phi: Formula) extends Formula
 case class ExistsR(x: Symbol, phi: Formula) extends Formula
 
 object Real {
-  implicit def int2BigDecimal(x: Int): BigDecimal = {
-    new BigDecimal(x)
+  implicit def int2BigDecimal(x: Int): DyadicDecimal = {
+    DyadicDecimal.valueOf(x)
   }
   
-  implicit def bigDecimal2Const(x: BigDecimal): Const = {
+  implicit def bigDecimal2Const(x: DyadicDecimal): Const = {
     Const(x)
   }
 
   implicit def int2Const(x: Int): Const = {
-    Const(new BigDecimal(x))
+    Const(DyadicDecimal.valueOf(x))
   }
   
   implicit def symbol2Var(name: Symbol): Var = {
