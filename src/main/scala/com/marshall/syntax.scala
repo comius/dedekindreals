@@ -2,7 +2,6 @@ package com.marshall
 
 import com.marshall.dyadic.DyadicDecimal
 
-
 sealed trait Real {
   def +(other: Real) = Add(this, other)
   def -(other: Real) = Sub(this, other)
@@ -14,7 +13,7 @@ sealed trait Formula
 
 case class Cut(x: Symbol, a: DyadicDecimal, b: DyadicDecimal, lower: Formula, upper: Formula) extends Real {
   override def toString: String = {
-    s"Cut(${x},${Interval(a,b)},${lower},${upper})"
+    s"Cut(${x},${Interval(a, b)},${lower},${upper})"
   }
 }
 case class CutR(x: Symbol, lower: Formula, upper: Formula) extends Real
@@ -42,7 +41,7 @@ object Real {
   implicit def int2BigDecimal(x: Int): DyadicDecimal = {
     DyadicDecimal.valueOf(x)
   }
-  
+
   implicit def bigDecimal2Const(x: DyadicDecimal): Const = {
     Const(x)
   }
@@ -50,8 +49,8 @@ object Real {
   implicit def int2Const(x: Int): Const = {
     Const(DyadicDecimal.valueOf(x))
   }
-  
+
   implicit def symbol2Var(name: Symbol): Var = {
     Var(name)
-  }  
+  }
 }

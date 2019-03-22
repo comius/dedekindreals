@@ -1,8 +1,7 @@
 package com.marshall;
 
-import static org.junit.Assert.*;
-
-import java.math.BigDecimal;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -37,13 +36,14 @@ public class IntervalTest {
 	assertIn(a.y().add(b.y(), r.up), c);
 
 	// Verify midpoints are in the interval
-/*	BigDecimal am = a.x().add(a.y()).divide(BigDecimal.valueOf(2));
-	BigDecimal bm = b.x().add(b.y()).divide(BigDecimal.valueOf(2));
+
+	DyadicDecimal am = a.x().split(a.y());
+	DyadicDecimal bm = b.x().split(b.y());
 	assertIn(am.add(bm, r.down), c);
 
-	// Verify a lower endpoint - 1 is out, and upper endpoint + 1 is out
-	assertOut(a.x().add(b.x(), r.down).subtract(BigDecimal.ONE), c);
-	assertOut(a.y().add(b.y(), r.up).add(BigDecimal.ONE), c);
-*/    }
+	// Verify a lower endpoint - 1 is out, and upper endpoint + 1 is out assertOut(a.x().add(b.x(),
+	assertOut(a.x().add(b.x(), r.down).subtract(DyadicDecimal.valueOf(1), r.down), c);
+	assertOut(a.y().add(b.y(), r.up).add(DyadicDecimal.valueOf(1), r.up), c);
+    }
 
 }

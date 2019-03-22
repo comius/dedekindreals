@@ -6,7 +6,6 @@ import org.junit.runner.notification.RunNotifier
 import org.scalacheck.Properties
 import org.scalacheck.Test
 import org.scalacheck.util.ConsoleReporter
-import org.scalacheck.rng.Seed
 
 /**
  * This a JUnit runner that allows to run ScalaCheck properties (created into an object that implements

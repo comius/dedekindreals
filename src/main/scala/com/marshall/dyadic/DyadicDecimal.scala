@@ -87,14 +87,14 @@ sealed trait DyadicDecimal extends Dyadic[DyadicDecimal] {
   override def split(b: DyadicDecimal) = {
     (this, b) match {
       case (Number(x), Number(y)) => Number(x.add(y).divide(BigDecimal.valueOf(2)))
-      case _ => throw new Exception()
+      case _                      => throw new Exception()
     }
   }
   override def trisect(b: DyadicDecimal, c: RoundingContext): (DyadicDecimal, DyadicDecimal) = {
     (this, b) match {
-      case (Number(x), Number(y)) => 
+      case (Number(x), Number(y)) =>
         val a = Utils.splitInterval(x, y, c)
-        (Number(a(0)),Number(a(1)))
+        (Number(a(0)), Number(a(1)))
       case _ => throw new Exception()
     }
   }

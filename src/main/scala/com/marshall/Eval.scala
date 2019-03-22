@@ -37,11 +37,11 @@ object Eval {
       val m = a.split(b) //Utils.splitInterval(a, b, ctx.roundingContext.swap)(0)
       approximate(phi)(ctx + (x -> Approximation(Interval(a, b), Interval(m, m))))
 
-    case And(x, y) => lift(_ && _)(x, y)
+    case And(x, y)                => lift(_ && _)(x, y)
 
-    case Or(x, y)  => lift(_ || _)(x, y)
+    case Or(x, y)                 => lift(_ || _)(x, y)
 
-    case ConstFormula(a: Boolean)    => Approximation(a, a)
+    case ConstFormula(a: Boolean) => Approximation(a, a)
   }
 
   def lift(op: (Interval, Interval, RoundingContext) => Interval)(x: Real, y: Real)(implicit ctx: Context[Approximation[Interval]]) =
@@ -119,7 +119,7 @@ object Eval {
 
   def refine(expr: Real)(implicit ctx: Context[Interval]): Real = expr match {
     case Cut(x, a, b, l, u) =>
-      val (m1,m2) = a.trisect(b, ctx.roundingContext)
+      val (m1, m2) = a.trisect(b, ctx.roundingContext)
       val a2 = if (approximate(l)(extendContext(ctx) + (x -> Approximation(Interval(m1, m1), Interval(m1, m1)))).lower) m1 else a
       val b2 = if (approximate(u)(extendContext(ctx) + (x -> Approximation(Interval(m1, m1), Interval(m2, m2)))).lower) m2 else b
       Cut(x, a2, b2, refine(l)(ctx + (x -> Interval(a2, b2))), refine(u)(ctx + (x -> Interval(a2, b2))))
@@ -132,7 +132,7 @@ object Eval {
 
   def eval(expr: Real, precision: Int): Unit = {
     var rexpr = expr
-    var dprec = 200 // precision *2
+    val dprec = 200 // precision *2
     var stime = System.currentTimeMillis()
 
     for (i <- 0 to 200) {
@@ -159,7 +159,7 @@ object Eval {
 
     val rc = new RoundingContext(0, 200)
     val N = 100
-    var dx = DyadicDecimal.ONE.divide(N, rc.down)
+    val dx = DyadicDecimal.ONE.divide(N, rc.down)
     var yl = DyadicDecimal.valueOf(1)
     var yu = DyadicDecimal.valueOf(1)
     var x = DyadicDecimal.ZERO

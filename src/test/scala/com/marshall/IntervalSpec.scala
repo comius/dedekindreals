@@ -1,15 +1,11 @@
 package com.marshall
-import java.math.BigDecimal
-
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.BooleanOperators
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
-import org.scalacheck.Gen
-import org.scalacheck.Shrink
-import org.scalacheck.Test.Parameters
+
 import com.marshall.dyadic.DyadicDecimal
 
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])

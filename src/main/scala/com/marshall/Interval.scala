@@ -1,5 +1,4 @@
 package com.marshall
-import java.math.BigDecimal
 import com.marshall.dyadic.DyadicDecimal
 import com.marshall.dyadic.Number
 
@@ -71,28 +70,27 @@ case class Interval(x: DyadicDecimal, y: DyadicDecimal) extends Product2[DyadicD
 
   def multiply(i2: Interval, r: RoundingContext) = {
     val i1 = this
-    
+
     def pm(x: DyadicDecimal): (DyadicDecimal, DyadicDecimal) = {
       x.signum() match {
-        case 1 => (x, DyadicDecimal.ZERO)
+        case 1  => (x, DyadicDecimal.ZERO)
         case -1 => (DyadicDecimal.ZERO, x.negate())
-        case _ => (DyadicDecimal.ZERO, DyadicDecimal.ZERO)
+        case _  => (DyadicDecimal.ZERO, DyadicDecimal.ZERO)
       }
     }
-    
+
     val (lxp, lxm) = pm(i1.x)
     val (uxp, uxm) = pm(i1.y)
     val (lyp, lym) = pm(i2.x)
     val (uyp, uym) = pm(i2.y)
-       
-    
+
     Interval(
-        lxp.multiply(lyp,r.down).max(uxm.multiply(uym,r.down)).subtract(
-            uxp.multiply(lym,r.up).max(lxm.multiply(uyp,r.up)), r.down),
-        uxp.multiply(uyp,r.up).max(lxm.multiply(lym,r.up)).subtract(
-            lxp.multiply(uym,r.down).max(uxm.multiply(lyp,r.down)), r.up))
+      lxp.multiply(lyp, r.down).max(uxm.multiply(uym, r.down)).subtract(
+        uxp.multiply(lym, r.up).max(lxm.multiply(uyp, r.up)), r.down),
+      uxp.multiply(uyp, r.up).max(lxm.multiply(lym, r.up)).subtract(
+        lxp.multiply(uym, r.down).max(uxm.multiply(lyp, r.down)), r.up))
   }
-  
+
   def divide(i2: Interval, r: RoundingContext) = {
     multiply(Interval(DyadicDecimal.ONE.divide(i2.y, r.down), DyadicDecimal.ONE.divide(i2.x, r.down)), r)
   }
@@ -102,11 +100,11 @@ case class Interval(x: DyadicDecimal, y: DyadicDecimal) extends Product2[DyadicD
       case that: Interval => x.compareTo(that.x) == 0 && y.compareTo(that.y) == 0
       case _              => false
     }
-  
+
   override def toString() = {
-    (x,y) match {
-      case (Number(a),Number(b)) => Utils.intervalToString(a, b)
-      case (a,b) => s"[${a},${b}]"
+    (x, y) match {
+      case (Number(a), Number(b)) => Utils.intervalToString(a, b)
+      case (a, b)                 => s"[${a},${b}]"
     }
   }
 }

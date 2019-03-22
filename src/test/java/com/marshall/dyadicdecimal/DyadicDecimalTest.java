@@ -15,7 +15,7 @@ public class DyadicDecimalTest {
     private int inf = 100;
 
     private int[] testValuesInt1 = new int[] { inf, -inf, 0, 1, -1 };
-    private int[] testValuesInt2 = new int[] { inf+5, -inf-5, 0, 1, -1 };
+    private int[] testValuesInt2 = new int[] { inf + 5, -inf - 5, 0, 1, -1 };
     private DyadicDecimal[] testValuesDyadic = new DyadicDecimal[] { DyadicDecimal.posInf(), DyadicDecimal.negInf(),
 	    DyadicDecimal.ZERO(), DyadicDecimal.valueOf(1), DyadicDecimal.valueOf(-1) };
 
@@ -65,8 +65,9 @@ public class DyadicDecimalTest {
     @Test
     public void testLimits() {
 	testOperation((a, b) -> a.add(b, new MathContext(10, RoundingMode.CEILING)), (a, b) -> a + b, " + ");
-	testOperation((a, b) -> a.subtract(b, new MathContext(10, RoundingMode.CEILING)),  (a, b) -> a - b, " - ");
-	testOperation((a, b) -> a.multiply(b, new MathContext(10, RoundingMode.CEILING)),  (a, b) -> a * b, " * ");
-	testOperation((a, b) -> a.divide(b, new MathContext(10, RoundingMode.CEILING)),  (a, b) -> b != 0 ? a/b : (int)Math.signum(a)*inf*(int)Math.signum(b), " / ");
+	testOperation((a, b) -> a.subtract(b, new MathContext(10, RoundingMode.CEILING)), (a, b) -> a - b, " - ");
+	testOperation((a, b) -> a.multiply(b, new MathContext(10, RoundingMode.CEILING)), (a, b) -> a * b, " * ");
+	testOperation((a, b) -> a.divide(b, new MathContext(10, RoundingMode.CEILING)),
+		(a, b) -> b != 0 ? a / b : (int) Math.signum(a) * inf * (int) Math.signum(b), " / ");
     }
 }
