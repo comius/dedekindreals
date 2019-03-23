@@ -52,15 +52,15 @@ object Eval {
     }
 
   def approximate(expr: Real)(implicit ctx: Context[Approximation[Interval]]): Approximation[Interval] = expr match {
-    case Cut(_, a, b, _, _) => Approximation(Interval(a, b), Interval(b, a))
-    case CutR(_, _, _)      => Approximation(Interval(null, null), Interval(null, null)) // TODO
+    case Cut(_, a, b, _, _)  => Approximation(Interval(a, b), Interval(b, a))
+    case CutR(_, _, _, _, _) => Approximation(Interval(DyadicDecimal.negInf, DyadicDecimal.posInf), Interval(DyadicDecimal.posInf, DyadicDecimal.negInf))
 
-    case Const(a)           => Approximation(Interval(a, a), Interval(a, a))
-    case Add(x, y)          => lift(_.add(_, _))(x, y)
-    case Sub(x, y)          => lift(_.subtract(_, _))(x, y)
-    case Mul(x, y)          => lift(_.multiply(_, _))(x, y)
-    case Div(x, y)          => lift(_.divide(_, _))(x, y)
-    case Var(name)          => ctx.vars.get(name).get
+    case Const(a)            => Approximation(Interval(a, a), Interval(a, a))
+    case Add(x, y)           => lift(_.add(_, _))(x, y)
+    case Sub(x, y)           => lift(_.subtract(_, _))(x, y)
+    case Mul(x, y)           => lift(_.multiply(_, _))(x, y)
+    case Div(x, y)           => lift(_.divide(_, _))(x, y)
+    case Var(name)           => ctx.vars.get(name).get
   }
 
   def extendContext(ctx: Context[Interval]): Context[Approximation[Interval]] = {
@@ -118,6 +118,18 @@ object Eval {
   }
 
   def refine(expr: Real)(implicit ctx: Context[Interval]): Real = expr match {
+    case CutR(x, l, u, a, b) =>
+
+      val aFound = approximate(l)(extendContext(ctx) + (x -> Approximation(Interval(a, a), Interval(a, a)))).lower
+      val bFound = approximate(u)(extendContext(ctx) + (x -> Approximation(Interval(b, b), Interval(b, b)))).lower
+      if (aFound && bFound) {
+        Cut(x, a, b, refine(l)(ctx + (x -> Interval(a, b))), refine(u)(ctx + (x -> Interval(a, b))))
+      } else {
+        val a2 = if (aFound) a else a.multiply(DyadicDecimal.valueOf(2), ctx.roundingContext.down)
+        val b2 = if (bFound) b else b.multiply(DyadicDecimal.valueOf(2), ctx.roundingContext.up)        
+        val i = Interval(if (aFound) a else DyadicDecimal.negInf, if (bFound) b else DyadicDecimal.posInf)
+        CutR(x, refine(l)(ctx + (x -> i)), refine(u)(ctx + (x -> i)), a2, b2)
+      }
     case Cut(x, a, b, l, u) =>
       val (m1, m2) = a.trisect(b, ctx.roundingContext)
       val a2 = if (approximate(l)(extendContext(ctx) + (x -> Approximation(Interval(m1, m1), Interval(m1, m1)))).lower) m1 else a
@@ -174,6 +186,7 @@ object Eval {
     //println(upper(Exists('x, new BigDecimal("0.4999"), new BigDecimal("0.5001"), 'y < 'x * (Const(1) - 'x)))(Context(new RoundingContext(0, 200), Map('y -> Interval(new BigDecimal(0.26), new BigDecimal(0.24))))))
 
     eval(Cut('x, 1, 2, 'x * 'x < 2, 2 < 'x * 'x), 10)
+    eval(CutR('x, 'x < 0 || 'x * 'x < 200, 200 < 'x * 'x && Const(0) < 'x), 10)
     eval(Cut('y, -1, 2, Exists('x, 0, 1, 'y < 'x * (Const(1) - 'x)), Forall('x, 0, 1, 'x * (Const(1) - 'x) < 'y)), 10)
   }
 }
