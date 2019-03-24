@@ -13,12 +13,12 @@ public class IntervalTest {
     Interval b = new Interval(DyadicDecimal.valueOf(5), DyadicDecimal.valueOf(6));
     RoundingContext r = new RoundingContext(0, 10);
 
-    private void assertIn(DyadicDecimal a, Interval i) {
+    private void assertIn(DyadicDecimal.DyadicDecimal a, Interval i) {
 	assertTrue(a + " not in " + i, a.compareTo(i.x()) >= 0);
 	assertTrue(a + " not in " + i, i.y().compareTo(a) >= 0);
     }
 
-    private void assertOut(DyadicDecimal a, Interval i) {
+    private void assertOut(DyadicDecimal.DyadicDecimal a, Interval i) {
 	assertFalse(a + " in " + i, a.compareTo(i.x()) >= 0 && i.y().compareTo(a) >= 0);
     }
 
@@ -37,8 +37,8 @@ public class IntervalTest {
 
 	// Verify midpoints are in the interval
 
-	DyadicDecimal am = a.x().split(a.y());
-	DyadicDecimal bm = b.x().split(b.y());
+	DyadicDecimal.DyadicDecimal am = a.x().split(a.y());
+	DyadicDecimal.DyadicDecimal bm = b.x().split(b.y());
 	assertIn(am.add(bm, r.down), c);
 
 	// Verify a lower endpoint - 1 is out, and upper endpoint + 1 is out assertOut(a.x().add(b.x(),

@@ -1,10 +1,7 @@
 package com.marshall
-import com.marshall.dyadic.DyadicDecimal
-import com.marshall.dyadic.Number
+import com.marshall.dyadic.{DyadicDecimal => D}
 
-case class Interval(x: DyadicDecimal, y: DyadicDecimal) extends Product2[DyadicDecimal, DyadicDecimal] {
-  def _1 = x
-  def _2 = y
+case class Interval(x: D.T, y: D.T) {
 
   def swap(): Interval = {
     Interval(y, x)
@@ -48,7 +45,7 @@ case class Interval(x: DyadicDecimal, y: DyadicDecimal) extends Product2[DyadicD
       case (-1, -1, _, _) => Interval(u.multiply(t, r.down), d.multiply(e, r.up))
 
       case (-1, _, 1, 1)  => Interval(d.multiply(t, r.down), u.multiply(t, r.up))
-      case (-1, _, 1, _)  => Interval(DyadicDecimal.ZERO, DyadicDecimal.ZERO)
+      case (-1, _, 1, _)  => Interval(D.ZERO, D.ZERO)
       case (-1, _, _, 1) => Interval(
         d.multiply(t, r.down).min(u.multiply(e, r.down)),
         d.multiply(e, r.up).max(u.multiply(t, r.up)))
@@ -58,7 +55,7 @@ case class Interval(x: DyadicDecimal, y: DyadicDecimal) extends Product2[DyadicD
       case (_, -1, 1, _) => Interval(
         d.multiply(e, r.down).max(u.multiply(t, r.down)),
         d.multiply(t, r.up).min(u.multiply(e, r.up)))
-      case (_, -1, _, 1) => Interval(DyadicDecimal.ZERO, DyadicDecimal.ZERO)
+      case (_, -1, _, 1) => Interval(D.ZERO, D.ZERO)
       case (_, -1, _, _) => Interval(u.multiply(t, r.down), d.multiply(t, r.up))
 
       case (_, _, 1, 1)  => Interval(d.multiply(e, r.down), u.multiply(t, r.up))
@@ -71,11 +68,11 @@ case class Interval(x: DyadicDecimal, y: DyadicDecimal) extends Product2[DyadicD
   def multiply(i2: Interval, r: RoundingContext) = {
     val i1 = this
 
-    def pm(x: DyadicDecimal): (DyadicDecimal, DyadicDecimal) = {
+    def pm(x: D.T): (D.T, D.T) = {
       x.signum() match {
-        case 1  => (x, DyadicDecimal.ZERO)
-        case -1 => (DyadicDecimal.ZERO, x.negate())
-        case _  => (DyadicDecimal.ZERO, DyadicDecimal.ZERO)
+        case 1  => (x, D.ZERO)
+        case -1 => (D.ZERO, x.negate())
+        case _  => (D.ZERO, D.ZERO)
       }
     }
 
@@ -92,7 +89,7 @@ case class Interval(x: DyadicDecimal, y: DyadicDecimal) extends Product2[DyadicD
   }
 
   def divide(i2: Interval, r: RoundingContext) = {
-    multiply(Interval(DyadicDecimal.ONE.divide(i2.y, r.down), DyadicDecimal.ONE.divide(i2.x, r.down)), r)
+    multiply(Interval(D.ONE.divide(i2.y, r.down), D.ONE.divide(i2.x, r.down)), r)
   }
 
   override def equals(that: Any): Boolean =
@@ -103,7 +100,7 @@ case class Interval(x: DyadicDecimal, y: DyadicDecimal) extends Product2[DyadicD
 
   override def toString() = {
     (x, y) match {
-      case (Number(a), Number(b)) => Utils.intervalToString(a, b)
+      case (D.Number(a), D.Number(b)) => Utils.intervalToString(a, b)
       case (a, b)                 => s"[${a},${b}]"
     }
   }

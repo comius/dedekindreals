@@ -16,8 +16,8 @@ public class DyadicDecimalTest {
 
     private int[] testValuesInt1 = new int[] { inf, -inf, 0, 1, -1 };
     private int[] testValuesInt2 = new int[] { inf + 5, -inf - 5, 0, 1, -1 };
-    private DyadicDecimal[] testValuesDyadic = new DyadicDecimal[] { DyadicDecimal.posInf(), DyadicDecimal.negInf(),
-	    DyadicDecimal.ZERO(), DyadicDecimal.valueOf(1), DyadicDecimal.valueOf(-1) };
+    private DyadicDecimal.DyadicDecimal[] testValuesDyadic = new DyadicDecimal.DyadicDecimal[] { DyadicDecimal.posInf(),
+	    DyadicDecimal.negInf(), DyadicDecimal.ZERO(), DyadicDecimal.valueOf(1), DyadicDecimal.valueOf(-1) };
 
     private int normalize(int a) {
 	if (a >= inf)
@@ -27,19 +27,20 @@ public class DyadicDecimalTest {
 	return a;
     }
 
-    public void testOperation(BiFunction<DyadicDecimal, DyadicDecimal, DyadicDecimal> op,
+    public void testOperation(
+	    BiFunction<DyadicDecimal.DyadicDecimal, DyadicDecimal.DyadicDecimal, DyadicDecimal.DyadicDecimal> op,
 	    BiFunction<Integer, Integer, Integer> intOp, String opStr) {
 	for (int i = 0; i < testValuesInt1.length; i++) {
 	    for (int j = 0; j < testValuesInt1.length; j++) {
-		DyadicDecimal a = testValuesDyadic[i];
-		DyadicDecimal b = testValuesDyadic[j];
+		DyadicDecimal.DyadicDecimal a = testValuesDyadic[i];
+		DyadicDecimal.DyadicDecimal b = testValuesDyadic[j];
 
 		int ai = testValuesInt1[i];
 		int bi = testValuesInt2[j];
 		int ci = normalize(intOp.apply(ai, bi));
 
 		try {
-		    DyadicDecimal c = op.apply(a, b);
+		    DyadicDecimal.DyadicDecimal c = op.apply(a, b);
 
 		    System.out.println(a + " " + opStr + " " + b + " = " + c);
 		    if (ci == inf)

@@ -6,7 +6,7 @@ import org.scalacheck.Prop.BooleanOperators
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
 
-import com.marshall.dyadic.DyadicDecimal
+import com.marshall.dyadic.{DyadicDecimal => D}
 
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class IntervalSpec extends Properties("Interval") {
@@ -17,7 +17,7 @@ class IntervalSpec extends Properties("Interval") {
       for {
         a <- arbitrary[scala.math.BigDecimal]
         b <- arbitrary[scala.math.BigDecimal]
-      } yield Interval(DyadicDecimal.valueOf(a.underlying()), DyadicDecimal.valueOf(b.underlying()))
+      } yield Interval(D.valueOf(a.underlying()), D.valueOf(b.underlying()))
     }
 
   property("addEndpointsIn") = forAll {
@@ -61,7 +61,7 @@ class IntervalSpec extends Properties("Interval") {
     (a: Interval, b: Interval) => (a.multiply(b, r) == a.multiplyKaucher(b, r)) :| s"${a.multiply(b, r)} != ${a.multiplyKaucher(b, r)}"
   }
 
-  def in(a: DyadicDecimal, i: Interval): Boolean = {
+  def in(a: D.T, i: Interval): Boolean = {
     a.compareTo(i.x) >= 0 && i.y.compareTo(a) >= 0
   }
 

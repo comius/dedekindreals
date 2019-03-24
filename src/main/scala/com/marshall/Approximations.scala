@@ -1,8 +1,8 @@
 package com.marshall
 
-import com.marshall.dyadic.DyadicDecimal
-
 object Approximations {
+  import com.marshall.dyadic.{ DyadicDecimal => D }
+
   case class Approximation[T](lower: T, upper: T)
 
   def lift(op: (Boolean, Boolean) => Boolean)(x: Formula, y: Formula)(implicit ctx: Context[Approximation[Interval]]) =
@@ -16,7 +16,7 @@ object Approximations {
     case Less(x, y) =>
       val a @ Approximation(li1, ui1) = approximate(x)
       val b @ Approximation(li2, ui2) = approximate(y)
-      Approximation(li1._2.compareTo(li2._1) < 0, ui1._2.compareTo(ui2._1) < 0)
+      Approximation(li1.y.compareTo(li2.x) < 0, ui1.y.compareTo(ui2.x) < 0)
 
     // TODO
     case Exists(x, a, b, phi) =>
@@ -44,7 +44,7 @@ object Approximations {
 
   def approximate(expr: Real)(implicit ctx: Context[Approximation[Interval]]): Approximation[Interval] = expr match {
     case Cut(_, a, b, _, _)  => Approximation(Interval(a, b), Interval(b, a))
-    case CutR(_, _, _, _, _) => Approximation(Interval(DyadicDecimal.negInf, DyadicDecimal.posInf), Interval(DyadicDecimal.posInf, DyadicDecimal.negInf))
+    case CutR(_, _, _, _, _) => Approximation(Interval(D.negInf, D.posInf), Interval(D.posInf, D.negInf))
 
     case Const(a)            => Approximation(Interval(a, a), Interval(a, a))
     case Add(x, y)           => lift(_.add(_, _))(x, y)
