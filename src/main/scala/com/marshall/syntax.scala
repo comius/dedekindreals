@@ -39,7 +39,6 @@ case class And(x: Formula, y: Formula) extends Formula
 case class Or(x: Formula, y: Formula) extends Formula
 case class Forall(x: Symbol, a: DyadicDecimal, b: DyadicDecimal, phi: Formula) extends Formula
 case class Exists(x: Symbol, a: DyadicDecimal, b: DyadicDecimal, phi: Formula) extends Formula
-case class ExistsR(x: Symbol, phi: Formula) extends Formula
 
 object Real {
   implicit def int2BigDecimal(x: Int): DyadicDecimal = {

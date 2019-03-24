@@ -76,7 +76,6 @@ object Eval {
 
           case Less(x, y) => Less(refine(x), refine(y))
 
-          // TODO existsR
           case Exists(x, a, b, phi) =>
             val m = a.split(b) //Utils.splitInterval(a, b, ctx.roundingContext)(0)
             val phi2 = refine(phi)(ctx + (x -> Interval(a, b)))
@@ -147,6 +146,8 @@ object Eval {
     val dprec = 200 // precision *2
     var stime = System.currentTimeMillis()
 
+    println("\nEvaluating: " + expr)
+    
     for (i <- 0 to 200) {
       val context = Context[Approximation[Interval]](new RoundingContext(0, dprec))
       val prec = DyadicDecimal.valueOf(new BigDecimal(BigInteger.ONE, precision, context.roundingContext.down))
@@ -166,6 +167,32 @@ object Eval {
     }
   }
 
+  def eval(expr: Formula, maxSteps: Int): Unit = {
+    var rexpr = expr
+    val dprec = 200 // precision *2
+    var stime = System.currentTimeMillis()
+    val precision = 53
+    
+    println("\nEvaluating: " + expr)
+    
+    for (i <- 0 to 200) {
+      val context = Context[Approximation[Interval]](new RoundingContext(0, dprec))
+      val prec = DyadicDecimal.valueOf(new BigDecimal(BigInteger.ONE, precision, context.roundingContext.down))
+
+      val l = approximate(rexpr)(context)
+    
+      val ctime = System.currentTimeMillis()
+      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString.length}, time ${ctime - stime}")
+      stime = ctime
+      if (l.lower == l.upper) {
+        println(l)
+        return ;
+      }
+      rexpr = refine(rexpr)(Context[Interval](new RoundingContext(0, dprec)))
+
+    }
+  }
+  
   def main(args: Array[String]) = {
     //   eval(Cut('x, 0, 2, 'x * 'x < Const(2), Const(2) < 'x * 'x), 10)
 
@@ -185,6 +212,11 @@ object Eval {
 
     //println(upper(Exists('x, new BigDecimal("0.4999"), new BigDecimal("0.5001"), 'y < 'x * (Const(1) - 'x)))(Context(new RoundingContext(0, 200), Map('y -> Interval(new BigDecimal(0.26), new BigDecimal(0.24))))))
 
+    eval(Exists('x, 0, 1, 'x * 'x < 0), 10)
+    eval(Exists('x, 0, 1, 0 < 'x * 'x), 10)
+    eval(Exists('x, DyadicDecimal.negInf, DyadicDecimal.posInf, 0 < 'x * 'x), 10)
+    eval(Exists('x, DyadicDecimal.negInf, DyadicDecimal.posInf, 0 < 'x * 'x * 'x), 10)
+    eval(Exists('x, DyadicDecimal.negInf, DyadicDecimal.posInf, 'x * 'x * 'x < 0), 10)
     eval(Cut('x, 1, 2, 'x * 'x < 2, 2 < 'x * 'x), 10)
     eval(CutR('x, 'x < 0 || 'x * 'x < 200, 200 < 'x * 'x && Const(0) < 'x), 10)
     eval(Cut('y, -1, 2, Exists('x, 0, 1, 'y < 'x * (Const(1) - 'x)), Forall('x, 0, 1, 'x * (Const(1) - 'x) < 'y)), 10)

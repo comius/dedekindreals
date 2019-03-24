@@ -72,7 +72,7 @@ sealed trait DyadicDecimal extends Dyadic[DyadicDecimal] {
   override def compareTo(b: DyadicDecimal): Int = {
     (this, b) match {
       case (Number(x), Number(y))                      => x.compareTo(y)
-      case (PosInf(), PosInf()) | (NegInf(), NegInf()) => 0 // Weird case
+      case (PosInf(), PosInf()) | (NegInf(), NegInf()) => 0 // TODO Weird case
       case (PosInf(), _) | (_, NegInf())               => 1
       case (NegInf(), _) | (_, PosInf())               => -1
     }
@@ -86,8 +86,11 @@ sealed trait DyadicDecimal extends Dyadic[DyadicDecimal] {
   }
   override def split(b: DyadicDecimal) = {
     (this, b) match {
-      case (Number(x), Number(y)) => Number(x.add(y).divide(BigDecimal.valueOf(2)))
-      case _                      => throw new Exception()
+      case (Number(x), Number(y)) => Number(x.add(y).divide(BigDecimal.valueOf(2)))      
+      case (NegInf(), PosInf()) => DyadicDecimal.ZERO
+      case (Number(x), PosInf()) => if (x.compareTo(BigDecimal.ONE) < 0) DyadicDecimal.ONE else Number(x.multiply(BigDecimal.TEN))
+      case (NegInf(), Number(x)) => if (x.compareTo(BigDecimal.ONE.negate()) > 0) DyadicDecimal.ONE.negate() else Number(x.multiply(BigDecimal.TEN))
+      case _ => throw new Exception(s"splitting weird interval: ${this}, ${b}")
     }
   }
   override def trisect(b: DyadicDecimal, c: RoundingContext): (DyadicDecimal, DyadicDecimal) = {
