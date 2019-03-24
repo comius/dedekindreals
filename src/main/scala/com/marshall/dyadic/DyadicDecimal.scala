@@ -76,7 +76,7 @@ object DyadicDecimal extends DyadicModule {
     override def compareTo(b: DyadicDecimal): Int = {
       (this, b) match {
         case (Number(x), Number(y))                      => x.compareTo(y)
-        case (PosInf(), PosInf()) | (NegInf(), NegInf()) => 0 // TODO Weird case
+        case (PosInf(), PosInf()) | (NegInf(), NegInf()) => throw new Exception("Comparing infinities")
         case (PosInf(), _) | (_, NegInf())               => 1
         case (NegInf(), _) | (_, PosInf())               => -1
       }

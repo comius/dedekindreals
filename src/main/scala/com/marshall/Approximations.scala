@@ -18,12 +18,10 @@ object Approximations {
       val b @ Approximation(li2, ui2) = approximate(y)
       Approximation(li1.y.compareTo(li2.x) < 0, ui1.y.compareTo(ui2.x) < 0)
 
-    // TODO
     case Exists(x, a, b, phi) =>
       val m = a.split(b) //Utils.splitInterval(a, b, ctx.roundingContext)(0)
       approximate(phi)(ctx + (x -> Approximation(Interval(m, m), Interval(a, b))))
 
-    // case ExistsR(x: Symbol, phi: Formula)                              => false
     case Forall(x, a, b, phi) =>
       val m = a.split(b) //Utils.splitInterval(a, b, ctx.roundingContext.swap)(0)
       approximate(phi)(ctx + (x -> Approximation(Interval(a, b), Interval(m, m))))
