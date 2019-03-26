@@ -79,6 +79,12 @@ object Eval {
       val (m1, m2) = a.trisect(b, ctx.roundingContext)
       val a2 = if (approximate(l)(extendContext(ctx) + (x -> Approximation(Interval(m1, m1), Interval(m1, m1)))).lower) m1 else a
       val b2 = if (approximate(u)(extendContext(ctx) + (x -> Approximation(Interval(m1, m1), Interval(m2, m2)))).lower) m2 else b
+      
+      /*val test = NewtonApproximations.estimate(l)(extendContext(ctx), x, Interval(a,b))            
+      val ls = l.toString
+      
+      println(s"debug> ${Interval(a,b)}, ${test.lower} ${ls.substring(0, Math.min(100, ls.length))}")
+     */ 
       Cut(x, a2, b2, refine(l)(ctx + (x -> Interval(a2, b2))), refine(u)(ctx + (x -> Interval(a2, b2))))
     case Add(x, y) => Add(refine(x), refine(y))
     case Sub(x, y) => Sub(refine(x), refine(y))

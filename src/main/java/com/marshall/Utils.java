@@ -11,8 +11,9 @@ public class Utils {
 	if (a == null || b == null)
 	    return "NaN";
 	BigDecimal difference = a.subtract(b, new MathContext(1, RoundingMode.UP)).abs();
-	a = a.round(new MathContext(Math.max(1, difference.scale()), RoundingMode.FLOOR));
-	b = b.round(new MathContext(Math.max(1, difference.scale()), RoundingMode.CEILING));
+	if (difference.compareTo(BigDecimal.ZERO) == 0) return a.toPlainString();
+	a = a.round(new MathContext(Math.max(1, difference.scale()+1), RoundingMode.FLOOR));
+	b = b.round(new MathContext(Math.max(1, difference.scale()+1), RoundingMode.CEILING));
 
 	String strA = a.toPlainString(), strB = b.toPlainString();
 	int s = 0;

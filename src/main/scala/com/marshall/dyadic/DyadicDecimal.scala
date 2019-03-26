@@ -8,7 +8,7 @@ import com.marshall.Utils
 
 object DyadicDecimal extends DyadicModule {
   type T = DyadicDecimal
-  
+
   sealed trait DyadicDecimal extends Dyadic {
     override def add(b: DyadicDecimal, mc: MathContext): DyadicDecimal = {
       (this, b) match {
@@ -56,14 +56,16 @@ object DyadicDecimal extends DyadicModule {
       (this, b) match {
         case (Number(x), Number(y))        => Number(x.min(y))
         case (NegInf(), _) | (_, NegInf()) => NegInf()
-        case (PosInf(), _) | (_, PosInf()) => PosInf()
+        case (PosInf(), x)                 => x
+        case (x, PosInf())                 => x
       }
     }
     override def max(b: DyadicDecimal) = {
       (this, b) match {
         case (Number(x), Number(y))        => Number(x.max(y))
         case (PosInf(), _) | (_, PosInf()) => PosInf()
-        case (NegInf(), _) | (_, NegInf()) => NegInf()
+        case (NegInf(), x)                 => x
+        case (x, NegInf())                 => x
       }
     }
     override def negate(): DyadicDecimal = {
@@ -111,7 +113,7 @@ object DyadicDecimal extends DyadicModule {
   override val negInf: DyadicDecimal = NegInf()
   override val ZERO: DyadicDecimal = Number(BigDecimal.ZERO)
   override val ONE: DyadicDecimal = Number(BigDecimal.ONE)
-  
+
   override def valueOf(i: Long): DyadicDecimal = {
     Number(BigDecimal.valueOf(i))
   }
