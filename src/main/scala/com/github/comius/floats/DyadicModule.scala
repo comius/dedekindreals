@@ -1,8 +1,8 @@
-package com.marshall.dyadic
+package com.github.comius.floats
 
 import java.math.BigDecimal
 import java.math.MathContext
-import com.marshall.RoundingContext
+import com.github.comius.RoundingContext
 
 trait DyadicModule {
   type T <: Dyadic

@@ -1,12 +1,15 @@
-package com.marshall
+package com.github.comius.reals
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.BooleanOperators
 import org.scalacheck.Prop.forAll
+
+import com.github.comius.RoundingContext;
+
 import org.scalacheck.Properties
 
-import com.marshall.dyadic.{DyadicDecimal => D}
+import com.github.comius.floats.{DyadicDecimal => D}
 
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class IntervalSpec extends Properties("Interval") {

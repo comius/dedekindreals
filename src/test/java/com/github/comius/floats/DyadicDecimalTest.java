@@ -1,4 +1,4 @@
-package com.marshall.dyadicdecimal;
+package com.github.comius.floats;
 
 import static org.junit.Assert.assertTrue;
 
@@ -8,8 +8,8 @@ import java.util.function.BiFunction;
 
 import org.junit.Test;
 
-import com.marshall.dyadic.DyadicDecimal;
-import com.marshall.dyadic.NaNException;
+import com.github.comius.floats.DyadicDecimal;
+import com.github.comius.floats.NaNException;
 
 public class DyadicDecimalTest {
     private int inf = 100;

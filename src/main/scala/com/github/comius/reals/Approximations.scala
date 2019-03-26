@@ -1,7 +1,9 @@
-package com.marshall
+package com.github.comius.reals
+
+import com.github.comius.RoundingContext
 
 object Approximations {
-  import com.marshall.dyadic.{ DyadicDecimal => D }
+  import com.github.comius.floats.{ DyadicDecimal => D }
 
   case class Approximation[T](lower: T, upper: T)
 

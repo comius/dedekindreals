@@ -1,4 +1,4 @@
-package com.marshall;
+package com.github.comius;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

@@ -1,11 +1,13 @@
-package com.marshall;
+package com.github.comius.reals;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import com.marshall.dyadic.DyadicDecimal;
+import com.github.comius.RoundingContext;
+import com.github.comius.floats.DyadicDecimal;
+import com.github.comius.reals.Interval;
 
 public class IntervalTest {
 

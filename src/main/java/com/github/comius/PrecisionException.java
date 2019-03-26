@@ -1,4 +1,4 @@
-package com.marshall;
+package com.github.comius;
 
 @SuppressWarnings("serial")
 public class PrecisionException extends Exception {

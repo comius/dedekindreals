@@ -1,6 +1,6 @@
-package com.marshall
+package com.github.comius.reals
 
-import com.marshall.dyadic.{DyadicDecimal => D}
+import com.github.comius.floats.{DyadicDecimal => D}
 
 sealed trait Real {
   def +(other: Real) = Add(this, other)

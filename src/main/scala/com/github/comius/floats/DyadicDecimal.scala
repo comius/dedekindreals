@@ -1,10 +1,10 @@
-package com.marshall.dyadic
+package com.github.comius.floats
 
 import java.math.BigDecimal
 import java.math.MathContext
 
-import com.marshall.RoundingContext
-import com.marshall.Utils
+import com.github.comius.RoundingContext
+import com.github.comius.Utils
 
 object DyadicDecimal extends DyadicModule {
   type T = DyadicDecimal

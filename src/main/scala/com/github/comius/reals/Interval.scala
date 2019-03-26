@@ -1,5 +1,9 @@
-package com.marshall
-import com.marshall.dyadic.{DyadicDecimal => D}
+package com.github.comius.reals
+
+import com.github.comius.Utils;
+
+import com.github.comius.floats.{DyadicDecimal => D}
+import com.github.comius.RoundingContext
 
 case class Interval(x: D.T, y: D.T) {
 

@@ -1,12 +1,14 @@
 
-package com.marshall
+package com.github.comius.reals
 
 import Real._
 import java.math.BigDecimal
 import java.math.BigInteger
 
+import com.github.comius.RoundingContext;
+
 object Eval {
-  import com.marshall.dyadic.{ DyadicDecimal => D }
+  import com.github.comius.floats.{ DyadicDecimal => D }
   import Approximations._
 
   def extendContext(ctx: Context[Interval]): Context[Approximation[Interval]] = {

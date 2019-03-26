@@ -1,9 +1,10 @@
-package com.marshall
+package com.github.comius.reals
 
 import scala.annotation.tailrec
+import com.github.comius.RoundingContext
 
 object NewtonApproximations {
-  import com.marshall.dyadic.{ DyadicDecimal => D }
+  import com.github.comius.floats.{ DyadicDecimal => D }
   import Approximations.Approximation
 
   val zeroInt = Interval(D.ZERO, D.ZERO)
