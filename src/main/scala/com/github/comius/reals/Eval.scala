@@ -8,7 +8,7 @@ import java.math.BigInteger
 import com.github.comius.RoundingContext;
 
 object Eval {
-  import com.github.comius.floats.{ DyadicDecimal => D }
+  import com.github.comius.floats.{ BigDecimalFloats => D }
   import Approximations._
 
   def extendContext(ctx: Context[Interval]): Context[Approximation[Interval]] = {

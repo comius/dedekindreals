@@ -4,10 +4,15 @@ import java.math.BigDecimal
 import java.math.MathContext
 import com.github.comius.RoundingContext
 
-trait DyadicModule {
-  type T <: Dyadic
+/**
+ * 
+ */
+trait Floats {
+  val impl: Floats = BigDecimalFloats
+  
+  type T <: Float
 
-  trait Dyadic {
+  trait Float {
     def add(b: T, c: MathContext): T
     def subtract(b: T, c: MathContext): T
     def multiply(b: T, c: MathContext): T

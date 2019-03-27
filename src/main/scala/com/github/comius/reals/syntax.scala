@@ -1,6 +1,6 @@
 package com.github.comius.reals
 
-import com.github.comius.floats.{DyadicDecimal => D}
+import com.github.comius.floats.{BigDecimalFloats => D}
 
 sealed trait Real {
   def +(other: Real) = Add(this, other)

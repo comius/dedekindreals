@@ -2,7 +2,7 @@ package com.github.comius.reals
 
 import com.github.comius.Utils;
 
-import com.github.comius.floats.{ DyadicDecimal => D }
+import com.github.comius.floats.{ BigDecimalFloats => D }
 import com.github.comius.RoundingContext
 import com.github.comius.floats.NaNException
 import java.math.RoundingMode

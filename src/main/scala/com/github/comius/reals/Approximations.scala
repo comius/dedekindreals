@@ -3,7 +3,7 @@ package com.github.comius.reals
 import com.github.comius.RoundingContext
 
 object Approximations {
-  import com.github.comius.floats.{ DyadicDecimal => D }
+  import com.github.comius.floats.{ BigDecimalFloats => D }
 
   case class Approximation[T](lower: T, upper: T)
 
