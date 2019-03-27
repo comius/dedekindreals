@@ -39,13 +39,13 @@ object DyadicDecimal extends DyadicModule {
     }
     override def divide(b: DyadicDecimal, mc: MathContext) = {
       (this, b) match {
-        case (Number(x), Number(BigDecimal.ZERO)) => DyadicDecimal.signToInfty(x.signum()) // throw new NaNException("Division by zero.")
-        case (Number(x), Number(y))               => Number(x.divide(y, mc))
-        case (NegInf(), Number(a))                => DyadicDecimal.signToInfty(-a.signum())
-        case (Number(a), NegInf())                => DyadicDecimal.signToInfty(-a.signum())
-        case (PosInf(), Number(a))                => DyadicDecimal.signToInfty(a.signum())
-        case (Number(a), PosInf())                => DyadicDecimal.signToInfty(a.signum())
-        case _                                    => throw new NaNException("Division of infinities.")
+        case (Number(x), Number(y)) if y.compareTo(BigDecimal.ZERO) == 0 => DyadicDecimal.signToInfty(x.signum()) // throw new NaNException("Division by zero.")
+        case (Number(x), Number(y)) => Number(x.divide(y, mc))
+        case (NegInf(), Number(a)) => DyadicDecimal.signToInfty(-a.signum())
+        case (Number(a), NegInf()) => DyadicDecimal.signToInfty(-a.signum())
+        case (PosInf(), Number(a)) => DyadicDecimal.signToInfty(a.signum())
+        case (Number(a), PosInf()) => DyadicDecimal.signToInfty(a.signum())
+        case _ => throw new NaNException("Division of infinities.")
       }
     }
 
@@ -126,7 +126,7 @@ object DyadicDecimal extends DyadicModule {
     s match {
       case x if x > 0 => PosInf()
       case x if x < 0 => NegInf()
-      case _          => throw new NaNException("Infinitiy with 0 sign.")
+      case _          => throw new NaNException("Infinity with 0 sign.")
     }
   }
 
