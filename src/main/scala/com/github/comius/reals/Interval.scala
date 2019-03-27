@@ -2,7 +2,7 @@ package com.github.comius.reals
 
 import com.github.comius.Utils;
 
-import com.github.comius.floats.{ BigDecimalFloats => D }
+import com.github.comius.floats.Floats.{impl => D}
 import com.github.comius.RoundingContext
 import com.github.comius.floats.NaNException
 import java.math.RoundingMode
@@ -37,7 +37,9 @@ case class Interval(x: D.T, y: D.T) {
     if (x.compareTo(y) < 0) Interval(lower, upper) else Interval(upper, lower)
   }
 
-  def multiply(i2: Interval, r: RoundingContext) = {
+  val multiply = multiplyKaucher(_,_)
+
+  def multiplyKaucher(i2: Interval, r: RoundingContext) = {
     val i1 = this
     val d = i1.x
     val u = i1.y
@@ -70,6 +72,7 @@ case class Interval(x: D.T, y: D.T) {
       case (_, _, _, _)  => Interval(u.multiply(e, r.down), d.multiply(t, r.up))
     }
   }
+
 
   def multiplyLakayev(i2: Interval, r: RoundingContext) = {
     val i1 = this
@@ -108,10 +111,12 @@ case class Interval(x: D.T, y: D.T) {
     }
 
   override def toString() = {
-    (x, y) match {
+    s"[${x},${y}]"
+    // TODO nicer printing
+    /*(x, y) match {
       case (D.Number(a), D.Number(b)) => Utils.intervalToString(a, b)
-      case (a, b)                     => s"[${a},${b}]"
-    }
+      case (a, b)                     => 
+    }*/
   }
 }
 

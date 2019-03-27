@@ -9,7 +9,7 @@ import com.github.comius.RoundingContext;
 
 import org.scalacheck.Properties
 
-import com.github.comius.floats.{BigDecimalFloats => D}
+import com.github.comius.floats.Floats.{impl => D}
 
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class IntervalSpec extends Properties("Interval") {

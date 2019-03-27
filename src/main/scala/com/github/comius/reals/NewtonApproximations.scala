@@ -4,7 +4,7 @@ import scala.annotation.tailrec
 import com.github.comius.RoundingContext
 
 object NewtonApproximations {
-  import com.github.comius.floats.{ BigDecimalFloats => D }
+  import com.github.comius.floats.Floats.{impl => D}
   import Approximations.Approximation
 
   val zeroInt = Interval(D.ZERO, D.ZERO)

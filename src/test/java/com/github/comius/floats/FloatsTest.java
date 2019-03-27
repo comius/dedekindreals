@@ -8,16 +8,17 @@ import java.util.function.BiFunction;
 
 import org.junit.Test;
 
-import com.github.comius.floats.DyadicDecimal;
+import com.github.comius.floats.Floats;
+import com.github.comius.floats.Floats.Float;
 import com.github.comius.floats.NaNException;
 
-public class DyadicDecimalTest {
+public class FloatsTest {
     private int inf = 100;
 
     private int[] testValuesInt1 = new int[] { inf, -inf, 0, 1, -1 };
     private int[] testValuesInt2 = new int[] { inf + 5, -inf - 5, 0, 1, -1 };
-    private DyadicDecimal.DyadicDecimal[] testValuesDyadic = new DyadicDecimal.DyadicDecimal[] { DyadicDecimal.posInf(),
-	    DyadicDecimal.negInf(), DyadicDecimal.ZERO(), DyadicDecimal.valueOf(1), DyadicDecimal.valueOf(-1) };
+    private Float[] testValuesDyadic = new Float[] { Floats.impl().posInf(),
+	    Floats.impl().negInf(), Floats.impl().ZERO(), Floats.impl().valueOf(1), Floats.impl().valueOf(-1) };
 
     private int normalize(int a) {
 	if (a >= inf)
@@ -28,19 +29,19 @@ public class DyadicDecimalTest {
     }
 
     public void testOperation(
-	    BiFunction<DyadicDecimal.DyadicDecimal, DyadicDecimal.DyadicDecimal, DyadicDecimal.DyadicDecimal> op,
+	    BiFunction<Float, Float, Float> op,
 	    BiFunction<Integer, Integer, Integer> intOp, String opStr) {
 	for (int i = 0; i < testValuesInt1.length; i++) {
 	    for (int j = 0; j < testValuesInt1.length; j++) {
-		DyadicDecimal.DyadicDecimal a = testValuesDyadic[i];
-		DyadicDecimal.DyadicDecimal b = testValuesDyadic[j];
+		Float a = testValuesDyadic[i];
+		Float b = testValuesDyadic[j];
 
 		int ai = testValuesInt1[i];
 		int bi = testValuesInt2[j];
 		int ci = normalize(intOp.apply(ai, bi));
 
 		try {
-		    DyadicDecimal.DyadicDecimal c = op.apply(a, b);
+		    Float c = op.apply(a, b);
 
 		    System.out.println(a + " " + opStr + " " + b + " = " + c);
 		    if (ci == inf)

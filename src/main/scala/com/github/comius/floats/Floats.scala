@@ -4,11 +4,15 @@ import java.math.BigDecimal
 import java.math.MathContext
 import com.github.comius.RoundingContext
 
+object Floats {
+   val impl: Floats = BigDecimalFloats
+}
+
 /**
  * 
  */
 trait Floats {
-  val impl: Floats = BigDecimalFloats
+ 
   
   type T <: Float
 
