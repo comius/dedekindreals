@@ -6,6 +6,7 @@ sealed trait Real {
   def +(other: Real) = Add(this, other)
   def -(other: Real) = Sub(this, other)
   def *(other: Real) = Mul(this, other)
+  def /(other: Real) = Div(this, other)
   def <(other: Real) = Less(this, other)
 }
 
@@ -32,6 +33,8 @@ case class Const(a: D.T) extends Real {
 case class Var(name: Symbol) extends Real {
   override def toString: String = name.toString
 }
+
+case class Integrate(x: Symbol,  a: D.T, b: D.T, expr: Real) extends Real
 
 case class ConstFormula(b: Boolean) extends Formula
 case class Less(x: Real, y: Real) extends Formula

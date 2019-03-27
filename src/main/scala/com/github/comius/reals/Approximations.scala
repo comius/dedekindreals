@@ -45,7 +45,14 @@ object Approximations {
   def approximate(expr: Real)(implicit ctx: Context[Approximation[Interval]]): Approximation[Interval] = expr match {
     case Cut(_, a, b, _, _)  => Approximation(Interval(a, b), Interval(b, a))
     case CutR(_, _, _, _, _) => Approximation(Interval(D.negInf, D.posInf), Interval(D.posInf, D.negInf))
-
+    case Integrate(x, a, b, e) =>
+      val Approximation(l1, u1) = approximate(e)(ctx + (x -> Approximation(Interval(a,b), Interval(b,a))))
+      Approximation(
+          Interval(l1.x.multiply(b.subtract(a, ctx.roundingContext.down), ctx.roundingContext.down),
+              l1.y.multiply(b.subtract(a, ctx.roundingContext.up), ctx.roundingContext.up)),
+          Interval(u1.x.multiply(b.subtract(a, ctx.roundingContext.down), ctx.roundingContext.up),
+              u1.y.multiply(b.subtract(a, ctx.roundingContext.up), ctx.roundingContext.down)))    
+          
     case Const(a)            => Approximation(Interval(a, a), Interval(a, a))
     case Add(x, y)           => lift(_.add(_, _))(x, y)
     case Sub(x, y)           => lift(_.subtract(_, _))(x, y)

@@ -81,13 +81,18 @@ object Eval {
       val (m1, m2) = a.trisect(b, ctx.roundingContext)
       val a2 = if (approximate(l)(extendContext(ctx) + (x -> Approximation(Interval(m1, m1), Interval(m1, m1)))).lower) m1 else a
       val b2 = if (approximate(u)(extendContext(ctx) + (x -> Approximation(Interval(m1, m1), Interval(m2, m2)))).lower) m2 else b
-      
-      /*val test = NewtonApproximations.estimate(l)(extendContext(ctx), x, Interval(a,b))            
+
+      /*val test = NewtonApproximations.estimate(l)(extendContext(ctx), x, Interval(a,b))
       val ls = l.toString
-      
+
       println(s"debug> ${Interval(a,b)}, ${test.lower} ${ls.substring(0, Math.min(100, ls.length))}")
-     */ 
+     */
       Cut(x, a2, b2, refine(l)(ctx + (x -> Interval(a2, b2))), refine(u)(ctx + (x -> Interval(a2, b2))))
+    case Integrate(x, a, b, e) =>
+      val m = a.split(b)
+      val le = refine(e)(ctx + (x -> Interval(a, m)))
+      val ue = refine(e)(ctx + (x -> Interval(m, b)))
+      Add(Integrate(x, a, m, le), Integrate(x, m, b, ue))
     case Add(x, y) => Add(refine(x), refine(y))
     case Sub(x, y) => Sub(refine(x), refine(y))
     case Mul(x, y) => Mul(refine(x), refine(y))
@@ -129,7 +134,7 @@ object Eval {
     println("\nEvaluating: " + expr)
 
     for (i <- 0 to 200) {
-      val context = Context[Approximation[Interval]](new RoundingContext(0, dprec))      
+      val context = Context[Approximation[Interval]](new RoundingContext(0, dprec))
 
       val l = approximate(rexpr)(context)
 
@@ -146,7 +151,15 @@ object Eval {
   }
 
   def main(args: Array[String]) = {
-    //   eval(Cut('x, 0, 2, 'x * 'x < Const(2), Const(2) < 'x * 'x), 10)
+    // e
+    eval(Cut('y, 2, 3, Integrate('x, 0, 1, ('y - 1) / ('x * 'y + 1 - 'x)) < 1,
+      1 < Integrate('x, 0, 1, ('y - 1) / ('x * 'y + 1 - 'x))), 10)
+
+    // == log(2) = 0.623
+    eval(Integrate('x, 0, 1, Const(1) / (Const(1) + 'x)), 10)
+
+    // PI
+    eval(Integrate('x, 0, 1, Cut('y, 0, 1, 'x * 'x + 'y * 'y < 1, 1 < 'x * 'x + 'y * 'y)) * 4, 10)
 
     val rc = new RoundingContext(0, 200)
     val N = 100
