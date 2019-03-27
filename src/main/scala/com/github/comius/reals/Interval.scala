@@ -2,8 +2,10 @@ package com.github.comius.reals
 
 import com.github.comius.Utils;
 
-import com.github.comius.floats.{DyadicDecimal => D}
+import com.github.comius.floats.{ DyadicDecimal => D }
 import com.github.comius.RoundingContext
+import com.github.comius.floats.NaNException
+import java.math.RoundingMode
 
 case class Interval(x: D.T, y: D.T) {
 
@@ -35,7 +37,7 @@ case class Interval(x: D.T, y: D.T) {
     if (x.compareTo(y) < 0) Interval(lower, upper) else Interval(upper, lower)
   }
 
-  def multiplyKaucher(i2: Interval, r: RoundingContext) = {
+  def multiply(i2: Interval, r: RoundingContext) = {
     val i1 = this
     val d = i1.x
     val u = i1.y
@@ -69,7 +71,7 @@ case class Interval(x: D.T, y: D.T) {
     }
   }
 
-  def multiply(i2: Interval, r: RoundingContext) = {
+  def multiplyLakayev(i2: Interval, r: RoundingContext) = {
     val i1 = this
 
     def pm(x: D.T): (D.T, D.T) = {
@@ -85,6 +87,8 @@ case class Interval(x: D.T, y: D.T) {
     val (lyp, lym) = pm(i2.x)
     val (uyp, uym) = pm(i2.y)
 
+    // TODO check intervals with infinite endpoints - problem when multiplied by zeroes !!!
+
     Interval(
       lxp.multiply(lyp, r.down).max(uxm.multiply(uym, r.down)).subtract(
         uxp.multiply(lym, r.up).max(lxm.multiply(uyp, r.up)), r.down),
@@ -93,6 +97,7 @@ case class Interval(x: D.T, y: D.T) {
   }
 
   def divide(i2: Interval, r: RoundingContext) = {
+    // TODO handle zero in the interval
     multiply(Interval(D.ONE.divide(i2.y, r.down), D.ONE.divide(i2.x, r.down)), r)
   }
 
@@ -105,7 +110,7 @@ case class Interval(x: D.T, y: D.T) {
   override def toString() = {
     (x, y) match {
       case (D.Number(a), D.Number(b)) => Utils.intervalToString(a, b)
-      case (a, b)                 => s"[${a},${b}]"
+      case (a, b)                     => s"[${a},${b}]"
     }
   }
 }
