@@ -5,10 +5,17 @@ import java.math.MathContext
 
 import com.github.comius.RoundingContext
 import com.github.comius.Utils
+import java.math.BigInteger
 
+/**
+ * Implementation of Floats signature based on BigDecimal.
+ */
 object BigDecimalFloats extends Floats {
   type T = BigDecimalFloat
 
+  /**
+   * Sealed trait with three case classes: PosInf, NegInf, Number.
+   */
   sealed trait BigDecimalFloat extends Float {
     override def add(b: BigDecimalFloat, mc: MathContext): BigDecimalFloat = {
       (this, b) match {
@@ -18,63 +25,24 @@ object BigDecimalFloats extends Floats {
         case (NegInf(), _) | (_, NegInf())               => NegInf()
       }
     }
-    override def subtract(b: BigDecimalFloat, mc: MathContext) = {
-      (this, b) match {
-        case (Number(x), Number(y))                      => Number(x.subtract(y, mc))
-        case (PosInf(), PosInf()) | (NegInf(), NegInf()) => throw new NaNException("Adding positive and negative infinity.")
-        case (PosInf(), _) | (_, NegInf())               => PosInf()
-        case (NegInf(), _) | (_, PosInf())               => NegInf()
-      }
-    }
+
     override def multiply(b: BigDecimalFloat, mc: MathContext) = {
       (this, b) match {
-        case (Number(x), Number(y))                      => Number(x.multiply(y, mc))
-        case (PosInf(), PosInf()) | (NegInf(), NegInf()) => PosInf()
-        case (PosInf(), NegInf()) | (NegInf(), PosInf()) => NegInf()
-        case (NegInf(), Number(a))                       => BigDecimalFloats.signToInfty(-a.signum())
-        case (Number(a), NegInf())                       => BigDecimalFloats.signToInfty(-a.signum())
-        case (PosInf(), Number(a))                       => BigDecimalFloats.signToInfty(a.signum())
-        case (Number(a), PosInf())                       => BigDecimalFloats.signToInfty(a.signum())
+        case (Number(x), Number(y)) => Number(x.multiply(y, mc))
+        case _                      => BigDecimalFloats.signToInfty(signum() * b.signum())
       }
     }
+    
     override def divide(b: BigDecimalFloat, mc: MathContext) = {
       (this, b) match {
-        case (Number(x), Number(y)) if y.compareTo(BigDecimal.ZERO) == 0 => BigDecimalFloats.signToInfty(x.signum()) // throw new NaNException("Division by zero.")
+        case (Number(x), Number(y)) if y.compareTo(BigDecimal.ZERO) == 0 => BigDecimalFloats.signToInfty(x.signum()) // TODO throw new NaNException("Division by zero.")
         case (Number(x), Number(y)) => Number(x.divide(y, mc))
-        case (NegInf(), Number(a)) => BigDecimalFloats.signToInfty(-a.signum())
-        case (Number(a), NegInf()) => BigDecimalFloats.signToInfty(-a.signum())
-        case (PosInf(), Number(a)) => BigDecimalFloats.signToInfty(a.signum())
-        case (Number(a), PosInf()) => BigDecimalFloats.signToInfty(a.signum())
+        case (PosInf()|NegInf(), Number(a)) => BigDecimalFloats.signToInfty(signum()*a.signum())
+        case (Number(_), NegInf() | PosInf()) => BigDecimalFloats.ZERO
         case _ => throw new NaNException("Division of infinities.")
       }
     }
 
-    override def isPosInf(): Boolean
-    override def isNegInf(): Boolean
-
-    override def min(b: BigDecimalFloat) = {
-      (this, b) match {
-        case (Number(x), Number(y))        => Number(x.min(y))
-        case (NegInf(), _) | (_, NegInf()) => NegInf()
-        case (PosInf(), x)                 => x
-        case (x, PosInf())                 => x
-      }
-    }
-    override def max(b: BigDecimalFloat) = {
-      (this, b) match {
-        case (Number(x), Number(y))        => Number(x.max(y))
-        case (PosInf(), _) | (_, PosInf()) => PosInf()
-        case (NegInf(), x)                 => x
-        case (x, NegInf())                 => x
-      }
-    }
-    override def negate(): BigDecimalFloat = {
-      this match {
-        case Number(x) => Number(x.negate())
-        case PosInf()  => NegInf()
-        case NegInf()  => PosInf()
-      }
-    }
     override def compareTo(b: BigDecimalFloat): Int = {
       (this, b) match {
         case (Number(x), Number(y))                      => x.compareTo(y)
@@ -83,19 +51,14 @@ object BigDecimalFloats extends Floats {
         case (NegInf(), _) | (_, PosInf())               => -1
       }
     }
-    override def signum(): Int = {
-      this match {
-        case Number(x) => x.signum()
-        case PosInf()  => 1
-        case NegInf()  => -1
-      }
-    }
+
     override def split(b: BigDecimalFloat) = {
       (this, b) match {
+        // TODO precision and rounding
         case (Number(x), Number(y)) => Number(x.add(y).divide(BigDecimal.valueOf(2)))
         case (NegInf(), PosInf())   => BigDecimalFloats.ZERO
-        case (Number(x), PosInf())  => if (x.compareTo(BigDecimal.ONE) < 0) BigDecimalFloats.ONE else Number(x.multiply(BigDecimal.TEN))
-        case (NegInf(), Number(x))  => if (x.compareTo(BigDecimal.ONE.negate()) > 0) BigDecimalFloats.ONE.negate() else Number(x.multiply(BigDecimal.TEN))
+        case (Number(x), PosInf())  => Number(x.multiply(BigDecimal.TEN))
+        case (NegInf(), Number(x))  => Number(x.multiply(BigDecimal.TEN))
         case _                      => throw new Exception(s"splitting weird interval: ${this}, ${b}")
       }
     }
@@ -118,30 +81,35 @@ object BigDecimalFloats extends Floats {
     Number(BigDecimal.valueOf(i))
   }
 
-  override def valueOf(x: BigDecimal): BigDecimalFloat = {
-    Number(x)
+  override def valueOf(s: String, mc: MathContext): BigDecimalFloat = {
+    Number(new BigDecimal(s, mc))
   }
 
-  override def signToInfty(s: Int): BigDecimalFloat = {
-    s match {
-      case x if x > 0 => PosInf()
-      case x if x < 0 => NegInf()
-      case _          => throw new NaNException("Infinity with 0 sign.")
-    }
+   override def valueOfEpsilon(precision: Int): T = {
+    Number(new BigDecimal(BigInteger.ONE, precision, MathContext.UNLIMITED))
   }
-
-  case class PosInf() extends BigDecimalFloat {
+   
+  private[this] case class PosInf() extends BigDecimalFloat {
     override def isPosInf() = true
     override def isNegInf() = false
+    override def isRegularNumber() = false
+    override def signum(): Int = 1
+    override def negate(): BigDecimalFloat = NegInf()
   }
 
-  case class NegInf() extends BigDecimalFloat {
+  private[this] case class NegInf() extends BigDecimalFloat {
     override def isPosInf() = false
     override def isNegInf() = true
+    override def isRegularNumber() = false
+    override def signum(): Int = -1
+    override def negate(): BigDecimalFloat = PosInf()
   }
 
-  case class Number(x: BigDecimal) extends BigDecimalFloat {
+  private[this] case class Number(x: BigDecimal) extends BigDecimalFloat {
     override def isPosInf() = false
     override def isNegInf() = false
+    override def isRegularNumber() = true
+    override def signum(): Int = x.signum()
+    override def negate(): BigDecimalFloat = Number(x.negate())
   }
 }

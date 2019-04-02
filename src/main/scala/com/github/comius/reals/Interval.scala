@@ -1,11 +1,7 @@
 package com.github.comius.reals
 
-import com.github.comius.Utils;
-
 import com.github.comius.floats.Floats.{impl => D}
 import com.github.comius.RoundingContext
-import com.github.comius.floats.NaNException
-import java.math.RoundingMode
 
 case class Interval(x: D.T, y: D.T) {
 

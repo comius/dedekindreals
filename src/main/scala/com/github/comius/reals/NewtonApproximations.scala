@@ -1,6 +1,5 @@
 package com.github.comius.reals
 
-import scala.annotation.tailrec
 import com.github.comius.RoundingContext
 
 object NewtonApproximations {

@@ -72,4 +72,12 @@ public class FloatsTest {
 	testOperation((a, b) -> a.divide(b, new MathContext(10, RoundingMode.CEILING)),
 		(a, b) -> b != 0 ? a / b : (int) Math.signum(a) * inf * (int) Math.signum(b), " / ");
     }
+    
+    @Test
+    public void testExponent() {
+	MathContext mc = new MathContext(1, RoundingMode.FLOOR);
+	Float a = Floats.impl().valueOf("49e2147483647", mc);
+	System.out.println(a.add(a, mc));
+	System.out.println(Floats.impl().valueOf("17", new MathContext(2, RoundingMode.FLOOR)));
+    }
 }

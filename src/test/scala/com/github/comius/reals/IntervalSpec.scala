@@ -10,6 +10,7 @@ import com.github.comius.RoundingContext;
 import org.scalacheck.Properties
 
 import com.github.comius.floats.Floats.{impl => D}
+import java.math.MathContext
 
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class IntervalSpec extends Properties("Interval") {
@@ -20,7 +21,8 @@ class IntervalSpec extends Properties("Interval") {
       for {
         a <- arbitrary[scala.math.BigDecimal]
         b <- arbitrary[scala.math.BigDecimal]
-      } yield Interval(D.valueOf(a.underlying()), D.valueOf(b.underlying()))
+      } yield Interval(D.valueOf(a.underlying().toString(), new MathContext(a.underlying().precision())), 
+          D.valueOf(b.underlying().toString(), new MathContext(a.underlying().precision())))
     }
 
   property("addEndpointsIn") = forAll {

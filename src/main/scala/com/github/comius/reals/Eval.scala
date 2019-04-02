@@ -2,8 +2,6 @@
 package com.github.comius.reals
 
 import Real._
-import java.math.BigDecimal
-import java.math.BigInteger
 
 import com.github.comius.RoundingContext;
 
@@ -109,7 +107,7 @@ object Eval {
 
     for (i <- 0 to 200) {
       val context = Context[Approximation[Interval]](new RoundingContext(0, dprec))
-      val prec = D.valueOf(new BigDecimal(BigInteger.ONE, precision, context.roundingContext.down))
+      val prec = D.valueOfEpsilon(precision)
 
       val l = approximate(rexpr)(context).lower
 
