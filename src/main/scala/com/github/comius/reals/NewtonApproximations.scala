@@ -113,7 +113,16 @@ object NewtonApproximations {
       case Mul(x, y) =>
         liftr((a, b, r) => (a._1.multiply(b._1, r), a._1.multiply(b._2, r).add(b._1.multiply(a._2, r), r)))(x, y)
       case Div(x, y) =>
-        throw new NotImplementedError()
+        liftr((a, b, r) => (a._1.multiply(b._1, r), a._2.multiply(b._1, r).subtract(b._2.multiply(a._1, r), r)
+            .divide(b._1.multiply(b._1, r), r)))(x, y) // TODO rounding
+      case Integrate(x, a, b, e) =>
+          val Approximation(l1, u1) = estimate(e)(ctx + (x -> Approximation((Interval(a,b), zeroInt), (Interval(b,a), zeroInt))))
+          val (baDown, baUp) = (b.subtract(a, ctx.roundingContext.down), b.subtract(a, ctx.roundingContext.up)) 
+          Approximation(
+          (Interval(l1._1.x.multiply(baDown, ctx.roundingContext.down), l1._1.y.multiply(baUp, ctx.roundingContext.up)), 
+              Interval(l1._2.x.multiply(baDown, ctx.roundingContext.down), l1._2.y.multiply(baUp, ctx.roundingContext.up))),
+          (Interval(u1._1.x.multiply(baDown, ctx.roundingContext.up), u1._1.y.multiply(baUp, ctx.roundingContext.down)),
+           Interval(u1._2.x.multiply(baDown, ctx.roundingContext.up), u1._2.y.multiply(baUp, ctx.roundingContext.down))))    
       case Var(name) => ctx.vars.get(name).get
     }
   }
