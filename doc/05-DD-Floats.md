@@ -60,6 +60,11 @@ compact respectively.
   4. roots of polynomials with integer coefficients, where the notion of simplicity is given by the degree 
      and coefficients of the polynomials;
 
+Lemma 6.16 Let q 0 < q 1 < ··· < q n be a strictly ascending finite sequence of rationals, and let
+(δ,υ) be rounded, located and bounded, with δq 0 and υq n . Then this (pseudo-)cut belongs to at
+least one of the overlapping open intervals (q 0 ,q 2 ), (q 1 ,q 3 ), ..., (q n−2 ,q n ).
+
+
 *Axiom 11.1* Q is a discrete, densely linearly ordered (Definition 6.1) commutative ring.
 
 *Axiom 11.2* Q obeys the **Archimedean principle**, for p,q : Q, q > 0 ⇒ ∃n:Z. q(n − 1) < p < q(n + 1).
@@ -164,6 +169,7 @@ TODO
 Floats module provide ASD's extended type Q, called rationals (but not necessary fractions). The type is extended with
 infinities.
 
+Lemma 6.16
 
 
 
