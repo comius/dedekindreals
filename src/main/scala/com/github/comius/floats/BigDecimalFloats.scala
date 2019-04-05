@@ -29,24 +29,33 @@ object BigDecimalFloats extends Floats {
     override def multiply(b: BigDecimalFloat, mc: MathContext) = {
       (this, b) match {
         case (Number(x), Number(y)) => Number(x.multiply(y, mc))
-        case _                      => BigDecimalFloats.signToInfty(signum() * b.signum())
+        // One number is infinity
+        case _ =>
+          try {
+            BigDecimalFloats.signToInfty(signum() * b.signum())
+          } catch {
+            case e: NaNException =>
+              e.addSuppressed(new NaNException(s"Multiplying ${this} and ${b}"))
+              throw e
+          }
       }
     }
-    
+
     override def divide(b: BigDecimalFloat, mc: MathContext) = {
       (this, b) match {
-        case (Number(x), Number(y)) if y.compareTo(BigDecimal.ZERO) == 0 => BigDecimalFloats.signToInfty(x.signum()) // TODO throw new NaNException("Division by zero.")
-        case (Number(x), Number(y)) => Number(x.divide(y, mc))
-        case (PosInf()|NegInf(), Number(a)) => BigDecimalFloats.signToInfty(signum()*a.signum())
+        case (Number(x), ZERO)                => throw new NaNException("Division by zero.")
+        case (Number(x), Number(y))           => Number(x.divide(y, mc))
+        case (PosInf() | NegInf(), Number(a)) => BigDecimalFloats.signToInfty(signum() * a.signum())
         case (Number(_), NegInf() | PosInf()) => BigDecimalFloats.ZERO
-        case _ => throw new NaNException("Division of infinities.")
+        case _                                => throw new NaNException("Division of infinities.")
       }
     }
 
     override def compareTo(b: BigDecimalFloat): Int = {
       (this, b) match {
         case (Number(x), Number(y))                      => x.compareTo(y)
-        case (PosInf(), PosInf()) | (NegInf(), NegInf()) => throw new Exception("Comparing infinities")
+        // comparing infinities might be a problem in some cases, but we use them in min/max functions
+        case (PosInf(), PosInf()) | (NegInf(), NegInf()) => 0
         case (PosInf(), _) | (_, NegInf())               => 1
         case (NegInf(), _) | (_, PosInf())               => -1
       }
@@ -85,10 +94,13 @@ object BigDecimalFloats extends Floats {
     Number(new BigDecimal(s, mc))
   }
 
-   override def valueOfEpsilon(precision: Int): T = {
+  override def valueOfEpsilon(precision: Int): T = {
     Number(new BigDecimal(BigInteger.ONE, precision, MathContext.UNLIMITED))
   }
-   
+
+  /**
+   * Case class expressing positive infinity.
+   */
   private[this] case class PosInf() extends BigDecimalFloat {
     override def isPosInf() = true
     override def isNegInf() = false
@@ -97,6 +109,9 @@ object BigDecimalFloats extends Floats {
     override def negate(): BigDecimalFloat = NegInf()
   }
 
+  /**
+   * Case class expressing negative infinity.
+   */
   private[this] case class NegInf() extends BigDecimalFloat {
     override def isPosInf() = false
     override def isNegInf() = true
@@ -105,11 +120,28 @@ object BigDecimalFloats extends Floats {
     override def negate(): BigDecimalFloat = PosInf()
   }
 
+  /**
+   * Case class expressing regular number, i.e. container for BigDecimal.
+   */
   private[this] case class Number(x: BigDecimal) extends BigDecimalFloat {
     override def isPosInf() = false
     override def isNegInf() = false
     override def isRegularNumber() = true
     override def signum(): Int = x.signum()
     override def negate(): BigDecimalFloat = Number(x.negate())
+
+    /**
+     * Unlike BigDecimal implementation equals which compares also the scale/precision of the numbers,
+     * this implementation only considers the value.
+     *
+     * @param b the other object to compare to
+     * @return true when value is equal
+     */
+    override def equals(b: Any) = {
+      b match {
+        case number: Number => number.x.compareTo(x) == 0
+        case _              => false
+      }
+    }
   }
 }

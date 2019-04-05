@@ -10,10 +10,8 @@ import com.github.comius.RoundingContext
  * Each Float number supports basic arithmetics, comparisons.
  *
  * Minimal supported rounding modes are FLOOR, CEILING. precision > 0 (otherwise BigDecimal implementation uses
- * precision = 0 for precise result or an exception).
- * 
- * @contentDiagram
- * 
+ * precision = 0 for precise result or an exception). Class {@link MathContext} is reused to specify precision and
+ * rounding mode.
  */
 trait Floats {
   /** Type of the Floats, must provide Float trait. */
@@ -163,7 +161,15 @@ trait Floats {
      */
     def split(b: T): T
 
-    // TODO remove RoundingContext, figure out how to do this properly
+    /**
+     * Returns two numbers (x,y) such that {@code this} < x < y < {@code b} and that numbers are 'epsilon in given
+     * precision' away from the average of {@code this} and {@code b}.
+     *  
+     * @param b second  
+     * @param precision the precision
+     * 
+     * @return Returns two numbers (x,y) such that {@code this} < x < y < {@code b}
+     */
     def trisect(b: T, precision: RoundingContext): (T, T)
   }
 
@@ -196,11 +202,23 @@ trait Floats {
    */
   def valueOf(s: String, mc: MathContext): T
 
-  //D.valueOf(new BigDecimal(BigInteger.ONE, precision, context.roundingContext.down))
+  /**
+   * Returns smallest number in given precision that is bigger than 0.
+   *
+   * @param precision the precision
+   * @return Smallest number in given precision bigger than 0.
+   */
   def valueOfEpsilon(precision: Int): T
 
+  /**
+   * Returns infinity with same sign as s.
+   *
+   * @param s the sign
+   * @throws NaNException when s == 0
+   * @return Positive infinity when s > 0 and Negative infinity when s < 0
+   */
   protected def signToInfty(s: Int): T = {
-    if (s > 0) posInf else if (s < 0) negInf else ZERO // TODO should this throw NaNException?
+    if (s > 0) posInf else if (s < 0) negInf else throw new NaNException("signToInfinity called with zero.")
   }
 }
 

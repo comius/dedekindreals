@@ -1,6 +1,6 @@
 package com.github.comius.reals
 
-import com.github.comius.floats.Floats.{impl => D}
+import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.RoundingContext
 
 case class Interval(x: D.T, y: D.T) {
@@ -33,7 +33,7 @@ case class Interval(x: D.T, y: D.T) {
     if (x.compareTo(y) < 0) Interval(lower, upper) else Interval(upper, lower)
   }
 
-  val multiply = multiplyKaucher(_,_)
+  val multiply = multiplyKaucher(_, _)
 
   def multiplyKaucher(i2: Interval, r: RoundingContext) = {
     val i1 = this
@@ -69,7 +69,6 @@ case class Interval(x: D.T, y: D.T) {
     }
   }
 
-
   def multiplyLakayev(i2: Interval, r: RoundingContext) = {
     val i1 = this
 
@@ -96,8 +95,16 @@ case class Interval(x: D.T, y: D.T) {
   }
 
   def divide(i2: Interval, r: RoundingContext) = {
-    // TODO handle zero in the interval
-    multiply(Interval(D.ONE.divide(i2.y, r.down), D.ONE.divide(i2.x, r.down)), r)
+    val inv =
+      (i2.x.signum(), i2.y.signum()) match {
+        case (1, 1) | (-1, -1) => Interval(D.ONE.divide(i2.y, r.down), D.ONE.divide(i2.x, r.up))
+        case (0, -1)           => Interval(D.ONE.divide(i2.y, r.up), D.negInf)
+        case (1, 0)            => Interval(D.posInf, D.ONE.divide(i2.x, r.down))
+        case (1, -1)           => Interval(D.posInf, D.negInf)
+        case _                 => Interval(D.negInf, D.posInf)
+
+      }
+    multiply(inv, r)
   }
 
   override def equals(that: Any): Boolean =
@@ -111,7 +118,7 @@ case class Interval(x: D.T, y: D.T) {
     // TODO nicer printing
     /*(x, y) match {
       case (D.Number(a), D.Number(b)) => Utils.intervalToString(a, b)
-      case (a, b)                     => 
+      case (a, b)                     =>
     }*/
   }
 }

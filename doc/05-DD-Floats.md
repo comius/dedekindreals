@@ -31,11 +31,11 @@ The content of this chapter are excerpts copied from [DEDRAS]:
 
 *Axiom 4.1* ASD has base type N, and products...
 
-*Axiom 4.2* equality on discreete types...
+*Axiom 4.2* equality on discrete types...
 
 *Axiom 4.3* N is generated from 0, variables, successor...
 
-*Definition 4.12* If the diagonal subspace, X⊂ X×X, is open or closed then we call X discrete
+*Definition 4.12* If the diagonal subspace, X⊂X×X, is open or closed then we call X discrete
 or Hausdorff respectively.
 
 *Definition 4.14* A space X that admits existential or universal quantification is called overt or
