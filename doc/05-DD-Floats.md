@@ -134,17 +134,17 @@ precision big enough eventually returns proper result. Division may be tested us
 ### Requirement: limits of arithmetic operations
 
 **The result of addition, subtraction, multiplication, and division when one or both of the arguments is infinite**
-**shall return correct limit when it exists or throw an ArithmeticException otherwise. Similarly division by zero.** 
+**shall return correct limit when it exists or throw an ArithmeticException otherwise.**
+**Similarly division by zero  throws exception.** 
  
 *Rationale:* Returning correct limit simplifies interval arithmetic and still guarantee correct results.
 When a limit does not exists an exception is thrown that needs to be handled by the module using Floats. We don't want
 incorrect result to be hidden in a low-level module.   
 
-*Verification:* Test in parallel operations on integers (which we may trust).
-For regular values use small integers, i.e. -2...2 and for infinities big integers -100, 100. Test pair of all values.
-When operation on integers produces results less that -100 or more than 100 so shall the Floats operation. 
-When operation on integers produces smaller results different that 0, so shall the Floats operation.  
-When operation on integers fail, so shall the operation on Floats.
+*Verification:* Test float operation in parallel with operations on integers (which we may trust).
+For regular values use small integers, i.e. -2...2 and for infinities big integers -100, 100. Test pairs of all values.
+Test that float and integer operations produce same result or fail at the same time. Special cases that need to be 
+handled separately are multiplication of zero and infinity and division of two infinite values.
 
 *Source:* correct result
 
@@ -158,7 +158,7 @@ TODO
 
 *Rationale:* TODO
 
-*Verification:* Test that a + a.negate == 0. Test infinities separately.
+*Verification:* Verify that a + a.negate == 0. Test infinities separately.
 
 
 ## Interpolation and extrapolation
