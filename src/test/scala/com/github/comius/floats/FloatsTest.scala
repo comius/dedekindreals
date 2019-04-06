@@ -5,10 +5,9 @@ import java.math.RoundingMode
 
 import scala.reflect.ClassTag
 
-import org.scalatest.FunSuite
-
 import com.github.comius.floats.BigDecimalFloats.BigDecimalFloat
 import com.github.comius.floats.Floats.{ impl => D }
+import org.junit.Test
 
 /**
  * Unit tests for Floats.
@@ -19,7 +18,7 @@ import com.github.comius.floats.Floats.{ impl => D }
  * Environment: no specific test environment needs to be set up. Java/Scala provide everything in default installation.
  *
  */
-class FloatsTest extends FunSuite {
+class FloatsTest {
 
   /** An integer representing the infinity. */
   val inf = 100
@@ -98,7 +97,8 @@ class FloatsTest extends FunSuite {
   /**
    * Tests limits of arithmetic operations.
    */
-  test("Limits of Arithmetic Operations") {
+  @Test
+  def testLimits(): Unit = {
     // Test addition
     testLimits((a, b) => a.add(b, new MathContext(10, RoundingMode.CEILING)), (a, b) => a + b, " + ");
 
@@ -121,11 +121,13 @@ class FloatsTest extends FunSuite {
   /**
    * Tests rounding of arithmetic operations.
    */
-  test("Rounding") {
+  @Test
+  def testRounding() = {
 
   }
 
-  test("Exponent") {
+  @Test
+  def testExponent(): Unit = {
     val mc = new MathContext(1, RoundingMode.FLOOR);
     val a = D.valueOf("49e2147483647", mc);
     println(a.add(a, mc));
