@@ -1,7 +1,12 @@
 package com.github.comius.reals
 
-import com.github.comius.floats.Floats.{ impl => D }
+import java.math.MathContext
+import java.math.RoundingMode
+
+import scala.annotation.tailrec
+
 import com.github.comius.RoundingContext
+import com.github.comius.floats.Floats.{ impl => D }
 
 case class Interval(x: D.T, y: D.T) {
 
@@ -114,12 +119,43 @@ case class Interval(x: D.T, y: D.T) {
     }
 
   override def toString() = {
-    s"[${x},${y}]"
-    // TODO nicer printing
-    /*(x, y) match {
-      case (D.Number(a), D.Number(b)) => Utils.intervalToString(a, b)
-      case (a, b)                     =>
-    }*/
+    val prec = 2
+
+    if (x == y) {
+      x.toString
+    } else {
+      val mcDown = new MathContext(1, RoundingMode.DOWN) // DOWN is towards zero
+      val x1 = x.add(D.ZERO, mcDown)
+      val y1 = y.add(D.ZERO, mcDown)
+
+      // Numbers are of the same magnitude
+      if (x1 == y1) {
+
+        // Now find equal significant digits
+        @tailrec
+        def findLast(starting: Int)(filter: Int => Boolean): Integer = {
+          if (!filter(starting)) starting - 1 else findLast(starting + 1)(filter)
+        }
+        val p = findLast(prec) { p =>
+          val mcDown = new MathContext(p, RoundingMode.DOWN)          
+          x.add(D.ZERO, mcDown) == y.add(D.ZERO, mcDown) ||
+            y.subtract(x, MathContext.UNLIMITED).abs().compareTo(D.valueOfEpsilon(p)) < 0
+        }
+
+        val mcDownP = new MathContext(p + prec, RoundingMode.DOWN) // DOWN is towards zero
+        val mcUpP = new MathContext(p + prec, RoundingMode.UP) // UP is away from zero
+
+        val xp = x.add(D.ZERO, mcDownP).toString()
+        val yp = y.add(D.ZERO, mcUpP).toString()
+
+        val p2 = 1 + findLast(0)(px => px < xp.length && px < yp.length && xp(px) == yp(px))
+
+        s"${xp.substring(0, p2)}[${xp.substring(p2)},${yp.substring(p2)}]"
+      } else {
+        // We are printing numbers of different magnitude. We're more interested in the magnitude than anything else.
+        s"[${x1},${y1}]"
+      }
+    }
   }
 }
 

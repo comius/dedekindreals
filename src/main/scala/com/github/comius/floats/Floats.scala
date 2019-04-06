@@ -159,6 +159,13 @@ trait Floats {
     def signum(): Int
 
     /**
+     * Returns the absolute value of this {@code Float}.
+     *
+     * @return absolute value of this {@code Float}.
+     */
+    def abs() = if (signum()<0) negate else this
+
+    /**
      * Returns a midpoint/average between {@code this} and {@code b}.
      *
      * Precision is determined automatically.

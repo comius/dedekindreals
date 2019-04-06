@@ -132,7 +132,7 @@ object BigDecimalFloats extends Floats {
     override def isRegularNumber() = true
     override def signum(): Int = x.signum()
     override def negate(): BigDecimalFloat = Number(x.negate())
-    override def toString(): String = x.toString()
+    override def toString(): String = x.toPlainString()
 
     /**
      * Unlike BigDecimal implementation equals which compares also the scale/precision of the numbers,

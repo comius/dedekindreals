@@ -10,7 +10,6 @@ import org.scalacheck.Prop.forAll
 import java.math.RoundingMode
 import org.scalacheck.Prop.BooleanOperators
 import org.scalacheck.Gen
-import scala.util.Sorting
 
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class FloatsSpec extends Properties("Floats") {
