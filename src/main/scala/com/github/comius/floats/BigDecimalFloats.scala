@@ -3,8 +3,6 @@ package com.github.comius.floats
 import java.math.BigDecimal
 import java.math.MathContext
 
-import com.github.comius.RoundingContext
-import com.github.comius.Utils
 import java.math.BigInteger
 import java.math.RoundingMode
 
@@ -20,10 +18,11 @@ object BigDecimalFloats extends Floats {
   sealed trait BigDecimalFloat extends Float {
     override def add(b: BigDecimalFloat, mc: MathContext): BigDecimalFloat = {
       (this, b) match {
-        case (Number(x), Number(y))                      => Number(x.add(y, mc))
-        case (PosInf(), NegInf()) | (NegInf(), PosInf()) => throw new ArithmeticException("Adding positive and negative infinity.")
-        case (PosInf(), _) | (_, PosInf())               => PosInf()
-        case (NegInf(), _) | (_, NegInf())               => NegInf()
+        case (Number(x), Number(y)) => Number(x.add(y, mc))
+        case (PosInf(), NegInf()) | (NegInf(), PosInf()) =>
+          throw new ArithmeticException("Adding positive and negative infinity.")
+        case (PosInf(), _) | (_, PosInf()) => PosInf()
+        case (NegInf(), _) | (_, NegInf()) => NegInf()
       }
     }
 
@@ -76,7 +75,7 @@ object BigDecimalFloats extends Floats {
     override def trisect(b: BigDecimalFloat, precision: Int): (BigDecimalFloat, BigDecimalFloat) = {
       (this, b) match {
         case (Number(x), Number(y)) =>
-          val c = split(b)          
+          val c = split(b)
           // TODO
           (c, c.add(valueOfEpsilon(precision), new MathContext(precision, RoundingMode.UP)))
         case _ => throw new ArithmeticException()
