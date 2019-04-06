@@ -110,7 +110,7 @@ Is provided by equals, and compareTo methods.
 Arithmetics is rounded. For every arithmetic operation user needs to provide desired resulting precision. Precision
 also defines simplicity order [DEDRAS, 6.3].
 
-### Requirement: result of arithmetic operations
+### Requirement: rounding result of arithmetic operations
 
 **The result of addition, subtraction, multiplication, and division on regular numbers shall be properly rounded.**
 **Proper rounding towards floor/ceiling means that:**
@@ -120,10 +120,10 @@ also defines simplicity order [DEDRAS, 6.3].
  - **the result is greatest (respectively) least such representable number in given precision.**
 
 *Rationale:* Given precision, because we need to control memory footprint. Lower/upper bound in needs for correct
-computation. Greatest/least is not strictly necessary and we could drop it in favour of faster computation.
+computation. Greatest/least is not strictly necessary and we could drop it in favor of faster computation.
 
 *Verification:* No matter the underlying implementation we can test the bounds by increasing given precision and
-adding/subtracting on ulp. For BigDecimal implementation we know that addition, subtraction, multiplication with
+adding/subtracting an ulp. For BigDecimal implementation we assume that addition, subtraction, multiplication with
 precision big enough eventually returns proper result. Division may be tested using multiplication.  
 
 *Source:* efficiency, correct result
