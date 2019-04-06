@@ -6,6 +6,7 @@ import java.math.MathContext
 import com.github.comius.RoundingContext
 import com.github.comius.Utils
 import java.math.BigInteger
+import java.math.RoundingMode
 
 /**
  * Implementation of Floats signature based on BigDecimal.
@@ -20,7 +21,7 @@ object BigDecimalFloats extends Floats {
     override def add(b: BigDecimalFloat, mc: MathContext): BigDecimalFloat = {
       (this, b) match {
         case (Number(x), Number(y))                      => Number(x.add(y, mc))
-        case (PosInf(), NegInf()) | (NegInf(), PosInf()) => throw new NaNException("Adding positive and negative infinity.")
+        case (PosInf(), NegInf()) | (NegInf(), PosInf()) => throw new ArithmeticException("Adding positive and negative infinity.")
         case (PosInf(), _) | (_, PosInf())               => PosInf()
         case (NegInf(), _) | (_, NegInf())               => NegInf()
       }
@@ -34,8 +35,8 @@ object BigDecimalFloats extends Floats {
           try {
             BigDecimalFloats.signToInfty(signum() * b.signum())
           } catch {
-            case e: NaNException =>
-              e.addSuppressed(new NaNException(s"Multiplying ${this} and ${b}"))
+            case e: ArithmeticException =>
+              e.addSuppressed(new ArithmeticException(s"Multiplying ${this} and ${b}"))
               throw e
           }
       }
@@ -43,11 +44,12 @@ object BigDecimalFloats extends Floats {
 
     override def divide(b: BigDecimalFloat, mc: MathContext) = {
       (this, b) match {
-        case (Number(x), ZERO)                => throw new NaNException("Division by zero.")
+        case (Number(x), ZERO)                => throw new ArithmeticException("Division by zero.")
         case (Number(x), Number(y))           => Number(x.divide(y, mc))
         case (PosInf() | NegInf(), Number(a)) => BigDecimalFloats.signToInfty(signum() * a.signum())
         case (Number(_), NegInf() | PosInf()) => BigDecimalFloats.ZERO
-        case _                                => throw new NaNException("Division of infinities.")
+        case (PosInf() | NegInf(),
+          PosInf() | NegInf()) => throw new ArithmeticException("Division of infinities.")
       }
     }
 
@@ -68,15 +70,16 @@ object BigDecimalFloats extends Floats {
         case (NegInf(), PosInf())   => BigDecimalFloats.ZERO
         case (Number(x), PosInf())  => Number(x.multiply(BigDecimal.TEN))
         case (NegInf(), Number(x))  => Number(x.multiply(BigDecimal.TEN))
-        case _                      => throw new Exception(s"splitting weird interval: ${this}, ${b}")
+        case _                      => throw new ArithmeticException(s"splitting weird interval: ${this}, ${b}")
       }
     }
-    override def trisect(b: BigDecimalFloat, c: RoundingContext): (BigDecimalFloat, BigDecimalFloat) = {
+    override def trisect(b: BigDecimalFloat, precision: Int): (BigDecimalFloat, BigDecimalFloat) = {
       (this, b) match {
         case (Number(x), Number(y)) =>
-          val a = Utils.splitInterval(x, y, c)
-          (Number(a(0)), Number(a(1)))
-        case _ => throw new Exception()
+          val c = split(b)          
+          // TODO
+          (c, c.add(valueOfEpsilon(precision), new MathContext(precision, RoundingMode.UP)))
+        case _ => throw new ArithmeticException()
       }
     }
   }

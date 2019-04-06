@@ -76,7 +76,7 @@ object Eval {
         CutR(x, refine(l)(ctx + (x -> i)), refine(u)(ctx + (x -> i)), a2, b2)
       }
     case Cut(x, a, b, l, u) =>
-      val (m1, m2) = a.trisect(b, ctx.roundingContext)
+      val (m1, m2) = a.trisect(b, ctx.roundingContext.up.getPrecision)
       val a2 = if (approximate(l)(extendContext(ctx) + (x -> Approximation(Interval(m1, m1), Interval(m1, m1)))).lower) m1 else a
       val b2 = if (approximate(u)(extendContext(ctx) + (x -> Approximation(Interval(m1, m1), Interval(m2, m2)))).lower) m2 else b
 

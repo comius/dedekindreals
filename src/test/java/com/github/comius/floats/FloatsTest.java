@@ -10,7 +10,6 @@ import org.junit.Test;
 
 import com.github.comius.floats.Floats;
 import com.github.comius.floats.Floats.Float;
-import com.github.comius.floats.NaNException;
 
 public class FloatsTest {
     private int inf = 100;
@@ -50,7 +49,7 @@ public class FloatsTest {
 		    if (ci == -inf)
 			assertTrue(a + " " + opStr + " " + b + " expected negative infinity, but got " + c,
 				c.isNegInf());
-		} catch (NaNException e) {
+		} catch (ArithmeticException e) {
 		    System.out.println(a + " " + opStr + " " + b + " = NaN: " + e.getMessage());
 		    if (ci == inf || ci == -inf) {
 			assertTrue(a + " " + opStr + " " + b + " expected infinity, but got NaN", false);

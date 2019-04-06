@@ -134,7 +134,7 @@ precision big enough eventually returns proper result. Division may be tested us
 ### Requirement: limits of arithmetic operations
 
 **The result of addition, subtraction, multiplication, and division when one or both of the arguments is infinite**
-**shall return correct limit when it exists or throw a NaNException otherwise. Similarly division by zero.** 
+**shall return correct limit when it exists or throw an ArithmeticException otherwise. Similarly division by zero.** 
  
 *Rationale:* Returning correct limit simplifies interval arithmetic and still guarantee correct results.
 When a limit does not exists an exception is thrown that needs to be handled by the module using Floats. We don't want
