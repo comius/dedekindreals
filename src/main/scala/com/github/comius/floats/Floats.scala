@@ -241,7 +241,7 @@ trait Floats {
    *             when s == 0
    * @return Positive infinity when s > 0 and Negative infinity when s < 0
    */
-  protected def signToInfty(s: Int): T = {
+   def signToInfty(s: Int): T = {
     if (s > 0) posInf
     else if (s < 0) negInf
     else {

@@ -46,7 +46,7 @@ compact respectively.
 *Definition 6.1* A **dense linear order without endpoints** is an overt Hausdorff object Q
 (Definitions 4.12 and 4.14) with an open binary relation < that is, for p,q,r : Q,
 
-  1. transitive and interpolative (dense): (p < r)⇔ (∃q. p < q < r)
+  1. transitive and interpolative (dense): (p < r) ⇔ (∃q. p < q < r)
   2. extrapolative (without endpoints): (∃p. p < q) ⇔ ⊤ ⇔ (∃r. q < r)
   3. linear (total or trichotomous): (p ≠ q) ⇔ (p < q) ∨ (q < p).
 
@@ -100,10 +100,55 @@ have any meaning to have intervals with NaN endpoints. In such cases we want thi
 
 ## Comparisons
 
-**Coverage:** compareTo, max, min, equals.
+Floats implement dense linear order like Definition 6.2, but with endpoints. 
+Linearity and transitivity is covered in this section.
+Interpolations and extrapolations are covered in a following section.
+
+### Requirement: linearity
+
+**Float values shall be linear.**
+
+*Rationale:* Linearity is assumed by upstream software units and is needed for correctness. 
+
+*Verification:* It is linear, because compareTo method always returns without exceptions. Verify by code inspection. 
 
 
-Is provided by equals, and compareTo methods.
+### Requirement: transitivity
+
+**CompareTo method shall be transitive, i.e. if a < b and b < c then a < c.**
+
+*Rationale:* Transitivity is assumed by upstream software units and is needed for correctness. 
+
+*Verification:* Generate random a,b,c and verify the property holds.
+
+
+### Requirement: equals
+
+**The equals method shall return true iff compareTo method returns 0.**
+
+*Rationale:* Prevent accidental mistakes (Java BigDecimal equals compares also precision).
+
+*Verification:* By code inspection.
+
+**Coverage:** compareTo, equals
+
+
+### Requirement: min and max
+
+**CompareTo operation shall be consistent with min and max operation, i.e. a,b >= min(a,b) and a,b <= max(a,b).**
+**Max(a,b), Min(a,b) \in {a,b}** 
+
+*Rationale:* Correctness.
+
+*Verification:* Verify on random numbers as well as on special values.
+
+### Requirement: signum
+**CompareTo(0) operation shall be consistent with signum.**
+
+*Rationale:* Correctness.
+
+*Verification:* Verify on random numbers as well as on special values.
+
 
 ## Arithmetics
 
@@ -128,7 +173,7 @@ precision big enough eventually returns proper result. Division may be tested us
 
 *Source:* efficiency, correct result
 
-*Coverage:* add, subtract, multiply, divide
+*Coverage:* add, subtract, multiply, divide (rounding)
 
 
 ### Requirement: limits of arithmetic operations
@@ -150,19 +195,20 @@ handled separately are multiplication of zero and infinity and division of two i
 
 *Coverage:* edge cases of add, subtract, multiply, divide
 
-### Requirement: negation and signum
-
-TODO
+### Requirement: negation
 
 **Result of negation shall be additive inverse. In case of infinities is shall change the sign of infinity.**
 
-*Rationale:* TODO
+*Rationale:* Correctness.
 
 *Verification:* Verify that a + a.negate == 0. Test infinities separately.
 
+*Coverage*: Negation
 
 ## Interpolation and extrapolation
 
+Split function covers both interpolation and extrapolation. First is covered when operands are regular numbers. Second
+is covered when one of the operands is infinity.
 
 **Coverage**: split, trisect
 
@@ -170,8 +216,6 @@ Floats module provide ASD's extended type Q, called rationals (but not necessary
 infinities.
 
 Lemma 6.16
-
-
 
 
 
@@ -192,19 +236,12 @@ We can construct Floats from ints or strings, using static method Floats.valueOf
 **Coverage** ZERO, posInf, negInf, isPosInf, isNegInf, isZero, isRegularNumber, signToInfity
 
 
-TODO Successor can be constructed using add, but we might have problems specifying precision.
-
- the usual arithmetic operations on N, Z and Q
- 
-
 
 
 
 
 # BigDecimalFloats
 
-
-# BigDecimal 
 
 Floats are constructed from product of two natural numbers. BigDecimal implementation in Java is a product of BigInteger
 intVal an integer called scale. Together the represent a number of form intVal * 10^-scale (example 6.4/2).
@@ -222,9 +259,4 @@ BigInteger store sign separately to magnitude, which is an array of ints. It is 
 # Possible extensions
 
 - Implementation using MPFR.
-
-
-
-
-
-
+- Implementation using doubles (caveat rounding modes in Java)
