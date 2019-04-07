@@ -12,6 +12,9 @@ import java.math.RoundingMode
 object BigDecimalFloats extends Floats {
   type T = BigDecimalFloat
 
+  private[this] val mc1Up = new MathContext(1, RoundingMode.UP)
+  private[this] val mc1Down = new MathContext(1, RoundingMode.DOWN)
+    
   /**
    * Sealed trait with three case classes: PosInf, NegInf, Number.
    */
@@ -64,11 +67,36 @@ object BigDecimalFloats extends Floats {
     override def split(b: BigDecimalFloat) = {
       (this, b) match {
         // TODO precision and rounding
-        case (Number(x), Number(y)) => Number(x.add(y).divide(BigDecimal.valueOf(2)))
-        case (NegInf(), PosInf())   => BigDecimalFloats.ZERO
-        case (Number(x), PosInf())  => Number(x.multiply(BigDecimal.TEN))
-        case (NegInf(), Number(x))  => Number(x.multiply(BigDecimal.TEN))
-        case _                      => throw new ArithmeticException(s"splitting weird interval: ${this}, ${b}")
+        case (ZERO, Number(y)) =>
+          Number(y.divide(BigDecimal.valueOf(2), mc1Down))
+        case (Number(x), ZERO) =>
+          Number(x.divide(BigDecimal.valueOf(2), mc1Up))
+        case (Number(x), Number(y)) =>
+          val mx = x.precision() - x.scale()
+          val my = y.precision() - y.scale()
+          mx - my match { // same magnitude
+            case ms if -1 <= ms && ms <= 1 =>
+              val maxp = Math.max(x.precision(), y.precision())
+              val mc = new MathContext(maxp + 1, RoundingMode.HALF_EVEN)              
+              Number(x.add(y, mc).divide(BigDecimal.valueOf(2), mc))
+            case ms if ms > 1              => Number(x.divide(BigDecimal.valueOf(2), mc1Down))
+            case _                         => Number(y.divide(BigDecimal.valueOf(2), mc1Down))
+          }
+       case (Number(x), PosInf()) =>
+          x.signum() match {
+            case 1 => Number(x.round(new MathContext(1, RoundingMode.FLOOR)).scaleByPowerOfTen(1))
+            case 0  => ONE
+            case _  => ZERO
+          }
+        case (NegInf(), Number(x)) =>
+          x.signum() match {
+            case -1 => Number(x.round(new MathContext(1, RoundingMode.CEILING)).scaleByPowerOfTen(1))
+            case 0 => ONE.negate
+            case _ => ZERO
+          }
+ 
+        case (NegInf(), PosInf()) => BigDecimalFloats.ZERO
+        case _                    => throw new ArithmeticException(s"Splitting interval: ${this}, ${b}")
       }
     }
     override def trisect(b: BigDecimalFloat, precision: Int): (BigDecimalFloat, BigDecimalFloat) = {

@@ -173,7 +173,7 @@ trait Floats {
      * Edge cases:
      *   - If one of the operands is infinite, an extrapolated point is returned. The points are extrapolated by
      *     multiplying with 2. 
-     *   - If operands are infinities with oposite signs, zero is returned.
+     *   - If operands are infinities with opposite signs, zero is returned.
      *   - If operands are equal or {@code this} > {@code b} an exception is thrown.
      *
      * @param b

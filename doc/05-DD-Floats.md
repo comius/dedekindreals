@@ -60,9 +60,10 @@ compact respectively.
   4. roots of polynomials with integer coefficients, where the notion of simplicity is given by the degree 
      and coefficients of the polynomials;
 
-Lemma 6.16 Let q 0 < q 1 < ··· < q n be a strictly ascending finite sequence of rationals, and let
-(δ,υ) be rounded, located and bounded, with δq 0 and υq n . Then this (pseudo-)cut belongs to at
-least one of the overlapping open intervals (q 0 ,q 2 ), (q 1 ,q 3 ), ..., (q n−2 ,q n ).
+*Lemma 6.16* Let q<sub>0</sub> < q<sub>1</sub> < ··· < q<sub>n</sub> be a strictly ascending finite sequence of 
+rationals, and let (δ,υ) be rounded, located and bounded, with δq<sub>0</sub> and υq<sub>n</sub>.
+Then this (pseudo-)cut belongs to at least one of the overlapping open intervals (q<sub>0</sub> ,q<sub>2</sub>),
+ (q<sub>1</sub>, q<sub>3</sub>), ..., (q<sub>n−2</sub>, q<sub>n</sub>).
 
 
 *Axiom 11.1* Q is a discrete, densely linearly ordered (Definition 6.1) commutative ring.
@@ -182,7 +183,7 @@ precision big enough eventually returns proper result. Division may be tested us
 **shall return correct limit when it exists or throw an ArithmeticException otherwise.**
 **Similarly division by zero  throws exception.** 
  
-*Rationale:* Returning correct limit simplifies interval arithmetic and still guarantee correct results.
+*Rationale:* Returning correct limit simplifies interval arithmetic and still guarantees correct results.
 When a limit does not exists an exception is thrown that needs to be handled by the module using Floats. We don't want
 incorrect result to be hidden in a low-level module.   
 
@@ -210,13 +211,50 @@ handled separately are multiplication of zero and infinity and division of two i
 Split function covers both interpolation and extrapolation. First is covered when operands are regular numbers. Second
 is covered when one of the operands is infinity.
 
-**Coverage**: split, trisect
+### Requirement: Interpolation
 
-Floats module provide ASD's extended type Q, called rationals (but not necessary fractions). The type is extended with
-infinities.
+**Split function on regular numbers a < b, shall return x, such that a < x < b.**
 
-Lemma 6.16
+**When numbers:**
+  
+  - **have different sign return 0.**
+  - **are of the same magnitude the returned value shall be near average.**
+  - **are of different magnitude, return a number that is half the bigger magnitude.**
 
+*Rationale:* Interpolative property of Definition 6.1. We further optimize the return value on space, that is returning
+the number with given property and smallest precision. When numbers are of the same magnitude, it is in interest of
+upstream modules to split it evenly (without any additional knowledge). 
+
+*Verification:* generate random numbers a < b and verify that a < split(a,b) < b. Reduce the precision of the returned
+value and verify it no longer satisfies that property.
+
+**Coverage**: split/interpolation
+
+### Requirement: Extrapolation
+
+**Split function shall:**
+
+  - **when both operands are infinite return 0**
+  - **on -inf, b return, x < b**
+  - **on a, inf, return a < x.**
+  
+**Returned number x shall have double magnitude than the input number.**
+
+*Rationale:* Extrapolative property of Definition 6.1. Furthermore we double the magnitude ...  
+
+*Verification:*
+
+**Coverage**: split/extrapolation
+
+### Requirement: Trisection
+
+**Trisect function of a,b,p shall return x,y, such that a<x<y<b and that x,y are epsilon in given precision apart.** 
+
+*Rationale:* Number x<y are used upstream by Lemma 6.16. We optimize on the evenness of splitting the a and b.  
+
+*Verification:* 
+
+**Coverage**: trisect
 
 
 ## String conversions
@@ -234,10 +272,6 @@ We can construct Floats from ints or strings, using static method Floats.valueOf
 ## Special values
 
 **Coverage** ZERO, posInf, negInf, isPosInf, isNegInf, isZero, isRegularNumber, signToInfity
-
-
-
-
 
 
 # BigDecimalFloats
