@@ -1,7 +1,7 @@
 
 package com.github.comius.reals
 
-import Real._
+
 
 import com.github.comius.RoundingContext;
 
@@ -148,42 +148,5 @@ object Eval {
     }
   }
 
-  def main(args: Array[String]) = {
-    // e
-    eval(Cut('y, 2, 3, Integrate('x, 0, 1, ('y - 1) / ('x * 'y + 1 - 'x)) < 1,
-      1 < Integrate('x, 0, 1, ('y - 1) / ('x * 'y + 1 - 'x))), 1)
-
-    // == log(2) = 0.693
-    eval(Integrate('x, 0, 1, Const(1) / (Const(1) + 'x)), 3)
-
-    // PI
-    eval(Integrate('x, 0, 1, Cut('y, 0, 1, 'x * 'x + 'y * 'y < 1, 1 < 'x * 'x + 'y * 'y)) * 4, 2)
-
-    /*
-    val rc = new RoundingContext(0, 200)
-    val N = 100
-    val dx = D.ONE.divide(N, rc.down)
-    var yl = D.valueOf(1)
-    var yu = D.valueOf(1)
-    var x = D.ZERO
-    while (x.compareTo(D.ONE) < 0) {
-      yl = yl.add(yl.multiply(dx, rc.down), rc.down)
-      yu = yu.divide(D.ONE.subtract(dx, rc.up), rc.up)
-      x = x.add(dx, rc.up)
-      //dx = dx.multiply(new BigDecimal(0.90), rc.up)
-    }
-    println("e = " + Interval(yl, yu))
-		*/
-    
-    //println(upper(Exists('x, new BigDecimal("0.4999"), new BigDecimal("0.5001"), 'y < 'x * (Const(1) - 'x)))(Context(new RoundingContext(0, 200), Map('y -> Interval(new BigDecimal(0.26), new BigDecimal(0.24))))))
-
-    eval(Exists('x, 0, 1, 'x * 'x < 0), 10)
-    eval(Exists('x, 0, 1, 0 < 'x * 'x), 10)
-    eval(Exists('x, D.negInf, D.posInf, 0 < 'x * 'x), 10)
-    eval(Exists('x, D.negInf, D.posInf, 0 < 'x * 'x * 'x), 10)
-    eval(Exists('x, D.negInf, D.posInf, 'x * 'x * 'x < 0), 10)
-    eval(Cut('x, 1, 2, 'x * 'x < 2, 2 < 'x * 'x), 10)
-    eval(CutR('x, 'x < 0 || 'x * 'x < 200, 200 < 'x * 'x && Const(0) < 'x), 10)
-    eval(Cut('y, -1, 2, Exists('x, 0, 1, 'y < 'x * (Const(1) - 'x)), Forall('x, 0, 1, 'x * (Const(1) - 'x) < 'y)), 10)
-  }
+ 
 }

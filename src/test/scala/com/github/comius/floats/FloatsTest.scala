@@ -117,21 +117,5 @@ class FloatsTest {
     val divide = (a: Int, b: Int) => if (isInf(a) && isInf(b)) throw new ArithmeticException() else a / b;
     testLimits((a, b) => a.divide(b, new MathContext(10, RoundingMode.CEILING)), divide, " / ");
   }
-
-  /**
-   * Tests rounding of arithmetic operations.
-   */
-  @Test
-  def testRounding() = {
-
-  }
-
-  @Test
-  def testExponent(): Unit = {
-    val mc = new MathContext(1, RoundingMode.FLOOR);
-    val a = D.valueOf("49e2147483647", mc);
-    println(a.add(a, mc));
-    println(D.valueOf("17", new MathContext(2, RoundingMode.FLOOR)));
-  }
 }
 
