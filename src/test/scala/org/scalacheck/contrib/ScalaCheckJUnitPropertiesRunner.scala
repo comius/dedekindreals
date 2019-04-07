@@ -6,6 +6,8 @@ import org.junit.runner.notification.RunNotifier
 import org.scalacheck.Properties
 import org.scalacheck.Test
 import org.scalacheck.util.ConsoleReporter
+import org.junit.runner.manipulation.Filterable
+import org.junit.runner.manipulation.Filter
 
 /**
  * This a JUnit runner that allows to run ScalaCheck properties (created into an object that implements
@@ -16,9 +18,12 @@ import org.scalacheck.util.ConsoleReporter
  * needs to be annotated with @RunWith[classOf[ScalaCheckJUnitPropertiesRunner]] so that JUnit knows how to run
  * the tests
  */
-class ScalaCheckJUnitPropertiesRunner(suiteClass: java.lang.Class[Properties]) extends org.junit.runner.Runner {
+class ScalaCheckJUnitPropertiesRunner(suiteClass: java.lang.Class[Properties]) extends org.junit.runner.Runner
+  with Filterable {
 
   private val properties = suiteClass.newInstance
+  
+  private var filter: Option[Filter] = None
 
   lazy val getDescription = createDescription(properties)
 
@@ -65,22 +70,30 @@ class ScalaCheckJUnitPropertiesRunner(suiteClass: java.lang.Class[Properties]) e
    * @param notifier the JUnit <code>RunNotifier</code> to which to report the results of executing
    * this suite of tests
    */
-  def run(notifier: RunNotifier) {
+  override def run(notifier: RunNotifier) {
 
     properties.properties.map({ propTuple =>
       propTuple match {
-        case (desc, prop) => {
+        case (desc, prop)  => {
           val descObj = Description.createTestDescription(properties.getClass, desc)
-
-          notifier.fireTestStarted(descObj)
-          //.withMinSuccessfulTests(1000000).withInitialSeed(123123213)
-          Test.check(prop)(_.withTestCallback(consoleReporter chain (new CustomTestCallback(notifier, descObj))))
-
-          notifier.fireTestFinished(descObj)
+          if (filter.forall(_.shouldRun(descObj))) {
+          
+            notifier.fireTestStarted(descObj)
+            //.withMinSuccessfulTests(1000000).withInitialSeed(123123213)
+            Test.check(prop)(_.withTestCallback(consoleReporter chain (new CustomTestCallback(notifier, descObj))))
+  
+            notifier.fireTestFinished(descObj)
+          }
         }
       }
     })
   }
+  
+  override def filter(filter: Filter): Unit = {
+    this.filter = Some(filter)
+  }
+   
+    
 
   /**
    * Returns the number of tests that are expected to run when this ScalaTest <code>Suite</code>
