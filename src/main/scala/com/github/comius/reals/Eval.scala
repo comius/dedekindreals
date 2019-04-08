@@ -94,19 +94,19 @@ object Eval {
       val (m1, m2) = a.trisect(b, ctx.roundingContext.up.getPrecision)
       val a2 = if (approximate(l)(extendContext(ctx) + (x -> Approximation(Interval(m1, m1), Interval(m1, m1)))).lower) m1 else a
       val b2 = if (approximate(u)(extendContext(ctx) + (x -> Approximation(Interval(m1, m1), Interval(m2, m2)))).lower) m2 else b
-      Cut(x, a2,b2, refine(l)(ctx + (x -> Interval(a2, b2))), refine(u)(ctx + (x -> Interval(a2, b2))))
-      /*
+      //Cut(x, a2,b2, refine(l)(ctx + (x -> Interval(a2, b2))), refine(u)(ctx + (x -> Interval(a2, b2))))
+      
       val t1 = NewtonApproximations.estimate(l)(extendContext(ctx), x, Interval(a,b))
       val t2 = NewtonApproximations.estimate(u)(extendContext(ctx), x, Interval(a,b))
       val a3 = t1.lower.lastOption.fold(a)(_.y)
       val b3 = t2.lower.headOption.fold(b)(_.x)
       
       // TODO find bugs
-      println(s"debug> ${Interval(a3,b3)} ${t1.lower} ${t2.lower}")
+      //println(s"debug> ${Interval(a3,b3)} ${t1.lower} ${t2.lower}")
       val an = a2.max(a3)
       val bn = b2.min(b3)
       
-      Cut(x, an,bn, refine(l)(ctx + (x -> Interval(an, bn))), refine(u)(ctx + (x -> Interval(an, bn))))*/
+      Cut(x, an,bn, refine(l)(ctx + (x -> Interval(an, bn))), refine(u)(ctx + (x -> Interval(an, bn))))
     case Integrate(x, a, b, e) =>
       val m = a.split(b)
       val le = refine(e)(ctx + (x -> Interval(a, m)))

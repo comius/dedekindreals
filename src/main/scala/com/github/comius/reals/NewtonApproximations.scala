@@ -62,37 +62,32 @@ object NewtonApproximations {
       val xm = i.x.split(i.y)
       val xi = Interval(xm, xm)
       // value at the middle point, we don't need interval
-      val a @ (Interval(lf, uf), _) = evalr(Sub(x, y))(extendContext(ctx) + (x0 -> Approximation((xi, zeroInt), (xi.swap, zeroInt))))
+      val a @ (Interval(lf, uf), _) = evalr(Sub(y,x))(extendContext(ctx) + (x0 -> Approximation((xi, zeroInt), (xi.swap, zeroInt))))
       // derivative over the whole interval
-      val b @ (_, Interval(ld, ud)) = evalr(Sub(x, y))(extendContext(ctx) + (x0 -> Approximation((i, oneInt), (i.swap, oneInt))))
+      val b @ (_, Interval(ld, ud)) = evalr(Sub(y,x))(extendContext(ctx) + (x0 -> Approximation((i, oneInt), (i.swap, oneInt))))
 
       val divU: (D.T, D.T) => D.T = _.divide(_, ctx.roundingContext.up)
       val divD: (D.T, D.T) => D.T = _.divide(_, ctx.roundingContext.down)
-      val upr = ((lf.signum(), ld.signum(), ud.signum()) match {
-        case (-1, 1, _)  => List(Interval(divU(lf, ld), D.posInf)) // 0.6 < x
-        case (-1, 0, _)  => List(Interval(D.negInf, D.posInf)) // 0.5 < x^2
-        case (-1, _, -1) => List(Interval(D.negInf, divD(lf, ud))) // x < 0.4
-        case (-1, _, _)  => List(Interval(D.negInf, D.posInf)) // (x*x) < -0.5, (x-0.5)^2 < -0.5
-        case (_, 1, _)   => List(Interval(divU(lf, ud), D.posInf)) // 0.5 < x
-        case (_, 0, _)   => List(Interval(divU(lf, ud), D.posInf)) // 0 < x*x
-        case (_, _, -1)  => List(Interval(D.negInf, divD(lf, ld))) // x < 0.5
-        case (_, _, 0)   => List(Interval(D.negInf, divD(lf, ld))) // (x*x) < 0.5
-        case (_, _, _)   => union(List(Interval(D.negInf, divD(lf, ld))), List(Interval(divU(lf, ud), D.posInf))) // (x-0.5)^2- < 0, (x-0.5)^2 < 0.5-
-      }) map { case Interval(l, u) => Interval(xm.subtract(u, ctx.roundingContext.down).max(i.x), xm.subtract(l, ctx.roundingContext.up).min(i.y)) }
-      val lwr = ((uf.signum(), ld.signum, ud.signum) match {
-        case (1, 1, _)  => List(Interval(divU(uf, ld), D.posInf))
-        case (1, 0, _)  => List()
-        case (1, _, -1) => List(Interval(D.negInf, divD(uf, ud))) //missing test
-        case (1, _, 0)  => List()
-        case (1, _, _)  => List()
-        case (_, 1, _)  => List(Interval(divU(uf, ud), D.posInf))
-        case (_, 0, _)  => List(Interval(divU(uf, ud), D.posInf))
-        case (_, _, -1) => List(Interval(D.negInf, divD(uf, ld)))
-        case (_, _, 0)  => List(Interval(D.negInf, D.posInf))
-        case (_, _, _)  => List(Interval(divU(uf, ud), divD(uf, ld)))
-      }) map { case Interval(l, u) => Interval(xm.subtract(u, ctx.roundingContext.up).max(i.x), xm.subtract(l, ctx.roundingContext.down).min(i.y)) }
       
-      Approximation(lwr, upr)
+      def halfLowerR(lf: D.T, ld: D.T) = {
+        (ld.signum, lf.signum()) match {
+          case (1, _) => intersection(List(Interval(xm.subtract(divD(lf,ld), ctx.roundingContext.up), i.y)), List(Interval(xm,i.y)))  
+          case (-1, _) => intersection(List(Interval(xm, xm.subtract(divU(lf,ld), ctx.roundingContext.down))), List(Interval(xm,i.y)))
+          case (0, 1) => List(Interval(xm,i.y))
+          case (0, _) => List()
+        }
+      }
+      def halfLowerL(lf: D.T, ud: D.T) = {
+        (ud.signum, lf.signum()) match {
+          case (1, _) => intersection(List(Interval(xm.subtract(divU(lf,ud), ctx.roundingContext.down), xm)), List(Interval(i.x, xm))) 
+          case (-1, _) => intersection(List(Interval(i.x, xm.subtract(divU(lf,ud), ctx.roundingContext.down))), List(Interval(i.x, xm)))          
+          case (0, 1) => List(Interval(i.x, xm))
+          case (0, _) => List()
+        }
+      }
+      val lwr =  union(halfLowerL(lf, ud), halfLowerR(lf,ld))
+            
+      Approximation(lwr, List())
 
     case Exists(x, a, b, phi) =>
       val m = a.split(b) //Utils.splitInterval(a, b, ctx.roundingContext)(0)

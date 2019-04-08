@@ -22,17 +22,17 @@ object Examples {
    def main(args: Array[String]) = {
     // e
     eval(Cut('y, 2, 3, Integrate('x, 0, 1, 1 / ('x + 1/('y-1))) < 1,
-      1 < Integrate('x, 0, 1, 1 / ('x + 1/('y-1)))), 2)      
+      1 < Integrate('x, 0, 1, 1 / ('x + 1/('y-1)))), 3)      
       
     val u = Integrate('x, 0, 1, 1 / ('x + 1/('y-1)))
     eval(Cut('y, 2, 3, u < 1, 1 < u), 2)  
       
       
     // == log(2) = 0.693
-    eval(Integrate('x, 1, 2, Const(1) / 'x), 4)
+    eval(Integrate('x, 1, 2, Const(1) / 'x), 5)
 
     // PI
-    eval(Integrate('x, 0, 1, Cut('y, 0, 1, 'x * 'x + 'y * 'y < 1, 1 < 'x * 'x + 'y * 'y)) * 4, 2)
+    eval(Integrate('x, 0, 1, Cut('y, 0, 1, 'x * 'x + 'y * 'y < 1, 1 < 'x * 'x + 'y * 'y)) * 4, 3)
     
     eval(Exists('x, 0, 1, 'x * 'x < 0), 10)
     eval(Exists('x, 0, 1, 0 < 'x * 'x), 10)
