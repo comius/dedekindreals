@@ -71,16 +71,24 @@ object NewtonApproximations {
       
       def halfLowerR(lf: D.T, ld: D.T) = {
         (ld.signum, lf.signum()) match {
-          case (1, _) => intersection(List(Interval(xm.subtract(divD(lf,ld), ctx.roundingContext.up), i.y)), List(Interval(xm,i.y)))  
-          case (-1, _) => intersection(List(Interval(xm, xm.subtract(divU(lf,ld), ctx.roundingContext.down))), List(Interval(xm,i.y)))
+          case (1, _) =>
+            val r = xm.subtract(divD(lf,ld), ctx.roundingContext.up)
+            if (r.compareTo(i.y) < 0) List(Interval(r.max(xm), i.y)) else List()
+          case (-1, _) =>
+            val r = xm.subtract(divU(lf,ld), ctx.roundingContext.down)
+            if (xm.compareTo(r) < 0) List(Interval(xm, r.min(i.y))) else List()
           case (0, 1) => List(Interval(xm,i.y))
           case (0, _) => List()
         }
       }
       def halfLowerL(lf: D.T, ud: D.T) = {
         (ud.signum, lf.signum()) match {
-          case (1, _) => intersection(List(Interval(xm.subtract(divU(lf,ud), ctx.roundingContext.down), xm)), List(Interval(i.x, xm))) 
-          case (-1, _) => intersection(List(Interval(i.x, xm.subtract(divU(lf,ud), ctx.roundingContext.down))), List(Interval(i.x, xm)))          
+          case (1, _) =>
+            val r = xm.subtract(divU(lf,ud), ctx.roundingContext.down)
+            if (r.compareTo(xm) < 0) List(Interval(r.max(i.x), xm)) else List()
+          case (-1, _) => 
+            val r = xm.subtract(divU(lf,ud), ctx.roundingContext.down)
+            if (i.x.compareTo(r) < 0) List(Interval(i.x, r.min(xm))) else List()            
           case (0, 1) => List(Interval(i.x, xm))
           case (0, _) => List()
         }
