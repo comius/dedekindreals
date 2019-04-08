@@ -1,5 +1,19 @@
 package com.github.comius.reals
 
+import com.github.comius.reals.syntax.Real
+
+import com.github.comius.reals.syntax.Integrate
+
+import com.github.comius.reals.syntax.Forall
+
+import com.github.comius.reals.syntax.Exists
+
+import com.github.comius.reals.syntax.CutR
+
+import com.github.comius.reals.syntax.Cut
+
+import com.github.comius.reals.syntax.Const
+
 object Examples {
    import Real._
    import Eval.eval
@@ -7,11 +21,15 @@ object Examples {
   
    def main(args: Array[String]) = {
     // e
-    eval(Cut('y, 2, 3, Integrate('x, 0, 1, ('y - 1) / ('x * 'y + 1 - 'x)) < 1,
-      1 < Integrate('x, 0, 1, ('y - 1) / ('x * 'y + 1 - 'x))), 1)
-
+    eval(Cut('y, 2, 3, Integrate('x, 0, 1, 1 / ('x + 1/('y-1))) < 1,
+      1 < Integrate('x, 0, 1, 1 / ('x + 1/('y-1)))), 2)      
+      
+    val u = Integrate('x, 0, 1, 1 / ('x + 1/('y-1)))
+    eval(Cut('y, 2, 3, u < 1, 1 < u), 2)  
+      
+      
     // == log(2) = 0.693
-    eval(Integrate('x, 0, 1, Const(1) / (Const(1) + 'x)), 3)
+    eval(Integrate('x, 1, 2, Const(1) / 'x), 4)
 
     // PI
     eval(Integrate('x, 0, 1, Cut('y, 0, 1, 'x * 'x + 'y * 'y < 1, 1 < 'x * 'x + 'y * 'y)) * 4, 2)

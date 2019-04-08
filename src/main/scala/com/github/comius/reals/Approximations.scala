@@ -1,6 +1,23 @@
 package com.github.comius.reals
 
 import com.github.comius.RoundingContext
+import com.github.comius.reals.syntax.Var
+import com.github.comius.reals.syntax.Sub
+import com.github.comius.reals.syntax.Real
+import com.github.comius.reals.syntax.Or
+import com.github.comius.reals.syntax.Mul
+import com.github.comius.reals.syntax.Less
+import com.github.comius.reals.syntax.Integrate
+import com.github.comius.reals.syntax.Formula
+import com.github.comius.reals.syntax.Forall
+import com.github.comius.reals.syntax.Exists
+import com.github.comius.reals.syntax.Div
+import com.github.comius.reals.syntax.CutR
+import com.github.comius.reals.syntax.Cut
+import com.github.comius.reals.syntax.ConstFormula
+import com.github.comius.reals.syntax.Const
+import com.github.comius.reals.syntax.And
+import com.github.comius.reals.syntax.Add
 
 object Approximations {
   import com.github.comius.floats.Floats.{impl => D}
@@ -22,7 +39,7 @@ object Approximations {
 
     case Exists(x, a, b, phi) =>
       val m = a.split(b) //Utils.splitInterval(a, b, ctx.roundingContext)(0)
-      approximate(phi)(ctx + (x -> Approximation(Interval(m, m), Interval(a, b))))
+      approximate(phi)(ctx + (x -> Approximation(Interval(m, m), Interval(b, a))))
 
     case Forall(x, a, b, phi) =>
       val m = a.split(b) //Utils.splitInterval(a, b, ctx.roundingContext.swap)(0)

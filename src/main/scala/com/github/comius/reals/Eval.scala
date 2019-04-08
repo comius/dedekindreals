@@ -4,6 +4,21 @@ package com.github.comius.reals
 
 
 import com.github.comius.RoundingContext;
+import com.github.comius.reals.syntax.Sub
+import com.github.comius.reals.syntax.Real
+import com.github.comius.reals.syntax.Or
+import com.github.comius.reals.syntax.Mul
+import com.github.comius.reals.syntax.Less
+import com.github.comius.reals.syntax.Integrate
+import com.github.comius.reals.syntax.Formula
+import com.github.comius.reals.syntax.Forall
+import com.github.comius.reals.syntax.Exists
+import com.github.comius.reals.syntax.Div
+import com.github.comius.reals.syntax.CutR
+import com.github.comius.reals.syntax.Cut
+import com.github.comius.reals.syntax.ConstFormula
+import com.github.comius.reals.syntax.And
+import com.github.comius.reals.syntax.Add
 
 object Eval {
   import com.github.comius.floats.Floats.{impl => D}
@@ -79,13 +94,19 @@ object Eval {
       val (m1, m2) = a.trisect(b, ctx.roundingContext.up.getPrecision)
       val a2 = if (approximate(l)(extendContext(ctx) + (x -> Approximation(Interval(m1, m1), Interval(m1, m1)))).lower) m1 else a
       val b2 = if (approximate(u)(extendContext(ctx) + (x -> Approximation(Interval(m1, m1), Interval(m2, m2)))).lower) m2 else b
-
-      /*val test = NewtonApproximations.estimate(l)(extendContext(ctx), x, Interval(a,b))
-      val ls = l.toString
-
-      println(s"debug> ${Interval(a,b)}, ${test.lower} ${ls.substring(0, Math.min(100, ls.length))}")
-     */
-      Cut(x, a2, b2, refine(l)(ctx + (x -> Interval(a2, b2))), refine(u)(ctx + (x -> Interval(a2, b2))))
+      Cut(x, a2,b2, refine(l)(ctx + (x -> Interval(a2, b2))), refine(u)(ctx + (x -> Interval(a2, b2))))
+      /*
+      val t1 = NewtonApproximations.estimate(l)(extendContext(ctx), x, Interval(a,b))
+      val t2 = NewtonApproximations.estimate(u)(extendContext(ctx), x, Interval(a,b))
+      val a3 = t1.lower.lastOption.fold(a)(_.y)
+      val b3 = t2.lower.headOption.fold(b)(_.x)
+      
+      // TODO find bugs
+      println(s"debug> ${Interval(a3,b3)} ${t1.lower} ${t2.lower}")
+      val an = a2.max(a3)
+      val bn = b2.min(b3)
+      
+      Cut(x, an,bn, refine(l)(ctx + (x -> Interval(an, bn))), refine(u)(ctx + (x -> Interval(an, bn))))*/
     case Integrate(x, a, b, e) =>
       val m = a.split(b)
       val le = refine(e)(ctx + (x -> Interval(a, m)))

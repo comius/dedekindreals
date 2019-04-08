@@ -1,6 +1,23 @@
 package com.github.comius.reals
 
 import com.github.comius.RoundingContext
+import com.github.comius.reals.syntax.Var
+import com.github.comius.reals.syntax.Sub
+import com.github.comius.reals.syntax.Real
+import com.github.comius.reals.syntax.Or
+import com.github.comius.reals.syntax.Mul
+import com.github.comius.reals.syntax.Less
+import com.github.comius.reals.syntax.Integrate
+import com.github.comius.reals.syntax.Formula
+import com.github.comius.reals.syntax.Forall
+import com.github.comius.reals.syntax.Exists
+import com.github.comius.reals.syntax.Div
+import com.github.comius.reals.syntax.CutR
+import com.github.comius.reals.syntax.Cut
+import com.github.comius.reals.syntax.ConstFormula
+import com.github.comius.reals.syntax.Const
+import com.github.comius.reals.syntax.And
+import com.github.comius.reals.syntax.Add
 
 object NewtonApproximations {
   import com.github.comius.floats.Floats.{impl => D}
@@ -31,9 +48,9 @@ object NewtonApproximations {
     case (x, Nil) => x
     case (Nil, x) => x
     case (Interval(a1, b1) :: c1, Interval(a2, b2) :: c2) =>
-      if (a1.compareTo(a2) > 0) union(l2, l1)
-      else if (a2.compareTo(b1) <= 0) intersection(Interval(a1, b1.max(b2)) :: c2, c1)
-      else Interval(a1, b1) :: intersection(Interval(a2, b2) :: c2, c1)
+      if (a1.compareTo(a2) > 0) union(l2, l1)     
+      else if (a2.compareTo(b1) <= 0) union(Interval(a1, b1.max(b2)) :: c2, c1)
+      else Interval(a1, b1) :: union(Interval(a2, b2) :: c2, c1)
   }
 
   def estimate(formula: Formula)(implicit ctx: Context[Approximation[Interval]], x0: Symbol, i: Interval): Approximation[List[Interval]] = formula match {
@@ -45,13 +62,13 @@ object NewtonApproximations {
       val xm = i.x.split(i.y)
       val xi = Interval(xm, xm)
       // value at the middle point, we don't need interval
-      val a @ Approximation((Interval(lf, uf), _), _) = estimate(Sub(x, y))(extendContext(ctx) + (x0 -> Approximation((xi, zeroInt), (xi.swap, zeroInt))))
+      val a @ (Interval(lf, uf), _) = evalr(Sub(x, y))(extendContext(ctx) + (x0 -> Approximation((xi, zeroInt), (xi.swap, zeroInt))))
       // derivative over the whole interval
-      val b @ Approximation((_, Interval(ld, ud)), _) = estimate(Sub(x, y))(extendContext(ctx) + (x0 -> Approximation((i, oneInt), (i.swap, oneInt))))
+      val b @ (_, Interval(ld, ud)) = evalr(Sub(x, y))(extendContext(ctx) + (x0 -> Approximation((i, oneInt), (i.swap, oneInt))))
 
       val divU: (D.T, D.T) => D.T = _.divide(_, ctx.roundingContext.up)
       val divD: (D.T, D.T) => D.T = _.divide(_, ctx.roundingContext.down)
-      val lwr = ((lf.signum(), ld.signum(), ud.signum()) match {
+      val upr = ((lf.signum(), ld.signum(), ud.signum()) match {
         case (-1, 1, _)  => List(Interval(divU(lf, ld), D.posInf)) // 0.6 < x
         case (-1, 0, _)  => List(Interval(D.negInf, D.posInf)) // 0.5 < x^2
         case (-1, _, -1) => List(Interval(D.negInf, divD(lf, ud))) // x < 0.4
@@ -62,7 +79,7 @@ object NewtonApproximations {
         case (_, _, 0)   => List(Interval(D.negInf, divD(lf, ld))) // (x*x) < 0.5
         case (_, _, _)   => union(List(Interval(D.negInf, divD(lf, ld))), List(Interval(divU(lf, ud), D.posInf))) // (x-0.5)^2- < 0, (x-0.5)^2 < 0.5-
       }) map { case Interval(l, u) => Interval(xm.subtract(u, ctx.roundingContext.down).max(i.x), xm.subtract(l, ctx.roundingContext.up).min(i.y)) }
-      val upr = ((uf.signum(), ld.signum, ud.signum) match {
+      val lwr = ((uf.signum(), ld.signum, ud.signum) match {
         case (1, 1, _)  => List(Interval(divU(uf, ld), D.posInf))
         case (1, 0, _)  => List()
         case (1, _, -1) => List(Interval(D.negInf, divD(uf, ud))) //missing test
@@ -95,35 +112,32 @@ object NewtonApproximations {
   type A = (Interval, Interval)
 
   def liftr(op: (A, A, RoundingContext) => A)(x: Real, y: Real)(implicit ctx: Context[Approximation[A]]) = {
-    val Approximation(l1, u1) = estimate(x)
-    val Approximation(l2, u2) = estimate(y)
-    Approximation(op(l1, l2, ctx.roundingContext), op(u1, u2, ctx.roundingContext.swap))
+    val l1 = evalr(x)
+    val l2 = evalr(y)
+    op(l1, l2, ctx.roundingContext)
   }
 
-  def estimate(expr: Real)(implicit ctx: Context[Approximation[(Interval, Interval)]]): Approximation[(Interval, Interval)] = {
+  def evalr(expr: Real)(implicit ctx: Context[Approximation[(Interval, Interval)]]): (Interval, Interval) = {
 
     expr match {
-      case Cut(_, a, b, _, _)  => Approximation((Interval(a, b), zeroInt), (Interval(b, a), zeroInt))
-      case CutR(_, _, _, _, _) => Approximation((Interval(D.negInf, D.posInf), zeroInt), (Interval(D.posInf, D.negInf), zeroInt))
-      case Const(a)            => Approximation((Interval(a, a), zeroInt), (Interval(a, a), zeroInt))
+      case Cut(_, a, b, _, _)  => (Interval(a, b), zeroInt)
+      case CutR(_, _, _, _, _) => (Interval(D.negInf, D.posInf), zeroInt)
+      case Const(a)            => (Interval(a, a), zeroInt)
       case Add(x, y) =>
-        liftr((a, b, r) => (a._1.add(a._1, r), b._2.add(b._2, r)))(x, y)
+        liftr((a, b, r) => (a._1.add(b._1, r), a._2.add(b._2, r)))(x, y)
       case Sub(x, y) =>
         liftr((a, b, r) => (a._1.subtract(b._1, r), a._2.subtract(b._2, r)))(x, y)
       case Mul(x, y) =>
         liftr((a, b, r) => (a._1.multiply(b._1, r), a._1.multiply(b._2, r).add(b._1.multiply(a._2, r), r)))(x, y)
       case Div(x, y) =>
-        liftr((a, b, r) => (a._1.multiply(b._1, r), a._2.multiply(b._1, r).subtract(b._2.multiply(a._1, r), r)
-            .divide(b._1.multiply(b._1, r), r)))(x, y) // TODO rounding
+        liftr((a, b, r) => (a._1.divide(b._1, r), a._2.multiply(b._1, r).subtract(b._2.multiply(a._1, r.swap), r.swap)
+            .divide(b._1.multiply(b._1, r), r.swap())))(x, y) // TODO rounding
       case Integrate(x, a, b, e) =>
-          val Approximation(l1, u1) = estimate(e)(ctx + (x -> Approximation((Interval(a,b), zeroInt), (Interval(b,a), zeroInt))))
+          val l1 = evalr(e)(ctx + (x -> Approximation((Interval(a,b), zeroInt), (Interval(b,a), zeroInt))))
           val (baDown, baUp) = (b.subtract(a, ctx.roundingContext.down), b.subtract(a, ctx.roundingContext.up)) 
-          Approximation(
           (Interval(l1._1.x.multiply(baDown, ctx.roundingContext.down), l1._1.y.multiply(baUp, ctx.roundingContext.up)), 
-              Interval(l1._2.x.multiply(baDown, ctx.roundingContext.down), l1._2.y.multiply(baUp, ctx.roundingContext.up))),
-          (Interval(u1._1.x.multiply(baDown, ctx.roundingContext.up), u1._1.y.multiply(baUp, ctx.roundingContext.down)),
-           Interval(u1._2.x.multiply(baDown, ctx.roundingContext.up), u1._2.y.multiply(baUp, ctx.roundingContext.down))))    
-      case Var(name) => ctx.vars.get(name).get
+              Interval(l1._2.x.multiply(baDown, ctx.roundingContext.down), l1._2.y.multiply(baUp, ctx.roundingContext.up)))    
+      case Var(name) => ctx.vars.get(name).get.lower
     }
   }
 }

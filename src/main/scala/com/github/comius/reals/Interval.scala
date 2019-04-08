@@ -46,32 +46,45 @@ case class Interval(x: D.T, y: D.T) {
     val u = i1.y
     val e = i2.x
     val t = i2.y
-
-    (d.signum, u.signum, e.signum, t.signum) match {
-      case (-1, -1, 1, 1) => Interval(d.multiply(t, r.down), u.multiply(e, r.up))
-      case (-1, -1, 1, _) => Interval(u.multiply(t, r.down), u.multiply(e, r.up))
-      case (-1, -1, _, 1) => Interval(d.multiply(t, r.down), d.multiply(e, r.up))
-      case (-1, -1, _, _) => Interval(u.multiply(t, r.down), d.multiply(e, r.up))
-
-      case (-1, _, 1, 1)  => Interval(d.multiply(t, r.down), u.multiply(t, r.up))
-      case (-1, _, 1, _)  => Interval(D.ZERO, D.ZERO)
-      case (-1, _, _, 1) => Interval(
-        d.multiply(t, r.down).min(u.multiply(e, r.down)),
-        d.multiply(e, r.up).max(u.multiply(t, r.up)))
-      case (-1, _, _, _) => Interval(u.multiply(e, r.down), d.multiply(e, r.up))
-
-      case (_, -1, 1, 1) => Interval(d.multiply(e, r.down), u.multiply(e, r.up))
-      case (_, -1, 1, _) => Interval(
-        d.multiply(e, r.down).max(u.multiply(t, r.down)),
-        d.multiply(t, r.up).min(u.multiply(e, r.up)))
-      case (_, -1, _, 1) => Interval(D.ZERO, D.ZERO)
-      case (_, -1, _, _) => Interval(u.multiply(t, r.down), d.multiply(t, r.up))
-
-      case (_, _, 1, 1)  => Interval(d.multiply(e, r.down), u.multiply(t, r.up))
-      case (_, _, 1, _)  => Interval(d.multiply(e, r.down), d.multiply(t, r.up))
-      case (_, _, _, 1)  => Interval(u.multiply(e, r.down), u.multiply(t, r.up))
-      case (_, _, _, _)  => Interval(u.multiply(e, r.down), d.multiply(t, r.up))
+    
+    def mulU(a: D.T, b: D.T) = try
+    {      
+        a.multiply(b, r.up)
+    } catch {
+      case a: ArithmeticException =>
+        if (r.up.getRoundingMode == RoundingMode.CEILING) D.posInf else D.negInf
     }
+    
+    def mulD(a: D.T, b: D.T) = try
+    {      
+        a.multiply(b, r.down)
+    } catch {
+      case a: ArithmeticException =>
+        if (r.down.getRoundingMode == RoundingMode.CEILING) D.posInf else D.negInf
+    }
+    
+    (d.signum, u.signum, e.signum, t.signum) match {
+      case (-1, -1, 1, 1) => Interval(mulD(d,t), mulU(u,e))
+      case (-1, -1, 1, _) => Interval(mulD(u,t), mulU(u,e))
+      case (-1, -1, _, 1) => Interval(mulD(d,t), mulU(d,e))
+      case (-1, -1, _, _) => Interval(mulD(u,t), mulU(d,e))
+
+      case (-1, _, 1, 1)  => Interval(mulD(d,t), mulU(u,t))
+      case (-1, _, 1, _)  => Interval(D.ZERO, D.ZERO)
+      case (-1, _, _, 1) => Interval(mulD(d,t).min(mulD(u,e)), mulU(d,e).max(mulU(u,t)))
+      case (-1, _, _, _) => Interval(mulD(u,e), mulU(d,e))
+
+      case (_, -1, 1, 1) => Interval(mulD(d,e), mulU(u,e))
+      case (_, -1, 1, _) => Interval(mulD(d,e).max(mulD(u,t)), mulU(d,t).min(mulU(u,e)))
+      case (_, -1, _, 1) => Interval(D.ZERO, D.ZERO)
+      case (_, -1, _, _) => Interval(mulD(u,t), mulU(d,t))
+
+      case (_, _, 1, 1)  => Interval(mulD(d,e), mulU(u,t))
+      case (_, _, 1, _)  => Interval(mulD(d,e), mulU(d,t))
+      case (_, _, _, 1)  => Interval(mulD(u,e), mulU(u,t))
+      case (_, _, _, _)  => Interval(mulD(u,e), mulD(d,t))
+    }
+    
   }
 
   def multiplyLakayev(i2: Interval, r: RoundingContext) = {
