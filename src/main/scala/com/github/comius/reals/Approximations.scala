@@ -35,7 +35,7 @@ object Approximations {
     case Less(x, y) =>
       val a @ Approximation(li1, ui1) = approximate(x)
       val b @ Approximation(li2, ui2) = approximate(y)
-      Approximation(li1.y.compareTo(li2.x) < 0, ui1.y.compareTo(ui2.x) < 0)
+      Approximation(li1.u.compareTo(li2.d) < 0, ui1.u.compareTo(ui2.d) < 0)
 
     case Exists(x, a, b, phi) =>
       val m = a.split(b) //Utils.splitInterval(a, b, ctx.roundingContext)(0)
@@ -65,10 +65,10 @@ object Approximations {
     case Integrate(x, a, b, e) =>
       val Approximation(l1, u1) = approximate(e)(ctx + (x -> Approximation(Interval(a,b), Interval(b,a))))
       Approximation(
-          Interval(l1.x.multiply(b.subtract(a, ctx.roundingContext.down), ctx.roundingContext.down),
-              l1.y.multiply(b.subtract(a, ctx.roundingContext.up), ctx.roundingContext.up)),
-          Interval(u1.x.multiply(b.subtract(a, ctx.roundingContext.down), ctx.roundingContext.up),
-              u1.y.multiply(b.subtract(a, ctx.roundingContext.up), ctx.roundingContext.down)))    
+          Interval(l1.d.multiply(b.subtract(a, ctx.roundingContext.down), ctx.roundingContext.down),
+              l1.u.multiply(b.subtract(a, ctx.roundingContext.up), ctx.roundingContext.up)),
+          Interval(u1.d.multiply(b.subtract(a, ctx.roundingContext.down), ctx.roundingContext.up),
+              u1.u.multiply(b.subtract(a, ctx.roundingContext.up), ctx.roundingContext.down)))    
           
     case Const(a)            => Approximation(Interval(a, a), Interval(a, a))
     case Add(x, y)           => lift(_.add(_, _))(x, y)

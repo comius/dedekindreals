@@ -59,12 +59,12 @@ object NewtonApproximations {
         Context(ctx.roundingContext, ctx.vars.mapValues(i => Approximation((i.lower, zeroInt), (i.upper, zeroInt))))
       }
 
-      val xm = i.x.split(i.y)
+      val xm = i.d.split(i.u)
       val xi = Interval(xm, xm)
       // value at the middle point, we don't need interval
-      val a @ (Interval(lf, uf), _) = evalr(Sub(y,x))(extendContext(ctx) + (x0 -> Approximation((xi, zeroInt), (xi.swap, zeroInt))))
+      val a @ (Interval(lf, uf), _) = evalr(Sub(y,x))(extendContext(ctx) + (x0 -> Approximation((xi, zeroInt), (xi.flip, zeroInt))))
       // derivative over the whole interval
-      val b @ (_, Interval(ld, ud)) = evalr(Sub(y,x))(extendContext(ctx) + (x0 -> Approximation((i, oneInt), (i.swap, oneInt))))
+      val b @ (_, Interval(ld, ud)) = evalr(Sub(y,x))(extendContext(ctx) + (x0 -> Approximation((i, oneInt), (i.flip, oneInt))))
 
       val divU: (D.T, D.T) => D.T = _.divide(_, ctx.roundingContext.up)
       val divD: (D.T, D.T) => D.T = _.divide(_, ctx.roundingContext.down)
@@ -73,11 +73,11 @@ object NewtonApproximations {
         (ld.signum, lf.signum()) match {
           case (1, _) =>
             val r = xm.subtract(divD(lf,ld), ctx.roundingContext.up)
-            if (r.compareTo(i.y) < 0) List(Interval(r.max(xm), i.y)) else List()
+            if (r.compareTo(i.u) < 0) List(Interval(r.max(xm), i.u)) else List()
           case (-1, _) =>
             val r = xm.subtract(divU(lf,ld), ctx.roundingContext.down)
-            if (xm.compareTo(r) < 0) List(Interval(xm, r.min(i.y))) else List()
-          case (0, 1) => List(Interval(xm,i.y))
+            if (xm.compareTo(r) < 0) List(Interval(xm, r.min(i.u))) else List()
+          case (0, 1) => List(Interval(xm,i.u))
           case (0, _) => List()
         }
       }
@@ -85,11 +85,11 @@ object NewtonApproximations {
         (ud.signum, lf.signum()) match {
           case (1, _) =>
             val r = xm.subtract(divU(lf,ud), ctx.roundingContext.down)
-            if (r.compareTo(xm) < 0) List(Interval(r.max(i.x), xm)) else List()
+            if (r.compareTo(xm) < 0) List(Interval(r.max(i.d), xm)) else List()
           case (-1, _) => 
             val r = xm.subtract(divU(lf,ud), ctx.roundingContext.down)
-            if (i.x.compareTo(r) < 0) List(Interval(i.x, r.min(xm))) else List()            
-          case (0, 1) => List(Interval(i.x, xm))
+            if (i.d.compareTo(r) < 0) List(Interval(i.d, r.min(xm))) else List()            
+          case (0, 1) => List(Interval(i.d, xm))
           case (0, _) => List()
         }
       }
@@ -138,8 +138,8 @@ object NewtonApproximations {
       case Integrate(x, a, b, e) =>
           val l1 = evalr(e)(ctx + (x -> Approximation((Interval(a,b), zeroInt), (Interval(b,a), zeroInt))))
           val (baDown, baUp) = (b.subtract(a, ctx.roundingContext.down), b.subtract(a, ctx.roundingContext.up)) 
-          (Interval(l1._1.x.multiply(baDown, ctx.roundingContext.down), l1._1.y.multiply(baUp, ctx.roundingContext.up)), 
-              Interval(l1._2.x.multiply(baDown, ctx.roundingContext.down), l1._2.y.multiply(baUp, ctx.roundingContext.up)))    
+          (Interval(l1._1.d.multiply(baDown, ctx.roundingContext.down), l1._1.u.multiply(baUp, ctx.roundingContext.up)), 
+              Interval(l1._2.d.multiply(baDown, ctx.roundingContext.down), l1._2.u.multiply(baUp, ctx.roundingContext.up)))    
       case Var(name) => ctx.vars.get(name).get.lower
     }
   }

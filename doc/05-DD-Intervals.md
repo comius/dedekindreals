@@ -127,7 +127,47 @@ u = 0    [−∞,+∞]  [−∞,+∞]  [+∞, d<sup>−1</sup>]
 u > 0    [−∞,+∞]  [−∞,+∞]  [u<sup>−1</sup>, d<sup>−1</sup>],
 </pre>
 
-# Design decisions
+# Intervals
+
+Interval case class represents a general interval with rational endpoints. There are no restrictions on the endpoints
+ (d<u, d=u or d<u). We're keeping only roundedness (not bound, disjoint nor located)
+
+Endpoints can also be positive and negative infinity, we must be take to handle such cases correctly.
+ 
+ 
+## Requirement: interval operations
+
+**Interval arithmetic operations are proper extensions of arithmetic operations on rational.**
+**Proper extension: x ⍟ y ⋐  w ⇔  ∃x' y' . x ⋐ x' ∧ y ⋐ y' ∧ x' ⍟  y' ⋐  w**
+  
+*Rationale:* Correctness.  
+
+*Verification:* Test the property on random values (including all combinations of special values) 
+for all operations.
+
+
+## Requirement: string representation of intervals
+
+**Intervals shall be printed with minimal unnecessary information:**
+
+  - **when endpoints are equal, print interval as a number**
+    - example [1,1] = "1"
+  - **when endpoints are of different magnitude or sign, print both numbers, limiting precision to p**, 
+     examples p = 2:
+       - "[1.1e10, -1]",
+       - "[-1,2]"
+  - **when endpoints are of same magnitude and sign**
+    **print numbers until the difference of printed numbers has given precision**
+    **and print same part of the number only once**, examples p = 2: 
+      - [123001,124005]="12[3000,4000]",
+      - [0.00123,0.00134] = "0.001[23,34]",
+      - [0.4999266, 0.5000125] = "0.[499926,500012]"  
+     
+
+*Rationale:* Usability. Upstream modules compute real numbers, so the focus is on intervals with small width.
+
+*Verification:* Test listed cases.
 
 # Possible extensions
 
+  -  

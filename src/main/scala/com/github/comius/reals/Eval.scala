@@ -25,7 +25,7 @@ object Eval {
   import Approximations._
 
   def extendContext(ctx: Context[Interval]): Context[Approximation[Interval]] = {
-    Context(ctx.roundingContext, ctx.vars.mapValues(i => Approximation(i, i.swap)))
+    Context(ctx.roundingContext, ctx.vars.mapValues(i => Approximation(i, i.flip)))
   }
 
   def refine(formula: Formula)(implicit ctx: Context[Interval]): Formula = {
@@ -98,8 +98,8 @@ object Eval {
       
       val t1 = NewtonApproximations.estimate(l)(extendContext(ctx), x, Interval(a,b))
       val t2 = NewtonApproximations.estimate(u)(extendContext(ctx), x, Interval(a,b))
-      val a3 = t1.lower.lastOption.fold(a)(_.y)
-      val b3 = t2.lower.headOption.fold(b)(_.x)
+      val a3 = t1.lower.lastOption.fold(a)(_.u)
+      val b3 = t2.lower.headOption.fold(b)(_.d)
       
       // TODO find bugs
       //println(s"debug> ${Interval(a3,b3)} ${t1.lower} ${t2.lower}")
@@ -132,7 +132,7 @@ object Eval {
 
       val l = approximate(rexpr)(context).lower
 
-      val width = l.y.subtract(l.x, context.roundingContext.up)
+      val width = l.u.subtract(l.d, context.roundingContext.up)
       val ctime = System.currentTimeMillis()
       println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString.length}, time ${ctime - stime}")
       stime = ctime
