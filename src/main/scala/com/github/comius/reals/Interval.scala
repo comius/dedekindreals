@@ -93,40 +93,38 @@ case class Interval(d: D.T, u: D.T) {
   def multiplyKaucher(i2: Interval, r: RoundingContext) = {
     val Interval(e, t) = i2
 
-    def mulU(a: D.T, b: D.T) = try {
-      a.multiply(b, r.up)
+    def mulU(a: D.T, b: D.T) = a.multiply(b, r.up)
+    def mulD(a: D.T, b: D.T) = a.multiply(b, r.down)
+
+    try {
+
+      (d.signum, u.signum, e.signum, t.signum) match {
+        case (-1, -1, 1, 1)                 => Interval(mulD(d, t), mulU(u, e))
+        case (-1, -1, 1, -1 | 0)            => Interval(mulD(u, t), mulU(u, e))
+        case (-1, -1, -1 | 0, 1)            => Interval(mulD(d, t), mulU(d, e))
+        case (-1, -1, -1 | 0, -1 | 0)       => Interval(mulD(u, t), mulU(d, e))
+
+        case (-1, 0 | 1, 1, 1)              => Interval(mulD(d, t), mulU(u, t))
+        case (-1, 0 | 1, 1, -1 | 0)         => Interval(D.ZERO, D.ZERO)
+        case (-1, 0 | 1, -1 | 0, 1)         => Interval(mulD(d, t).min(mulD(u, e)), mulU(d, e).max(mulU(u, t)))
+        case (-1, 0 | 1, -1 | 0, -1 | 0)    => Interval(mulD(u, e), mulU(d, e))
+
+        case (0 | 1, -1, 1, 1)              => Interval(mulD(d, e), mulU(u, e))
+        case (0 | 1, -1, 1, -1 | 0)         => Interval(mulD(d, e).max(mulD(u, t)), mulU(d, t).min(mulU(u, e)))
+        case (0 | 1, -1, -1 | 0, 1)         => Interval(D.ZERO, D.ZERO)
+        case (0 | 1, -1, -1 | 0, -1 | 0)    => Interval(mulD(u, t), mulU(d, t))
+
+        case (0 | 1, 0 | 1, 1, 1)           => Interval(mulD(d, e), mulU(u, t))
+        case (0 | 1, 0 | 1, 1, -1 | 0)      => Interval(mulD(d, e), mulU(d, t))
+        case (0 | 1, 0 | 1, -1 | 0, 1)      => Interval(mulD(u, e), mulU(u, t))
+        case (0 | 1, 0 | 1, -1 | 0, -1 | 0) => Interval(mulD(u, e), mulU(d, t))
+      }
     } catch {
       case e: ArithmeticException =>
-        if (r.up.getRoundingMode == RoundingMode.CEILING) D.posInf else D.negInf
-    }
-
-    def mulD(a: D.T, b: D.T) = try {
-      a.multiply(b, r.down)
-    } catch {
-      case e: ArithmeticException =>
-        if (r.down.getRoundingMode == RoundingMode.CEILING) D.posInf else D.negInf
-    }
-
-    (d.signum, u.signum, e.signum, t.signum) match {
-      case (-1, -1, 1, 1) => Interval(mulD(d, t), mulU(u, e))
-      case (-1, -1, 1, _) => Interval(mulD(u, t), mulU(u, e))
-      case (-1, -1, _, 1) => Interval(mulD(d, t), mulU(d, e))
-      case (-1, -1, _, _) => Interval(mulD(u, t), mulU(d, e))
-
-      case (-1, _, 1, 1)  => Interval(mulD(d, t), mulU(u, t))
-      case (-1, _, 1, _)  => Interval(D.ZERO, D.ZERO)
-      case (-1, _, _, 1)  => Interval(mulD(d, t).min(mulD(u, e)), mulU(d, e).max(mulU(u, t)))
-      case (-1, _, _, _)  => Interval(mulD(u, e), mulU(d, e))
-
-      case (_, -1, 1, 1)  => Interval(mulD(d, e), mulU(u, e))
-      case (_, -1, 1, _)  => Interval(mulD(d, e).max(mulD(u, t)), mulU(d, t).min(mulU(u, e)))
-      case (_, -1, _, 1)  => Interval(D.ZERO, D.ZERO)
-      case (_, -1, _, _)  => Interval(mulD(u, t), mulU(d, t))
-
-      case (_, _, 1, 1)   => Interval(mulD(d, e), mulU(u, t))
-      case (_, _, 1, _)   => Interval(mulD(d, e), mulU(d, t))
-      case (_, _, _, 1)   => Interval(mulD(u, e), mulU(u, t))
-      case (_, _, _, _)   => Interval(mulD(u, e), mulU(d, t))
+        if (r.down.getRoundingMode == RoundingMode.FLOOR)
+          Interval(D.negInf, D.posInf)
+        else
+          Interval(D.posInf, D.negInf)
     }
 
   }
@@ -188,7 +186,7 @@ case class Interval(d: D.T, u: D.T) {
 
   /**
    * Nice string representation of an interval.
-   * 
+   *
    * @return a string
    */
   override def toString() = {
