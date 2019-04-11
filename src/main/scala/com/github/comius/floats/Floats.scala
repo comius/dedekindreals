@@ -196,6 +196,13 @@ trait Floats {
      * @return Returns two numbers (x,y) such that {@code this} < x < y < {@code b}
      */
     def trisect(b: T, precision: Int): (T, T)
+    
+    /**
+     * Simple string representation
+     * 
+     * @return string of the number without exponents.
+     */
+    def toPlainString(): String
   }
 
   /** Positive infinity. */

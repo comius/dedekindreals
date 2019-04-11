@@ -137,6 +137,7 @@ object BigDecimalFloats extends Floats {
     override def signum(): Int = 1
     override def negate(): BigDecimalFloat = NegInf()
     override def toString(): String = "Inf"
+    override def toPlainString(): String = "Inf"
   }
 
   /**
@@ -149,6 +150,7 @@ object BigDecimalFloats extends Floats {
     override def signum(): Int = -1
     override def negate(): BigDecimalFloat = PosInf()
     override def toString(): String = "-Inf"
+    override def toPlainString(): String = "-Inf"
   }
 
   /**
@@ -160,7 +162,8 @@ object BigDecimalFloats extends Floats {
     override def isRegularNumber() = true
     override def signum(): Int = x.signum()
     override def negate(): BigDecimalFloat = Number(x.negate())
-    override def toString(): String = x.toPlainString()
+    override def toString(): String = x.toString()
+    override def toPlainString(): String = x.toPlainString()
 
     /**
      * Unlike BigDecimal implementation equals which compares also the scale/precision of the numbers,

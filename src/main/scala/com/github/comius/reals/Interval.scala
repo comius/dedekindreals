@@ -91,20 +91,19 @@ case class Interval(d: D.T, u: D.T) {
    * @return interval
    */
   def multiplyKaucher(i2: Interval, r: RoundingContext) = {
-    val Interval(d, u) = this
     val Interval(e, t) = i2
 
     def mulU(a: D.T, b: D.T) = try {
       a.multiply(b, r.up)
     } catch {
-      case a: ArithmeticException =>
+      case e: ArithmeticException =>
         if (r.up.getRoundingMode == RoundingMode.CEILING) D.posInf else D.negInf
     }
 
     def mulD(a: D.T, b: D.T) = try {
       a.multiply(b, r.down)
     } catch {
-      case a: ArithmeticException =>
+      case e: ArithmeticException =>
         if (r.down.getRoundingMode == RoundingMode.CEILING) D.posInf else D.negInf
     }
 
@@ -127,7 +126,7 @@ case class Interval(d: D.T, u: D.T) {
       case (_, _, 1, 1)   => Interval(mulD(d, e), mulU(u, t))
       case (_, _, 1, _)   => Interval(mulD(d, e), mulU(d, t))
       case (_, _, _, 1)   => Interval(mulD(u, e), mulU(u, t))
-      case (_, _, _, _)   => Interval(mulD(u, e), mulD(d, t))
+      case (_, _, _, _)   => Interval(mulD(u, e), mulU(d, t))
     }
 
   }
@@ -219,8 +218,8 @@ case class Interval(d: D.T, u: D.T) {
         val mcDownP = new MathContext(p + prec, RoundingMode.DOWN) // DOWN is towards zero
         val mcUpP = new MathContext(p + prec, RoundingMode.UP) // UP is away from zero
 
-        val xp = d.add(D.ZERO, mcDownP).toString()
-        val yp = u.add(D.ZERO, mcUpP).toString()
+        val xp = d.add(D.ZERO, mcDownP).toPlainString()
+        val yp = u.add(D.ZERO, mcUpP).toPlainString()
 
         val p2 = 1 + findLast(0)(px => px < xp.length && px < yp.length && xp(px) == yp(px))
 
