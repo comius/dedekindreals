@@ -99,25 +99,25 @@ case class Interval(d: D.T, u: D.T) {
     try {
 
       (d.signum, u.signum, e.signum, t.signum) match {
-        case (-1, -1, 1, 1)                 => Interval(mulD(d, t), mulU(u, e))
-        case (-1, -1, 1, -1 | 0)            => Interval(mulD(u, t), mulU(u, e))
-        case (-1, -1, -1 | 0, 1)            => Interval(mulD(d, t), mulU(d, e))
-        case (-1, -1, -1 | 0, -1 | 0)       => Interval(mulD(u, t), mulU(d, e))
+        case (-1 | 0, -1, 1, 0 | 1)         => Interval(mulD(d, t), mulU(u, e))
+        case (-1, -1 | 0, 1, -1)            => Interval(mulD(u, t), mulU(u, e))
+        case (-1 | 0, -1, -1 | 0, 1 | 0)    => Interval(mulD(d, t), mulU(d, e))
+        case (-1 | 0, -1, -1 | 0, -1)       => Interval(mulD(u, t), mulU(d, e))
 
-        case (-1, 0 | 1, 1, 1)              => Interval(mulD(d, t), mulU(u, t))
-        case (-1, 0 | 1, 1, -1 | 0)         => Interval(D.ZERO, D.ZERO)
-        case (-1, 0 | 1, -1 | 0, 1)         => Interval(mulD(d, t).min(mulD(u, e)), mulU(d, e).max(mulU(u, t)))
-        case (-1, 0 | 1, -1 | 0, -1 | 0)    => Interval(mulD(u, e), mulU(d, e))
+        case (-1 | 0, 0 | 1, 1, 0 | 1)      => Interval(mulD(d, t), mulU(u, t))
+        case (-1 | 0, 0 | 1, 1, -1)         => Interval(D.ZERO, D.ZERO)
+        case (-1 | 0, 0 | 1, -1 | 0, 0 | 1) => Interval(mulD(d, t).min(mulD(u, e)), mulU(d, e).max(mulU(u, t)))
+        case (-1 | 0, 0 | 1, -1 | 0, -1)    => Interval(mulD(u, e), mulU(d, e))
 
-        case (0 | 1, -1, 1, 1)              => Interval(mulD(d, e), mulU(u, e))
+        case (1, -1, 0 | 1, 1)              => Interval(mulD(d, e), mulU(u, e))
         case (0 | 1, -1, 1, -1 | 0)         => Interval(mulD(d, e).max(mulD(u, t)), mulU(d, t).min(mulU(u, e)))
-        case (0 | 1, -1, -1 | 0, 1)         => Interval(D.ZERO, D.ZERO)
-        case (0 | 1, -1, -1 | 0, -1 | 0)    => Interval(mulD(u, t), mulU(d, t))
+        case (1, -1, -1, 1)                 => Interval(D.ZERO, D.ZERO)
+        case (1, -1, -1 | 0, -1 | 0)        => Interval(mulD(u, t), mulU(d, t))
 
-        case (0 | 1, 0 | 1, 1, 1)           => Interval(mulD(d, e), mulU(u, t))
-        case (0 | 1, 0 | 1, 1, -1 | 0)      => Interval(mulD(d, e), mulU(d, t))
-        case (0 | 1, 0 | 1, -1 | 0, 1)      => Interval(mulD(u, e), mulU(u, t))
-        case (0 | 1, 0 | 1, -1 | 0, -1 | 0) => Interval(mulD(u, e), mulU(d, t))
+        case (1, 0 | 1, 1, 0 | 1)           => Interval(mulD(d, e), mulU(u, t))
+        case (1, 0 | 1, 1, -1)              => Interval(mulD(d, e), mulU(d, t))
+        case (1, 0 | 1, -1 | 0, 1 | 0)      => Interval(mulD(u, e), mulU(u, t))
+        case (1, 0 | 1, -1 | 0, -1)         => Interval(mulD(u, e), mulU(d, t))
       }
     } catch {
       case e: ArithmeticException =>

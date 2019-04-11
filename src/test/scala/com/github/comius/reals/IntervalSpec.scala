@@ -7,6 +7,7 @@ import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.BooleanOperators
 import org.scalacheck.Prop.forAll
+
 import org.scalacheck.Properties
 
 import com.github.comius.RoundingContext
@@ -91,6 +92,11 @@ class IntervalSpec extends Properties("Interval") {
           (10, arbFloat.arbitrary),
           (1, Gen.const(D.posInf)), (1, Gen.const(D.negInf)))
       }
+    
+    /*implicit def nastyFloatWithEndpoints: Arbitrary[D.T] =
+      Arbitrary {
+        Gen.oneOf(D.negInf, D.posInf, D.ZERO, D.ONE, D.ONE.negate())
+      }*/
 
     implicit def arbInterval: Arbitrary[Interval] =
       Arbitrary {
@@ -114,39 +120,51 @@ class IntervalSpec extends Properties("Interval") {
     // Multiply extension direction (=>) only works when x and y are not inf, otherwise we can find w
     property("multiplyExtensionToRight") = forAll {
       (x: Interval, y: Interval) =>
-        (x.d.compareTo(x.u) <= 0 && y.d.compareTo(y.u) <= 0) ==>
-          {
-            val xy = x.multiply(y, rinf)
+        //   (x.d.compareTo(x.u) <= 0 && y.d.compareTo(y.u) <= 0) ==>
+        {
+          val xy = x.multiply(y, rinf)
 
-            val xp = Interval(x.d.subtract(eps, mcd), x.u.add(eps, mcu))
-            val yp = Interval(y.d.subtract(eps, mcd), y.u.add(eps, mcu))
+          val xp = Interval(x.d.subtract(eps, mcd), x.u.add(eps, mcu))
+          val yp = Interval(y.d.subtract(eps, mcd), y.u.add(eps, mcu))
 
-            val xpyp = xp.multiply(yp, rinf)
+          val xpyp = xp.multiply(yp, rinf)
 
-            val w = Interval(xy.d.subtract(eps2, mcd), xy.u.add(eps2, mcu)) // xy >> w
-            approx(xpyp, w) :| s" not ${xpyp} >> ${w}"
-          }
+          val w = Interval(xy.d.subtract(eps2, mcd), xy.u.add(eps2, mcu)) // xy >> w
+          approx(xpyp, w) :| s" not ${xpyp} >> ${w}"
+        }
     }
 
+   /* val floats = List(D.negInf, D.posInf, D.ZERO, D.ONE, D.ONE.negate())
+    for {
+      d <- floats
+      u <- floats
+      e <- floats
+      t <- floats
+      au <- List(D.ONE, D.ZERO, D.ONE.negate())
+      bu <- List(D.ONE, D.ZERO, D.ONE.negate())
+    }*/
+    
     property("multiplyExtensionToLeft") = forAll {
       (xp: Interval, yp: Interval) =>
-        (xp.d.compareTo(xp.u) < 0 && yp.d.compareTo(yp.u) < 0) ==>
-          {
-            val xpyp = xp.multiply(yp, rinf)
+        // (xp.d.compareTo(xp.u) < 0 && yp.d.compareTo(yp.u) < 0) ==>
+        {
+          val xpyp = xp.multiply(yp, rinf)
 
-            def liftD(x: D.T) = if (!x.isNegInf) x else arbFloat.arbitrary.sample.get
-            def liftU(x: D.T) = if (!x.isPosInf) x else arbFloat.arbitrary.sample.get
+          def liftD(x: D.T) = if (!x.isNegInf) x else arbFloat.arbitrary.sample.get
+          def liftU(x: D.T) = if (!x.isPosInf) x else arbFloat.arbitrary.sample.get
 
-            val x = Interval(liftD(xp.d.add(eps, mcd)), liftU(xp.u.subtract(eps, mcu)))
-            val y = Interval(liftD(yp.d.add(eps, mcd)), liftU(yp.u.subtract(eps, mcu)))
-            val xy = x.multiply(y, rinf)
+          val x = Interval(liftD(xp.d.add(eps, mcd)), liftU(xp.u.subtract(eps, mcu)))
+          val y = Interval(liftD(yp.d.add(eps, mcd)), liftU(yp.u.subtract(eps, mcu)))
+          val xy = x.multiply(y, rinf)
 
-            approx(xy, xpyp) :| s" not ${xy} >> ${xpyp}"
+          (approx(xy, xpyp) || (xy == Interval(D.ZERO, D.ZERO) && xpyp == Interval(D.ZERO, D.ZERO))) :| s" not ${xy} >> ${xpyp}"
 
-          }
+        }
     }
-  }
 
-  //  println(Interval(D.ONE, D.posInf).multiply(Interval(D.ZERO, D.ONE), r))
-  //  println(Interval(D.posInf, D.ONE).multiply(Interval(D.ONE, D.ZERO), r))
+
+
+    //println(Interval(D.ONE, D.posInf).multiply(Interval(D.ZERO, D.ONE), r))
+    //println(Interval(D.posInf, D.ONE).multiply(Interval(D.ONE, D.ZERO), r))
+  }
 }

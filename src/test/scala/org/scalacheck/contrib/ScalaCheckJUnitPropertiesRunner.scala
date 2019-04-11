@@ -80,7 +80,7 @@ class ScalaCheckJUnitPropertiesRunner(suiteClass: java.lang.Class[Properties]) e
           
             notifier.fireTestStarted(descObj)
             //.withMinSuccessfulTests(1000000).withInitialSeed(123123213)
-            Test.check(prop)(_.withTestCallback(consoleReporter chain (new CustomTestCallback(notifier, descObj))))
+            Test.check(prop)(_.withMinSuccessfulTests(1000).withInitialSeed(123123213).withTestCallback(consoleReporter chain (new CustomTestCallback(notifier, descObj))))
   
             notifier.fireTestFinished(descObj)
           }
