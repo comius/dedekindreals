@@ -62,7 +62,7 @@ case class Interval(d: D.T, u: D.T) {
   /**
    * Default multiplication is using by Kaucher.
    */
-  val multiply = multiplyKaucher(_, _)
+  val multiply = multiplyLakayev(_, _)
 
   /**
    * Multiplies two intervals using Moore's formulas.
@@ -150,13 +150,20 @@ case class Interval(d: D.T, u: D.T) {
     val (lyp, lym) = pm(i2.d)
     val (uyp, uym) = pm(i2.u)
 
-    // TODO check intervals with infinite endpoints - problem when multiplied by zeroes !!!
+    def max(a: D.T, b: D.T): D.T = a.max(b)
+    def mulD(a: D.T, b: D.T): D.T = try a.multiply(b, r.down) catch { case e: ArithmeticException => D.negInf }
+    def mulU(a: D.T, b: D.T): D.T = try a.multiply(b, r.up) catch { case e: ArithmeticException => D.posInf }
+    
 
-    Interval(
-      lxp.multiply(lyp, r.down).max(uxm.multiply(uym, r.down)).subtract(
-        uxp.multiply(lym, r.up).max(lxm.multiply(uyp, r.up)), r.down),
-      uxp.multiply(uyp, r.up).max(lxm.multiply(lym, r.up)).subtract(
-        lxp.multiply(uym, r.down).max(uxm.multiply(lyp, r.down)), r.up))
+    try {
+      Interval(
+        max(mulD(lxp, lyp), mulD(uxm, uym)).subtract(max(mulU(uxp, lym), mulU(lxm, uyp)), r.down),
+        max(mulU(uxp, uyp), mulU(lxm, lym)).subtract(max(mulD(lxp, uym), mulD(uxm, lyp)), r.up))
+    } catch {      
+      case e: ArithmeticException =>
+        Interval(D.negInf, D.posInf)
+        //throw new ArithmeticException(s"Multiplying ${this} and ${i2}")
+    }
   }
 
   /**
