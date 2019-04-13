@@ -4,17 +4,15 @@ import java.math.RoundingMode
 
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
-import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Prop
 import org.scalacheck.Prop.BooleanOperators
+import org.scalacheck.Prop.Result
 import org.scalacheck.Prop.forAll
-
 import org.scalacheck.Properties
 
 import com.github.comius.RoundingContext
-import com.github.comius.floats.Floats.{ impl => D }
-import org.scalacheck.Gen
-import org.scalacheck.Prop
 import com.github.comius.floats.FloatSpec
+import com.github.comius.floats.Floats.{ impl => D }
 
 /**
  * Unit tests for Intervals.
@@ -23,18 +21,9 @@ import com.github.comius.floats.FloatSpec
  */
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class IntervalSpec extends Properties("Interval") {
-  val r = new RoundingContext(0, 10)
+  import IntervalSpec._
 
-  /**
-   * Implicitly defines arbitrary Interval, which is used in forAll tests when no generator is given.
-   */
-  implicit def arbInterval: Arbitrary[Interval] =
-    Arbitrary {
-      for {
-        a <- FloatSpec.genFloat
-        b <- FloatSpec.genFloat
-      } yield Interval(a, b)
-    }
+  val r = new RoundingContext(0, 10)
 
   // Verifies multiplication is comutative.
   property("multiplyComutative") = forAll {
@@ -66,9 +55,9 @@ class IntervalSpec extends Properties("Interval") {
 
   /**
    * Checks that interval {@code i2} approximates interval {@code i1}.
-   * 
+   *
    * Special case are infinite endpoints which approximate them-selves.
-   * 
+   *
    * @param i1 interval
    * @param i2 interval
    * @return {@code i1} >> {@code i2}
@@ -84,37 +73,21 @@ class IntervalSpec extends Properties("Interval") {
   val mcu = new MathContext(0, RoundingMode.CEILING)
   val rinf = new RoundingContext(0, 0)
 
-  def checkExtensionRight(x: Interval, y: Interval): Prop =
-    //   (x.d.compareTo(x.u) <= 0 && y.d.compareTo(y.u) <= 0) ==>
+  def checkExtensionRight(op: (Interval, Interval) => Interval)(x: Interval, y: Interval): Prop =
     {
-      val xy = x.multiply(y, rinf)
+      val xy = op(x, y)
 
       val xp = Interval(x.d.subtract(eps, mcd), x.u.add(eps, mcu))
       val yp = Interval(y.d.subtract(eps, mcd), y.u.add(eps, mcu))
 
-      val xpyp = xp.multiply(yp, rinf)
-
+      val xpyp = op(xp, yp)
       val w = Interval(xy.d.subtract(eps2, mcd), xy.u.add(eps2, mcu)) // xy >> w
       approx(xpyp, w) :| s" not ${xpyp} >> ${w}"
     }
 
-  // Multiply extension direction (=>) only works when x and y are not inf, otherwise we can find w
-  property("multiplyExtensionToRight") = forAll(checkExtensionRight(_, _))
-
-  val floats = List(D.negInf, D.posInf, D.ZERO, D.ONE, D.ONE.negate())
-  property("multiplyExtensionToRightSpecialValues") = {
-    val all = for {
-      d <- floats
-      u <- floats
-      e <- floats
-      t <- floats
-    } yield checkExtensionRight(Interval(d, u), Interval(e, t))
-    all.reduce(_ && _)
-  }
-
-  def checkExtensionLeft(xp: Interval, yp: Interval): Prop =
+  def checkExtensionLeft(op: (Interval, Interval) => Interval)(xp: Interval, yp: Interval): Prop =
     {
-      val xpyp = xp.multiply(yp, rinf)
+      val xpyp = op(xp, yp)
       val w = Interval(xpyp.d.subtract(eps2, mcd), xpyp.u.add(eps2, mcu))
 
       def liftD(x: D.T) = if (!x.isNegInf) x else FloatSpec.genRegularFloat.sample.get
@@ -122,24 +95,71 @@ class IntervalSpec extends Properties("Interval") {
 
       val x = Interval(liftD(xp.d.add(eps, mcd)), liftU(xp.u.subtract(eps, mcu)))
       val y = Interval(liftD(yp.d.add(eps, mcd)), liftU(yp.u.subtract(eps, mcu)))
-      val xy = x.multiply(y, rinf)
+      val xy = op(x, y)
 
       approx(xy, w) :| s" not ${xy} >> ${w}"
     }
 
-  property("multiplyExtensionToLeft") = forAll(checkExtensionLeft(_, _))
+  val add: (Interval, Interval) => Interval = _.add(_, rinf)
+  val subtract: (Interval, Interval) => Interval = _.subtract(_, rinf)
+  val multiply: (Interval, Interval) => Interval = _.multiply(_, rinf)
+  val divide: (Interval, Interval) => Interval = _.divide(_, new RoundingContext(0, 10000))
 
-  property("multiplyExtensionToLeftSpecialValues") = {
-    val all = for {
-      d <- floats
-      u <- floats
-      e <- floats
-      t <- floats
-    } yield checkExtensionLeft(Interval(d, u), Interval(e, t))
-    all.reduce(_ && _)
+  for ((opDesc, op) <- Map("Add" -> add, "Subtract" -> subtract, "Multiply" -> multiply, "Divide" -> divide)) {
+    property(s"${opDesc}ExtensionToRight") = forAll(checkExtensionRight(op)(_, _))
+
+    property(s"${opDesc}ExtensionToRightSpecialValues") =
+      forall(specialIntervals, specialIntervals)(checkExtensionRight(op)(_, _))
+
+    property(s"${opDesc}ExtensionToLeft") = forAll(checkExtensionLeft(op)(_, _))
+
+    property(s"${opDesc}ExtensionToLeftSpecialValues") =
+      forall(specialIntervals, specialIntervals)(checkExtensionLeft(op)(_, _))
+
   }
 
-  //println(Interval(D.ONE, D.posInf).multiply(Interval(D.ZERO, D.ONE), r))
-  //println(Interval(D.posInf, D.ONE).multiply(Interval(D.ONE, D.ZERO), r))
+  // println(Interval(D.ONE, D.posInf).multiply(Interval(D.ZERO, D.ONE), r))
+  // println(Interval(D.posInf, D.ONE).multiply(Interval(D.ONE, D.ZERO), r))
+}
 
+/**
+ * Provides generators for Interval.
+ */
+object IntervalSpec {
+  /**
+   * Implicitly defines arbitrary Interval, which is used in forAll tests when no generator is given.
+   */
+  implicit def arbInterval: Arbitrary[Interval] =
+    Arbitrary {
+      for {
+        d <- FloatSpec.genFloat
+        u <- FloatSpec.genFloat
+      } yield Interval(d, u)
+    }
+
+  /**
+   * A special forall that tests all values (not just random ones).
+   *
+   * Implemented in a form of property, because aggregating Prop-s with && throws stack exception.
+   */
+  def forall[A1, A2](g1: Stream[A1], g2: Stream[A2])(f: (A1, A2) => Prop): Prop = Prop {
+    prms0 =>
+      var r = Result(Prop.True)
+      for {
+        gv1 <- g1
+        gv2 <- g2
+      } (
+        r = r && f(gv1, gv2)(prms0))
+      if (r.status == Prop.True) Result(Prop.Proof) else r
+  }
+
+  /** Stream of special Floats */
+  val specialFloats = Stream(D.negInf, D.posInf, D.ZERO, D.ONE, D.ONE.negate())
+
+  /** Stream of special Intervals */
+  val specialIntervals =
+    for {
+      d <- specialFloats
+      u <- specialFloats
+    } yield Interval(d, u)
 }

@@ -7,6 +7,7 @@ import scala.annotation.tailrec
 
 import com.github.comius.RoundingContext
 import com.github.comius.floats.Floats.{ impl => D }
+import scala.util.control.Exception
 
 /**
  * General interval with rational endpoints. There are no restrictions on the endpoints (d<u, d=u or d<u).
@@ -18,13 +19,16 @@ import com.github.comius.floats.Floats.{ impl => D }
 case class Interval(d: D.T, u: D.T) {
 
   /**
-   * Flips the interval.
+   * Flips the interval. Warning: this is not computable on R!
    *
-   * @return interval with swaped endpoints
+   * @return interval with swapped endpoints
    */
   def flip(): Interval = {
     Interval(u, d)
   }
+
+  private val negInfOnException = Exception.failAsValue(classOf[ArithmeticException])(D.negInf)
+  private val posInfOnException = Exception.failAsValue(classOf[ArithmeticException])(D.posInf)
 
   /**
    * Adds two intervals.
@@ -35,7 +39,8 @@ case class Interval(d: D.T, u: D.T) {
    */
   def add(i2: Interval, r: RoundingContext) = {
     val Interval(e, t) = i2
-    Interval(d.add(e, r.down), u.add(t, r.up))
+
+    Interval(negInfOnException(d.add(e, r.down)), posInfOnException(u.add(t, r.up)))
   }
 
   /**
@@ -56,7 +61,7 @@ case class Interval(d: D.T, u: D.T) {
    */
   def subtract(i2: Interval, r: RoundingContext) = {
     val Interval(e, t) = i2
-    Interval(d.subtract(t, r.down), u.subtract(e, r.up))
+    Interval(negInfOnException(d.subtract(t, r.down)), posInfOnException(u.subtract(e, r.up)))
   }
 
   /**
@@ -93,40 +98,30 @@ case class Interval(d: D.T, u: D.T) {
   def multiplyKaucher(i2: Interval, r: RoundingContext) = {
     val Interval(e, t) = i2
 
-    def mulU(a: D.T, b: D.T) = a.multiply(b, r.up)
-    def mulD(a: D.T, b: D.T) = a.multiply(b, r.down)
+    def mulU(a: D.T, b: D.T) = posInfOnException(a.multiply(b, r.up))
+    def mulD(a: D.T, b: D.T) = negInfOnException(a.multiply(b, r.down))
 
-    try {
+    (d.signum, u.signum, e.signum, t.signum) match {
+      case (-1 | 0, -1, 1, 0 | 1)         => Interval(mulD(d, t), mulU(u, e))
+      case (-1, -1 | 0, 1, -1)            => Interval(mulD(u, t), mulU(u, e))
+      case (-1 | 0, -1, -1 | 0, 1 | 0)    => Interval(mulD(d, t), mulU(d, e))
+      case (-1 | 0, -1, -1 | 0, -1)       => Interval(mulD(u, t), mulU(d, e))
 
-      (d.signum, u.signum, e.signum, t.signum) match {
-        case (-1 | 0, -1, 1, 0 | 1)         => Interval(mulD(d, t), mulU(u, e))
-        case (-1, -1 | 0, 1, -1)            => Interval(mulD(u, t), mulU(u, e))
-        case (-1 | 0, -1, -1 | 0, 1 | 0)    => Interval(mulD(d, t), mulU(d, e))
-        case (-1 | 0, -1, -1 | 0, -1)       => Interval(mulD(u, t), mulU(d, e))
+      case (-1 | 0, 0 | 1, 1, 0 | 1)      => Interval(mulD(d, t), mulU(u, t))
+      case (-1 | 0, 0 | 1, 1, -1)         => Interval(D.ZERO, D.ZERO)
+      case (-1 | 0, 0 | 1, -1 | 0, 0 | 1) => Interval(mulD(d, t).min(mulD(u, e)), mulU(d, e).max(mulU(u, t)))
+      case (-1 | 0, 0 | 1, -1 | 0, -1)    => Interval(mulD(u, e), mulU(d, e))
 
-        case (-1 | 0, 0 | 1, 1, 0 | 1)      => Interval(mulD(d, t), mulU(u, t))
-        case (-1 | 0, 0 | 1, 1, -1)         => Interval(D.ZERO, D.ZERO)
-        case (-1 | 0, 0 | 1, -1 | 0, 0 | 1) => Interval(mulD(d, t).min(mulD(u, e)), mulU(d, e).max(mulU(u, t)))
-        case (-1 | 0, 0 | 1, -1 | 0, -1)    => Interval(mulD(u, e), mulU(d, e))
+      case (1, -1, 0 | 1, 1)              => Interval(mulD(d, e), mulU(u, e))
+      case (0 | 1, -1, 1, -1 | 0)         => Interval(mulD(d, e).max(mulD(u, t)), mulU(d, t).min(mulU(u, e)))
+      case (1, -1, -1, 1)                 => Interval(D.ZERO, D.ZERO)
+      case (1, -1, -1 | 0, -1 | 0)        => Interval(mulD(u, t), mulU(d, t))
 
-        case (1, -1, 0 | 1, 1)              => Interval(mulD(d, e), mulU(u, e))
-        case (0 | 1, -1, 1, -1 | 0)         => Interval(mulD(d, e).max(mulD(u, t)), mulU(d, t).min(mulU(u, e)))
-        case (1, -1, -1, 1)                 => Interval(D.ZERO, D.ZERO)
-        case (1, -1, -1 | 0, -1 | 0)        => Interval(mulD(u, t), mulU(d, t))
-
-        case (1, 0 | 1, 1, 0 | 1)           => Interval(mulD(d, e), mulU(u, t))
-        case (1, 0 | 1, 1, -1)              => Interval(mulD(d, e), mulU(d, t))
-        case (1, 0 | 1, -1 | 0, 1 | 0)      => Interval(mulD(u, e), mulU(u, t))
-        case (1, 0 | 1, -1 | 0, -1)         => Interval(mulD(u, e), mulU(d, t))
-      }
-    } catch {
-      case e: ArithmeticException =>
-        if (r.down.getRoundingMode == RoundingMode.FLOOR)
-          Interval(D.negInf, D.posInf)
-        else
-          Interval(D.posInf, D.negInf)
+      case (1, 0 | 1, 1, 0 | 1)           => Interval(mulD(d, e), mulU(u, t))
+      case (1, 0 | 1, 1, -1)              => Interval(mulD(d, e), mulU(d, t))
+      case (1, 0 | 1, -1 | 0, 1 | 0)      => Interval(mulD(u, e), mulU(u, t))
+      case (1, 0 | 1, -1 | 0, -1)         => Interval(mulD(u, e), mulU(d, t))
     }
-
   }
 
   /**
@@ -151,19 +146,13 @@ case class Interval(d: D.T, u: D.T) {
     val (uyp, uym) = pm(i2.u)
 
     def max(a: D.T, b: D.T): D.T = a.max(b)
-    def mulD(a: D.T, b: D.T): D.T = try a.multiply(b, r.down) catch { case e: ArithmeticException => D.negInf }
-    def mulU(a: D.T, b: D.T): D.T = try a.multiply(b, r.up) catch { case e: ArithmeticException => D.posInf }
-    
+    def mulD(a: D.T, b: D.T): D.T = negInfOnException(a.multiply(b, r.down))
+    def mulU(a: D.T, b: D.T): D.T = posInfOnException(a.multiply(b, r.up))
 
-    try {
-      Interval(
-        max(mulD(lxp, lyp), mulD(uxm, uym)).subtract(max(mulU(uxp, lym), mulU(lxm, uyp)), r.down),
-        max(mulU(uxp, uyp), mulU(lxm, lym)).subtract(max(mulD(lxp, uym), mulD(uxm, lyp)), r.up))
-    } catch {      
-      case e: ArithmeticException =>
-        Interval(D.negInf, D.posInf)
-        //throw new ArithmeticException(s"Multiplying ${this} and ${i2}")
-    }
+    Interval(
+      negInfOnException(max(mulD(lxp, lyp), mulD(uxm, uym)).subtract(max(mulU(uxp, lym), mulU(lxm, uyp)), r.down)),
+      posInfOnException(max(mulU(uxp, uyp), mulU(lxm, lym)).subtract(max(mulD(lxp, uym), mulD(uxm, lyp)), r.up)))
+
   }
 
   /**
