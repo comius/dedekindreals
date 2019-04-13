@@ -141,7 +141,7 @@ Interpolations and extrapolations are covered in a following section.
 
 *Rationale:* Correctness.
 
-*Verification:* Verify on random numbers as well as on special values.
+*Verification:* Verify consistency on random numbers as well as on special values.
 
 ### Requirement: signum
 **CompareTo(0) operation shall be consistent with signum.**

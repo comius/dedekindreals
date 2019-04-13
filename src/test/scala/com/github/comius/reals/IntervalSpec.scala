@@ -14,54 +14,48 @@ import com.github.comius.RoundingContext
 import com.github.comius.floats.Floats.{ impl => D }
 import org.scalacheck.Gen
 import org.scalacheck.Prop
+import com.github.comius.floats.FloatSpec
 
+/**
+ * Unit tests for Intervals.
+ *
+ * Environment: no specific test environment needs to be set up. Java/Scala provide everything in default installation.
+ */
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class IntervalSpec extends Properties("Interval") {
   val r = new RoundingContext(0, 10)
 
-  def arbFloat: Arbitrary[D.T] =
-    Arbitrary {
-      for {
-        a <- arbitrary[scala.math.BigDecimal]
-      } yield D.valueOf(a.underlying().toString(), new MathContext(a.underlying().precision()))
-    }
-
-  implicit def arbFloatWithEndpoints: Arbitrary[D.T] =
-    Arbitrary {
-      Gen.frequency(
-        (10, arbFloat.arbitrary),
-        (1, Gen.const(D.posInf)), (1, Gen.const(D.negInf)))
-    }
-
-  /*implicit def nastyFloatWithEndpoints: Arbitrary[D.T] =
-      Arbitrary {
-        Gen.oneOf(D.negInf, D.posInf, D.ZERO, D.ONE, D.ONE.negate())
-      }*/
-
+  /**
+   * Implicitly defines arbitrary Interval, which is used in forAll tests when no generator is given.
+   */
   implicit def arbInterval: Arbitrary[Interval] =
     Arbitrary {
       for {
-        a <- arbitrary[D.T]
-        b <- arbitrary[D.T]
+        a <- FloatSpec.genFloat
+        b <- FloatSpec.genFloat
       } yield Interval(a, b)
     }
 
+  // Verifies multiplication is comutative.
   property("multiplyComutative") = forAll {
     (a: Interval, b: Interval) =>
       (a.multiply(b, r) == b.multiply(a, r)) :| s"${a.multiply(b, r)} != ${b.multiply(a, r)}"
   }
 
+  // Verifies Kaucher multiplication is commutative. (TODO problems)
   property("multiplyKaucherComutative") = forAll {
     (a: Interval, b: Interval) =>
       (a.multiplyKaucher(b, r) == b.multiplyKaucher(a, r)) :|
         s"${a.multiplyKaucher(b, r)} != ${b.multiplyKaucher(a, r)}"
   }
 
+  // Verifies dualities hold. / They actually don't on infinities.
   property("multiplyDuality") = forAll {
     (a: Interval, b: Interval) =>
       (a.flip.multiply(b.flip, r.swap()).flip == a.multiply(b, r))
   }
 
+  // Verifies Kaucher multiplication is equal to Lakayev (TODO problems with infinities).
   property("multiplyKaucherEqualsLakayev") = forAll {
     (a: Interval, b: Interval) =>
       val lakayev = a.multiplyLakayev(b, r)
@@ -70,6 +64,15 @@ class IntervalSpec extends Properties("Interval") {
         s"Lakayev ${lakayev} != Kaucher ${kaucher}"
   }
 
+  /**
+   * Checks that interval {@code i2} approximates interval {@code i1}.
+   * 
+   * Special case are infinite endpoints which approximate them-selves.
+   * 
+   * @param i1 interval
+   * @param i2 interval
+   * @return {@code i1} >> {@code i2}
+   */
   def approx(i1: Interval, i2: Interval) = {
     (i1.d.compareTo(i2.d) > 0 || (i1.d == i2.d && !i1.d.isRegularNumber())) &&
       (i2.u.compareTo(i1.u) > 0 || (i1.u == i2.u && !i1.u.isRegularNumber()))
@@ -114,8 +117,8 @@ class IntervalSpec extends Properties("Interval") {
       val xpyp = xp.multiply(yp, rinf)
       val w = Interval(xpyp.d.subtract(eps2, mcd), xpyp.u.add(eps2, mcu))
 
-      def liftD(x: D.T) = if (!x.isNegInf) x else arbFloat.arbitrary.sample.get
-      def liftU(x: D.T) = if (!x.isPosInf) x else arbFloat.arbitrary.sample.get
+      def liftD(x: D.T) = if (!x.isNegInf) x else FloatSpec.genRegularFloat.sample.get
+      def liftU(x: D.T) = if (!x.isPosInf) x else FloatSpec.genRegularFloat.sample.get
 
       val x = Interval(liftD(xp.d.add(eps, mcd)), liftU(xp.u.subtract(eps, mcu)))
       val y = Interval(liftD(yp.d.add(eps, mcd)), liftU(yp.u.subtract(eps, mcu)))
@@ -125,17 +128,17 @@ class IntervalSpec extends Properties("Interval") {
     }
 
   property("multiplyExtensionToLeft") = forAll(checkExtensionLeft(_, _))
-  
+
   property("multiplyExtensionToLeftSpecialValues") = {
     val all = for {
       d <- floats
       u <- floats
       e <- floats
-      t <- floats      
+      t <- floats
     } yield checkExtensionLeft(Interval(d, u), Interval(e, t))
     all.reduce(_ && _)
-  }        
-        
+  }
+
   //println(Interval(D.ONE, D.posInf).multiply(Interval(D.ZERO, D.ONE), r))
   //println(Interval(D.posInf, D.ONE).multiply(Interval(D.ONE, D.ZERO), r))
 

@@ -137,13 +137,13 @@ Endpoints can also be positive and negative infinity, we must be take to handle 
  
 ## Requirement: interval operations
 
-**Interval arithmetic operations are proper extensions of arithmetic operations on rational.**
+**Interval arithmetic operations are proper extensions of arithmetic operations on rationals.**
 **Proper extension: x ⍟ y ⋐  w ⇔  ∃x' y' . x ⋐ x' ∧ y ⋐ y' ∧ x' ⍟  y' ⋐  w**
   
 *Rationale:* Correctness.  
 
 *Verification:* Test the property on random values (including all combinations of special values) 
-for all operations.
+for all binary operations.
 
 
 ## Requirement: string representation of intervals
