@@ -13,6 +13,7 @@ import org.scalacheck.Properties
 import com.github.comius.RoundingContext
 import com.github.comius.floats.FloatSpec
 import com.github.comius.floats.Floats.{ impl => D }
+import org.scalacheck.util.Pretty
 
 /**
  * Unit tests for Intervals.
@@ -67,7 +68,7 @@ class IntervalSpec extends Properties("Interval") {
       (i2.u.compareTo(i1.u) > 0 || (i1.u == i2.u && !i1.u.isRegularNumber()))
   }
 
-  val eps = D.valueOfEpsilon(1000)
+  val eps = D.valueOfEpsilon(610)
   val eps2 = D.valueOfEpsilon(10)
   val mcd = new MathContext(0, RoundingMode.FLOOR)
   val mcu = new MathContext(0, RoundingMode.CEILING)
@@ -82,8 +83,22 @@ class IntervalSpec extends Properties("Interval") {
 
       val xpyp = op(xp, yp)
       val w = Interval(xy.d.subtract(eps2, mcd), xy.u.add(eps2, mcu)) // xy >> w
-      approx(xpyp, w) :| s" not ${xpyp} >> ${w}"
+      approx(xpyp, w) :| s" not ${xpyp} >> ${w} ${xpyp.d.compareTo(w.d)} ${w.u.compareTo(xpyp.u)}"
     }
+
+  def checkExtensionRightForDivision(op: (Interval, Interval) => Interval)(x: Interval, y: Interval): Prop =
+      {
+        val xy = op(x, y)
+
+        val xp = Interval(x.d.subtract(eps, mcd), x.u.add(eps, mcu))
+        val yp =
+          if (y.d == D.ZERO || y.u == D.ZERO) Interval(D.negInf, D.posInf)
+          else Interval( y.d.subtract(eps, mcd), y.u.add(eps, mcu))
+
+        val xpyp = op(xp, yp)
+        val w = Interval(xy.d.subtract(eps2, mcd), xy.u.add(eps2, mcu)) // xy >> w
+        approx(xpyp, w) :| s" not ${xpyp} >> ${w} ${xpyp.d.compareTo(w.d)} ${w.u.compareTo(xpyp.u)}"
+      }
 
   def checkExtensionLeft(op: (Interval, Interval) => Interval)(xp: Interval, yp: Interval): Prop =
     {
@@ -103,13 +118,19 @@ class IntervalSpec extends Properties("Interval") {
   val add: (Interval, Interval) => Interval = _.add(_, rinf)
   val subtract: (Interval, Interval) => Interval = _.subtract(_, rinf)
   val multiply: (Interval, Interval) => Interval = _.multiply(_, rinf)
-  val divide: (Interval, Interval) => Interval = _.divide(_, new RoundingContext(0, 10000))
+  val divide: (Interval, Interval) => Interval = _.divide(_, new RoundingContext(0, 1200))
 
   for ((opDesc, op) <- Map("Add" -> add, "Subtract" -> subtract, "Multiply" -> multiply, "Divide" -> divide)) {
-    property(s"${opDesc}ExtensionToRight") = forAll(checkExtensionRight(op)(_, _))
 
-    property(s"${opDesc}ExtensionToRightSpecialValues") =
-      forall(specialIntervals, specialIntervals)(checkExtensionRight(op)(_, _))
+    if (op == divide) {
+      property(s"${opDesc}ExtensionToRight") = forAll(checkExtensionRightForDivision(op)(_, _))
+      property(s"${opDesc}ExtensionToRightSpecialValues") =
+        forall(specialIntervals, specialIntervals)(checkExtensionRightForDivision(op)(_, _))
+    } else {
+      property(s"${opDesc}ExtensionToRight") = forAll(checkExtensionRight(op)(_, _))
+      property(s"${opDesc}ExtensionToRightSpecialValues") =
+        forall(specialIntervals, specialIntervals)(checkExtensionRight(op)(_, _))
+    }
 
     property(s"${opDesc}ExtensionToLeft") = forAll(checkExtensionLeft(op)(_, _))
 
@@ -118,8 +139,9 @@ class IntervalSpec extends Properties("Interval") {
 
   }
 
-  // println(Interval(D.ONE, D.posInf).multiply(Interval(D.ZERO, D.ONE), r))
-  // println(Interval(D.posInf, D.ONE).multiply(Interval(D.ONE, D.ZERO), r))
+  property("addEdgeCases") =
+    Interval(D.posInf, D.negInf).add(Interval(D.negInf, D.posInf), rinf) == Interval(D.negInf, D.posInf)
+
 }
 
 /**
@@ -142,15 +164,23 @@ object IntervalSpec {
    *
    * Implemented in a form of property, because aggregating Prop-s with && throws stack exception.
    */
-  def forall[A1, A2](g1: Stream[A1], g2: Stream[A2])(f: (A1, A2) => Prop): Prop = Prop {
+  def forall[A1, A2](g1: Stream[A1], g2: Stream[A2])(f: (A1, A2) => Prop)(implicit pp1: A1 => Pretty, pp2: A2 => Pretty): Prop = Prop {
     prms0 =>
-      var r = Result(Prop.True)
-      for {
-        gv1 <- g1
-        gv2 <- g2
-      } (
-        r = r && f(gv1, gv2)(prms0))
-      if (r.status == Prop.True) Result(Prop.Proof) else r
+      def aggregate: Prop.Result = {
+        var r = Result(Prop.True)
+        for {
+          gv1 <- g1
+          gv2 <- g2
+        } {
+          r = r && f(gv1, gv2)(prms0)
+          if (r.status != Prop.True)
+            return r
+              .addArg(Prop.Arg("ARG1", gv2, 0, gv2, pp2(gv2), pp2(gv2)))
+              .addArg(Prop.Arg("ARG0", gv1, 0, gv1, pp1(gv1), pp1(gv1)))
+        }
+        return Result(Prop.Proof)
+      }
+      aggregate
   }
 
   /** Stream of special Floats */
