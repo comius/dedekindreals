@@ -163,7 +163,7 @@ trait Floats {
      *
      * @return absolute value of this {@code Float}.
      */
-    def abs() = if (signum()<0) negate else this
+    def abs(): T = if (signum()<0) negate else this.asInstanceOf[T]
 
     /**
      * Returns a midpoint/average between {@code this} and {@code b}.
