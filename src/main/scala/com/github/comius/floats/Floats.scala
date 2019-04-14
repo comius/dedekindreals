@@ -163,7 +163,7 @@ trait Floats {
      *
      * @return absolute value of this {@code Float}.
      */
-    def abs(): T = if (signum()<0) negate else this.asInstanceOf[T]
+    def abs(): T = if (signum() < 0) negate else this.asInstanceOf[T]
 
     /**
      * Returns a midpoint/average between {@code this} and {@code b}.
@@ -172,7 +172,7 @@ trait Floats {
      *
      * Edge cases:
      *   - If one of the operands is infinite, an extrapolated point is returned. The points are extrapolated by
-     *     multiplying with 2. 
+     *     multiplying with 2.
      *   - If operands are infinities with opposite signs, zero is returned.
      *   - If operands are equal or {@code this} > {@code b} an exception is thrown.
      *
@@ -196,10 +196,10 @@ trait Floats {
      * @return Returns two numbers (x,y) such that {@code this} < x < y < {@code b}
      */
     def trisect(b: T, precision: Int): (T, T)
-    
+
     /**
      * Simple string representation
-     * 
+     *
      * @return string of the number without exponents.
      */
     def toPlainString(): String
@@ -255,7 +255,7 @@ trait Floats {
    *             when s == 0
    * @return Positive infinity when s > 0 and Negative infinity when s < 0
    */
-   def signToInfty(s: Int): T = {
+  def signToInfty(s: Int): T = {
     if (s > 0) posInf
     else if (s < 0) negInf
     else {

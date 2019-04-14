@@ -14,7 +14,7 @@ object BigDecimalFloats extends Floats {
 
   private[this] val mc1Up = new MathContext(1, RoundingMode.UP)
   private[this] val mc1Down = new MathContext(1, RoundingMode.DOWN)
-    
+
   /**
    * Sealed trait with three case classes: PosInf, NegInf, Number.
    */
@@ -77,24 +77,24 @@ object BigDecimalFloats extends Floats {
           mx - my match { // same magnitude
             case ms if -1 <= ms && ms <= 1 =>
               val maxp = Math.max(x.precision(), y.precision())
-              val mc = new MathContext(maxp + 1, RoundingMode.HALF_EVEN)              
+              val mc = new MathContext(maxp + 1, RoundingMode.HALF_EVEN)
               Number(x.add(y, mc).divide(BigDecimal.valueOf(2), mc))
-            case ms if ms > 1              => Number(x.divide(BigDecimal.valueOf(2), mc1Down))
-            case _                         => Number(y.divide(BigDecimal.valueOf(2), mc1Down))
+            case ms if ms > 1 => Number(x.divide(BigDecimal.valueOf(2), mc1Down))
+            case _            => Number(y.divide(BigDecimal.valueOf(2), mc1Down))
           }
-       case (Number(x), PosInf()) =>
+        case (Number(x), PosInf()) =>
           x.signum() match {
             case 1 => Number(x.round(new MathContext(1, RoundingMode.FLOOR)).scaleByPowerOfTen(1))
-            case 0  => ONE
-            case _  => ZERO
+            case 0 => ONE
+            case _ => ZERO
           }
         case (NegInf(), Number(x)) =>
           x.signum() match {
             case -1 => Number(x.round(new MathContext(1, RoundingMode.CEILING)).scaleByPowerOfTen(1))
-            case 0 => ONE.negate
-            case _ => ZERO
+            case 0  => ONE.negate
+            case _  => ZERO
           }
- 
+
         case (NegInf(), PosInf()) => BigDecimalFloats.ZERO
         case _                    => throw new ArithmeticException(s"Splitting interval: ${this}, ${b}")
       }
