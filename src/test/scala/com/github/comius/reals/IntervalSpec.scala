@@ -14,6 +14,7 @@ import com.github.comius.RoundingContext
 import com.github.comius.floats.FloatSpec
 import com.github.comius.floats.Floats.{ impl => D }
 import org.scalacheck.util.Pretty
+import org.scalacheck.Gen
 
 /**
  * Unit tests for Intervals.
@@ -39,8 +40,8 @@ class IntervalSpec extends Properties("Interval") {
         s"${a.multiplyKaucher(b, r)} != ${b.multiplyKaucher(a, r)}"
   }
 
-  // Verifies dualities hold. / They actually don't on infinities.
-  property("multiplyDuality") = forAll {
+  // Verifies dualities does't hold. / They actually don't on infinities.
+  property("multiplyDualityDoesnHold") = forAll {
     (a: Interval, b: Interval) =>
       (a.flip.multiply(b.flip, r.swap()).flip == a.multiply(b, r))
   }
@@ -87,61 +88,75 @@ class IntervalSpec extends Properties("Interval") {
     }
 
   def checkExtensionRightForDivision(op: (Interval, Interval) => Interval)(x: Interval, y: Interval): Prop =
-      {
-        val xy = op(x, y)
+    {
+      val xy = op(x, y)
 
-        val xp = Interval(x.d.subtract(eps, mcd), x.u.add(eps, mcu))
-        val yp =
-          if (y.d == D.ZERO || y.u == D.ZERO) Interval(D.negInf, D.posInf)
-          else Interval( y.d.subtract(eps, mcd), y.u.add(eps, mcu))
+      val xp = Interval(x.d.subtract(eps, mcd), x.u.add(eps, mcu))
+      val yp =
+        if (y.d == D.ZERO || y.u == D.ZERO) Interval(D.negInf, D.posInf)
+        else Interval(y.d.subtract(eps, mcd), y.u.add(eps, mcu))
 
-        val xpyp = op(xp, yp)
-        val w = Interval(xy.d.subtract(eps2, mcd), xy.u.add(eps2, mcu)) // xy >> w
-        approx(xpyp, w) :| s" not ${xpyp} >> ${w} ${xpyp.d.compareTo(w.d)} ${w.u.compareTo(xpyp.u)}"
-      }
+      val xpyp = op(xp, yp)
+      val w = Interval(xy.d.subtract(eps2, mcd), xy.u.add(eps2, mcu)) // xy >> w
+      approx(xpyp, w) :| s" not ${xpyp} >> ${w} ${x}/${y}=${x}*${y.inverse(new RoundingContext(0, 620))}>>${w},  ${x}>>${xp}, ${y}>>{$yp}, ${xpyp}<<${w}"
+    }
 
   def checkExtensionLeft(op: (Interval, Interval) => Interval)(xp: Interval, yp: Interval): Prop =
     {
       val xpyp = op(xp, yp)
+      // Go a bit below xp op yp, this handles a special case when result is precise, i.e [0,0]
       val w = Interval(xpyp.d.subtract(eps2, mcd), xpyp.u.add(eps2, mcu))
+      assert(approx(xpyp, w))
 
+      // Compute intervals only a bit above xp,yp
       def liftD(x: D.T) = if (!x.isNegInf) x else FloatSpec.genRegularFloat.sample.get
       def liftU(x: D.T) = if (!x.isPosInf) x else FloatSpec.genRegularFloat.sample.get
 
       val x = Interval(liftD(xp.d.add(eps, mcd)), liftU(xp.u.subtract(eps, mcu)))
       val y = Interval(liftD(yp.d.add(eps, mcd)), liftU(yp.u.subtract(eps, mcu)))
-      val xy = op(x, y)
 
-      approx(xy, w) :| s" not ${xy} >> ${w}"
+      // Verify intervals approximated by xp and yp that are 'only a bit above'
+      (approx(op(x, y), w) :| s" not ${op(x, y)} >> ${w}" &&
+
+        // Verify for all intervals x,y generated randomly, approximated by xp and yp
+        forAll(approxInterval(xp))((x: Interval) =>
+          forAll(approxInterval(yp))((y: Interval) =>
+            approx(op(x, y), w) :| s"${op(x, y)}<<${w}")))
     }
+
+  /*
+   * Tests extension property for all arithmetic operations.
+   */
 
   val add: (Interval, Interval) => Interval = _.add(_, rinf)
   val subtract: (Interval, Interval) => Interval = _.subtract(_, rinf)
   val multiply: (Interval, Interval) => Interval = _.multiply(_, rinf)
-  val divide: (Interval, Interval) => Interval = _.divide(_, new RoundingContext(0, 1200))
+  val divide: (Interval, Interval) => Interval = _.divide(_, new RoundingContext(0, 320))
 
   for ((opDesc, op) <- Map("Add" -> add, "Subtract" -> subtract, "Multiply" -> multiply, "Divide" -> divide)) {
 
     if (op == divide) {
-      property(s"${opDesc}ExtensionToRight") = forAll(checkExtensionRightForDivision(op)(_, _))
-      property(s"${opDesc}ExtensionToRightSpecialValues") =
-        forall(specialIntervals, specialIntervals)(checkExtensionRightForDivision(op)(_, _))
-    } else {
+      // Division is tricky in (=>) direction.
       property(s"${opDesc}ExtensionToRight") = forAll(checkExtensionRight(op)(_, _))
+      property(s"${opDesc}ExtensionToRightSpecialValues") =
+        forall(specialIntervals, specialIntervals)(checkExtensionRight(op)(_, _))
+    } else {
+      // Tests extension in (=>) direction with arbitrary random intervals.
+      property(s"${opDesc}ExtensionToRight") = forAll(checkExtensionRight(op)(_, _))
+      
+      // Tests extension in (=>) direction with ALL special intervals (endpoints are special values).
       property(s"${opDesc}ExtensionToRightSpecialValues") =
         forall(specialIntervals, specialIntervals)(checkExtensionRight(op)(_, _))
     }
 
+    // Tests extension in (<=) direction with arbitrary random intervals.
     property(s"${opDesc}ExtensionToLeft") = forAll(checkExtensionLeft(op)(_, _))
 
+    // Tests extension in (<=) direction with ALL special intervals (endpoints are special values).
     property(s"${opDesc}ExtensionToLeftSpecialValues") =
       forall(specialIntervals, specialIntervals)(checkExtensionLeft(op)(_, _))
 
   }
-
-  property("addEdgeCases") =
-    Interval(D.posInf, D.negInf).add(Interval(D.negInf, D.posInf), rinf) == Interval(D.negInf, D.posInf)
-
 }
 
 /**
@@ -158,6 +173,42 @@ object IntervalSpec {
         u <- FloatSpec.genFloat
       } yield Interval(d, u)
     }
+
+  val mc = new MathContext(0, RoundingMode.UNNECESSARY)
+
+  /**
+   * Generates floats approximating xd below.
+   *
+   * @param xd value to approximate
+   * @return approximation
+   */
+  def approxAbove(xd: D.T): Gen[D.T] =
+    for {
+      d <- FloatSpec.genRegularFloat
+    } yield if (xd == D.negInf) d else xd.add(d.abs(), mc)
+
+  /**
+   * Generates floats approximating xu below.
+   *
+   * @param xu value to approximate
+   * @return approximation
+   */
+  def approxBelow(xu: D.T): Gen[D.T] =
+    for {
+      u <- FloatSpec.genRegularFloat
+    } yield if (xu == D.posInf) u else xu.subtract(u.abs, mc)
+
+  /**
+   * Generates intervals that are approximated by x.
+   *
+   * @param x value that approximates
+   * @return approximatee
+   */
+  def approxInterval(x: Interval): Gen[Interval] =
+    for {
+      d <- approxAbove(x.d)
+      u <- approxBelow(x.u)
+    } yield Interval(d, u)
 
   /**
    * A special forall that tests all values (not just random ones).
