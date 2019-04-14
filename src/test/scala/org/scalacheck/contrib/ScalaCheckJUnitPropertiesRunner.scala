@@ -8,6 +8,8 @@ import org.scalacheck.Test
 import org.scalacheck.util.ConsoleReporter
 import org.junit.runner.manipulation.Filterable
 import org.junit.runner.manipulation.Filter
+import org.scalacheck.Test.TestCallback
+import org.scalacheck.Test.Result
 
 /**
  * This a JUnit runner that allows to run ScalaCheck properties (created into an object that implements
@@ -22,7 +24,7 @@ class ScalaCheckJUnitPropertiesRunner(suiteClass: java.lang.Class[Properties]) e
   with Filterable {
 
   private val properties = suiteClass.newInstance
-  
+
   private var filter: Option[Filter] = None
 
   lazy val getDescription = createDescription(properties)
@@ -40,25 +42,30 @@ class ScalaCheckJUnitPropertiesRunner(suiteClass: java.lang.Class[Properties]) e
   private[contrib] class CustomTestCallback(notifier: RunNotifier, desc: Description) extends Test.TestCallback {
     def failure(res: Test.Failed) = {
       val assertion = new AssertionError(s"Failed on arguments ${res.args.map(_.arg).mkString(",")},\n${res.labels.mkString(",\n")}")
-      assertion.setStackTrace(Array(new StackTraceElement(properties.getClass.getName,"",null,-1)))
+      assertion.setStackTrace(Array(new StackTraceElement(properties.getClass.getName, "", null, -1)))
       new Failure(desc, assertion)
     }
 
     /** Called whenever a property has finished testing */
     override def onTestResult(name: String, res: Test.Result) = {
+      consoleReporter.onTestResult(desc.getDisplayName, res)
       res.status match {
-        case Test.Passed    => {} // Test passed, nothing to do
-        case Test.Proved(_) => {} // Test passed, nothing to do
-        case Test.Exhausted => notifier.fireTestIgnored(desc) // exhausted tests are marked as ignored in JUnit
+        case Test.Passed    => notifier.fireTestFinished(desc) // Test passed, nothing to do
+        case Test.Proved(_) => notifier.fireTestFinished(desc) // Test passed, nothing to do
+        case Test.Exhausted => notifier.fireTestAssumptionFailed( // exhausted tests are marked as assumption problem in JUnit
+          new Failure(desc, new AssertionError(s"Exhausted: ${res.succeeded} passed/${res.discarded} discarded")))
         case r @ Test.Failed(args, labels) =>
           notifier.fireTestFailure(failure(r)) // everything else is a failed test
-        case Test.PropException(args, e, labels) => notifier.fireTestFailure(new Failure(desc, e)) 
+        case Test.PropException(args, e, labels) => notifier.fireTestFailure(new Failure(desc, e))
       }
     }
+
+    override def onPropEval(n: String, t: Int, s: Int, d: Int) =
+      consoleReporter.onPropEval(desc.getDisplayName, t, s, d)     
   }
 
   // we'll use this one to report status to the console, and we'll chain it with our custom reporter
-  val consoleReporter = new ConsoleReporter(1, 80)
+  val consoleReporter = new ConsoleReporter(1, 0)
 
   /**
    * Run this <code>Suite</code> of tests, reporting results to the passed <code>RunNotifier</code>.
@@ -74,26 +81,23 @@ class ScalaCheckJUnitPropertiesRunner(suiteClass: java.lang.Class[Properties]) e
 
     properties.properties.map({ propTuple =>
       propTuple match {
-        case (desc, prop)  => {
+        case (desc, prop) => {
           val descObj = Description.createTestDescription(properties.getClass, desc)
           if (filter.forall(_.shouldRun(descObj))) {
-          
             notifier.fireTestStarted(descObj)
+
             //.withMinSuccessfulTests(1000000).withInitialSeed(123123213)
-            Test.check(prop)(_.withMinSuccessfulTests(1000).withInitialSeed(123123213).withTestCallback(consoleReporter chain (new CustomTestCallback(notifier, descObj))))
-  
-            notifier.fireTestFinished(descObj)
+            Test.check(prop)(_.withMinSuccessfulTests(10000).withInitialSeed(123123213).withTestCallback(new CustomTestCallback(notifier, descObj)))
+
           }
         }
       }
     })
   }
-  
+
   override def filter(filter: Filter): Unit = {
     this.filter = Some(filter)
   }
-   
-    
 
   /**
    * Returns the number of tests that are expected to run when this ScalaTest <code>Suite</code>
