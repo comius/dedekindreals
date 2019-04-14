@@ -1,15 +1,13 @@
 package org.scalacheck.contrib
 
 import org.junit.runner.Description
+import org.junit.runner.manipulation.Filter
+import org.junit.runner.manipulation.Filterable
 import org.junit.runner.notification.Failure
 import org.junit.runner.notification.RunNotifier
 import org.scalacheck.Properties
 import org.scalacheck.Test
 import org.scalacheck.util.ConsoleReporter
-import org.junit.runner.manipulation.Filterable
-import org.junit.runner.manipulation.Filter
-import org.scalacheck.Test.TestCallback
-import org.scalacheck.Test.Result
 
 /**
  * This a JUnit runner that allows to run ScalaCheck properties (created into an object that implements
@@ -61,7 +59,7 @@ class ScalaCheckJUnitPropertiesRunner(suiteClass: java.lang.Class[Properties]) e
     }
 
     override def onPropEval(n: String, t: Int, s: Int, d: Int) =
-      consoleReporter.onPropEval(desc.getDisplayName, t, s, d)     
+      consoleReporter.onPropEval(desc.getDisplayName, t, s, d)
   }
 
   // we'll use this one to report status to the console, and we'll chain it with our custom reporter
