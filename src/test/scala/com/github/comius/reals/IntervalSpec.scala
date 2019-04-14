@@ -183,11 +183,9 @@ class IntervalSpec extends Properties("Interval") {
         else if (x.d.compareTo(D.ZERO) >= 0 && D.ZERO.compareTo(x.u) >= 0) Interval(D.posInf, D.negInf)
         else Interval(x.d.subtract(eps, mc), x.u.add(eps, mc))
 
-      // Interval(if (x.d == D.ZERO) D.negInf else x.d.subtract(eps, mcd),
-      //   if (x.u == D.ZERO) D.posInf else x.u.add(eps, mcu))
-
       val xpyp = op(xp)
-      val w = Interval(xy.d.subtract(eps2, mc), xy.u.add(eps2, mc)) // xy >> w
+      val eps3 = D.valueOfEpsilon(-1000)
+      val w = Interval(xy.d.subtract(eps3, mc), xy.u.add(eps3, mc)) // xy >> w      
       approx(xpyp, w) :| s" not ${xpyp} >> ${w} ${xpyp.d.compareTo(w.d)} ${w.u.compareTo(xpyp.u)}"
     }
 
@@ -213,19 +211,19 @@ class IntervalSpec extends Properties("Interval") {
     }
 
   property(s"inverseExtensionToRight") =
-    forAll(checkExtensionRight((_: Interval).inverse(new RoundingContext(0, 320)))(_))
+    forAll(checkExtensionRight((_: Interval).inverse(new RoundingContext(0, 1000)))(_))
 
   // Tests extension in (<=) direction with arbitrary random intervals.
   property(s"inverseExtensionToLeft") =
-    forAll(checkExtensionLeft((_: Interval).inverse(new RoundingContext(0, 320)))(_))
+    forAll(checkExtensionLeft((_: Interval).inverse(new RoundingContext(0, 1000)))(_))
 
   property(s"inverseExtensionToLeftOnSpecial") =
     Prop.all((for { i <- specialIntervals }
-      yield checkExtensionLeft((_: Interval).inverse(new RoundingContext(0, 320)))(i)): _*)
+      yield checkExtensionLeft((_: Interval).inverse(new RoundingContext(0, 1000)))(i)): _*)
 
   property(s"inverseExtensionToRightOnSpecial") =
     Prop.all((for { i <- specialIntervals }
-      yield checkExtensionRight((_: Interval).inverse(new RoundingContext(0, 320)))(i)): _*)
+      yield checkExtensionRight((_: Interval).inverse(new RoundingContext(0, 1000)))(i)): _*)
 
 }
 
