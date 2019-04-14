@@ -149,11 +149,11 @@ case class Interval(d: D.T, u: D.T) {
     def mulD(a: D.T, b: D.T): D.T = negInfOnException(a.multiply(b, r.down))
     def mulU(a: D.T, b: D.T): D.T = posInfOnException(a.multiply(b, r.up))
 
-    if ((d==D.posInf && u==D.negInf) || (i2.d==D.posInf && i2.u==D.negInf)) Interval(D.posInf,D.negInf)
+    if (d == D.posInf || i2.d == D.posInf || u == D.negInf || i2.u == D.negInf) Interval(D.posInf, D.negInf)
     else
-    Interval(
-      negInfOnException(max(mulD(lxp, lyp), mulD(uxm, uym)).subtract(max(mulU(uxp, lym), mulU(lxm, uyp)), r.down)),
-      posInfOnException(max(mulU(uxp, uyp), mulU(lxm, lym)).subtract(max(mulD(lxp, uym), mulD(uxm, lyp)), r.up)))
+      Interval(
+        negInfOnException(max(mulD(lxp, lyp), mulD(uxm, uym)).subtract(max(mulU(uxp, lym), mulU(lxm, uyp)), r.down)),
+        posInfOnException(max(mulU(uxp, uyp), mulU(lxm, lym)).subtract(max(mulD(lxp, uym), mulD(uxm, lyp)), r.up)))
 
   }
 
@@ -178,7 +178,7 @@ case class Interval(d: D.T, u: D.T) {
     case (0, -1)                                    => Interval(D.ONE.divide(u, r.down), D.negInf)
 
     case (1, 0) if d == D.posInf                    => Interval(D.posInf, D.ZERO) //BAD
-    case (1, 0)                                     => Interval(D.posInf, D.ONE.divide(d, r.up)) //BAD 
+    case (1, 0)                                     => Interval(D.posInf, D.ONE.divide(d, r.up)) //BAD
 
     case (1, -1)                                    => Interval(D.posInf, D.negInf)
     case (-1, 1)                                    => Interval(D.negInf, D.posInf)
@@ -187,10 +187,6 @@ case class Interval(d: D.T, u: D.T) {
     case (0, 0)                                     => Interval(D.negInf, D.posInf)
     case (0, 1)                                     => Interval(D.negInf, D.posInf)
   }
-/// not [-Inf,Inf] >> [-1E-10,1E-10] -1 -1 [-1,1] [Inf,0]
-/// not [-Inf,Inf] >> [-1E-10,1E-10] -1 -1 [-1,1] [0,-Inf]
-/// not [-Inf,Inf] >> [-1,1] -1 -1 [-1,1] [0,-1]
-/// not [-Inf,Inf] >> [-1,1] -1 -1 [-1,1] [1,0]
 
   /**
    * Divides two intervals.
