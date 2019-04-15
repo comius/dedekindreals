@@ -2,6 +2,8 @@ package com.github.comius.reals.syntax
 
 import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.reals.Interval
+import java.math.MathContext
+import java.math.RoundingMode
 
 /* Our syntax is made of Reals and Formulas */
 
@@ -102,6 +104,10 @@ object Real {
 
   implicit def int2Const(x: Int): Const = {
     Const(D.valueOf(x))
+  }
+  
+  implicit def str2Const(x: String): Const = {
+    Const(D.valueOf(x, MathContext.UNLIMITED))
   }
 
   implicit def symbol2Var(name: Symbol): Var = {
