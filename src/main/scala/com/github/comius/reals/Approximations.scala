@@ -23,26 +23,37 @@ object Approximations {
   import com.github.comius.floats.Floats.{impl => D}
 
   case class Approximation[T](lower: T, upper: T)
+  
+  sealed trait VarDomain {
+    val lower: D.T
+    val upper: D.T
+  }
+    
+  
+  case class ExistsDomain(lower: D.T, upper: D.T) extends VarDomain
+  case class CutDomain(lower: D.T, upper: D.T) extends VarDomain
+  case class ForallDomain(lower: D.T, upper: D.T) extends VarDomain
 
-  def lift(op: (Boolean, Boolean) => Boolean)(x: Formula, y: Formula)(implicit ctx: Context[Approximation[Interval]]) =
+  
+  
+  def lift(op: (Boolean, Boolean) => Boolean)(x: Formula, y: Formula)(implicit ctx: Context[VarDomain]) =
     {
       val Approximation(l1, u1) = approximate(x)
       val Approximation(l2, u2) = approximate(y)
       Approximation(op(l1, l2), op(u1, u2))
     }
 
-  def approximate(formula: Formula)(implicit ctx: Context[Approximation[Interval]]): Approximation[Boolean] = formula match {
+  def approximate(formula: Formula)(implicit ctx: Context[VarDomain]): Approximation[Boolean] = formula match {
     case Less(x, y) =>
       val a @ Approximation(li1, ui1) = approximate(x)
       val b @ Approximation(li2, ui2) = approximate(y)
       Approximation(li1.u.compareTo(li2.d) < 0, ui1.u.compareTo(ui2.d) < 0)
 
     case Exists(x, a, b, phi) =>
-      approximate(phi)(ctx + (x -> Approximation(Interval(b, a), Interval(b, a))))
+      approximate(phi)(ctx + (x -> ExistsDomain(a,b)))
 
     case Forall(x, a, b, phi) =>
-      val m = a.split(b) //Utils.splitInterval(a, b, ctx.roundingContext.swap)(0)
-      approximate(phi)(ctx + (x -> Approximation(Interval(a, b), Interval(m, m))))
+      approximate(phi)(ctx + (x -> ForallDomain(a, b)))
 
     case And(x, y)                => lift(_ && _)(x, y)
 
@@ -51,18 +62,18 @@ object Approximations {
     case ConstFormula(a: Boolean) => Approximation(a, a)
   }
 
-  def lift(op: (Interval, Interval, RoundingContext) => Interval)(x: Real, y: Real)(implicit ctx: Context[Approximation[Interval]]) =
+  def lift(op: (Interval, Interval, RoundingContext) => Interval)(x: Real, y: Real)(implicit ctx: Context[VarDomain]) =
     {
       val Approximation(l1, u1) = approximate(x)
       val Approximation(l2, u2) = approximate(y)
       Approximation(op(l1, l2, ctx.roundingContext), op(u1, u2, ctx.roundingContext.swap))
     }
 
-  def approximate(expr: Real)(implicit ctx: Context[Approximation[Interval]]): Approximation[Interval] = expr match {
+  def approximate(expr: Real)(implicit ctx: Context[VarDomain]): Approximation[Interval] = expr match {
     case Cut(_, a, b, _, _)  => Approximation(Interval(a, b), Interval(b, a))
     case CutR(_, _, _, _, _) => Approximation(Interval(D.negInf, D.posInf), Interval(D.posInf, D.negInf))
     case Integrate(x, a, b, e) =>
-      val Approximation(l1, u1) = approximate(e)(ctx + (x -> Approximation(Interval(a,b), Interval(b,a))))
+      val Approximation(l1, u1) = approximate(e)(ctx + (x -> CutDomain(a,b)))
       Approximation(
           Interval(l1.d.multiply(b.subtract(a, ctx.roundingContext.down), ctx.roundingContext.down),
               l1.u.multiply(b.subtract(a, ctx.roundingContext.up), ctx.roundingContext.up)),
@@ -74,6 +85,17 @@ object Approximations {
     case Sub(x, y)           => lift(_.subtract(_, _))(x, y)
     case Mul(x, y)           => lift(_.multiply(_, _))(x, y)
     case Div(x, y)           => lift(_.divide(_, _))(x, y)
-    case Var(name)           => ctx.vars.get(name).get
+    case Var(name)           => approximate(ctx.vars.get(name).get)
+  }
+  
+  def approximate(domain: VarDomain): Approximation[Interval] = domain match  
+  {
+    case CutDomain(a,b) => Approximation(Interval(a,b), Interval(b,a))
+    case ExistsDomain(a,b) =>
+      val m = a.split(b)
+      Approximation( Interval(m,m), Interval(b,a))
+    case ForallDomain(a,b) => 
+      val m = a.split(b)
+      Approximation(Interval(a,b), Interval(m,m))
   }
 }

@@ -24,29 +24,25 @@ object Eval {
   import com.github.comius.floats.Floats.{impl => D}
   import Approximations._
 
-  def extendContext(ctx: Context[Interval]): Context[Approximation[Interval]] = {
-    Context(ctx.roundingContext, ctx.vars.mapValues(i => Approximation(i, i.flip)))
-  }
-
-  def refine(formula: Formula)(implicit ctx: Context[Interval]): Formula = {
-    approximate(formula)(extendContext(ctx)) match {
+  def refine(formula: Formula)(implicit ctx: Context[VarDomain]): Formula = {
+    approximate(formula)(ctx) match {
       case Approximation(true, _)  => ConstFormula(true)
       case Approximation(_, false) => ConstFormula(false)
       case _ =>
         formula match {
 
-          case Less(x, y) => Less(refine(x), refine(y))
+          case Less(x, y) => Less(refine(x),refine(y))
 
           case Exists(x, a, b, phi) =>
-            val m = a.split(b) //Utils.splitInterval(a, b, ctx.roundingContext)(0)
-            val phi2 = refine(phi)(ctx + (x -> Interval(a, b)))
+            val m = a.split(b)
+            val phi2 = refine(phi)(ctx + (x -> ExistsDomain(a, b)))
             if (phi2.isInstanceOf[ConstFormula])
               phi2
             else
               Or(Exists(x, a, m, phi), Exists(x, m, b, phi))
           case Forall(x, a, b, phi) =>
             val m = a.split(b) //Utils.splitInterval(a, b, ctx.roundingContext)(0)
-            val phi2 = refine(phi)(ctx + (x -> Interval(a, b)))
+            val phi2 = refine(phi)(ctx + (x -> ForallDomain(a, b)))
             if (phi2.isInstanceOf[ConstFormula])
               phi2
             else
@@ -77,27 +73,27 @@ object Eval {
     }
   }
 
-  def refine(expr: Real)(implicit ctx: Context[Interval]): Real = expr match {
+  def refine(expr: Real)(implicit ctx: Context[VarDomain]): Real = expr match {
     case CutR(x, l, u, a, b) =>
 
-      val aFound = approximate(l)(extendContext(ctx) + (x -> Approximation(Interval(a, a), Interval(a, a)))).lower
-      val bFound = approximate(u)(extendContext(ctx) + (x -> Approximation(Interval(b, b), Interval(b, b)))).lower
+      val aFound = approximate(l)(ctx + (x -> CutDomain(a, a))).lower
+      val bFound = approximate(u)(ctx + (x -> CutDomain(b, b))).lower
       if (aFound && bFound) {
-        Cut(x, a, b, refine(l)(ctx + (x -> Interval(a, b))), refine(u)(ctx + (x -> Interval(a, b))))
+        Cut(x, a, b, refine(l)(ctx + (x -> CutDomain(a, b))), refine(u)(ctx + (x -> CutDomain(a, b))))
       } else {
         val a2 = if (aFound) a else a.multiply(D.valueOf(2), ctx.roundingContext.down)
         val b2 = if (bFound) b else b.multiply(D.valueOf(2), ctx.roundingContext.up)
-        val i = Interval(if (aFound) a else D.negInf, if (bFound) b else D.posInf)
+        val i = CutDomain(if (aFound) a else D.negInf, if (bFound) b else D.posInf)
         CutR(x, refine(l)(ctx + (x -> i)), refine(u)(ctx + (x -> i)), a2, b2)
       }
     case Cut(x, a, b, l, u) =>
       val (m1, m2) = a.trisect(b, ctx.roundingContext.up.getPrecision)
-      val a2 = if (approximate(l)(extendContext(ctx) + (x -> Approximation(Interval(m1, m1), Interval(m1, m1)))).lower) m1 else a
-      val b2 = if (approximate(u)(extendContext(ctx) + (x -> Approximation(Interval(m1, m1), Interval(m2, m2)))).lower) m2 else b
-      //Cut(x, a2,b2, refine(l)(ctx + (x -> Interval(a2, b2))), refine(u)(ctx + (x -> Interval(a2, b2))))
+      val a2 = if (approximate(l)(ctx + (x -> CutDomain(m1, m1))).lower) m1 else a
+      val b2 = if (approximate(u)(ctx + (x -> CutDomain(m2, m2))).lower) m2 else b
+      //Cut(x, a2,b2, refine(l)(ctx + (x -> CutDomain(a2, b2))), refine(u)(ctx + (x -> CutDomain(a2, b2))))
       
-      val t1 = NewtonApproximations.estimate(l)(extendContext(ctx), x, Interval(a,b))
-      val t2 = NewtonApproximations.estimate(u)(extendContext(ctx), x, Interval(a,b))
+      val t1 = NewtonApproximations.estimate(l)(ctx, x, Interval(a,b))
+      val t2 = NewtonApproximations.estimate(u)(ctx, x, Interval(a,b))
       val a3 = t1.lower.lastOption.fold(a)(_.u)
       val b3 = t2.lower.headOption.fold(b)(_.d)
       
@@ -106,11 +102,11 @@ object Eval {
       val an = a2.max(a3)
       val bn = b2.min(b3)
       
-      Cut(x, an,bn, refine(l)(ctx + (x -> Interval(an, bn))), refine(u)(ctx + (x -> Interval(an, bn))))
+      Cut(x, an,bn, refine(l)(ctx + (x -> CutDomain(an, bn))), refine(u)(ctx + (x -> CutDomain(an, bn))))
     case Integrate(x, a, b, e) =>
       val m = a.split(b)
-      val le = refine(e)(ctx + (x -> Interval(a, m)))
-      val ue = refine(e)(ctx + (x -> Interval(m, b)))
+      val le = refine(e)(ctx + (x -> CutDomain(a, m)))
+      val ue = refine(e)(ctx + (x -> CutDomain(m, b)))
       Add(Integrate(x, a, m, le), Integrate(x, m, b, ue))
     case Add(x, y) => Add(refine(x), refine(y))
     case Sub(x, y) => Sub(refine(x), refine(y))
@@ -127,7 +123,7 @@ object Eval {
     println("\nEvaluating: " + expr)
 
     for (i <- 0 to 200) {
-      val context = Context[Approximation[Interval]](new RoundingContext(0, dprec))
+      val context = Context[VarDomain](new RoundingContext(0, dprec))
       val prec = D.valueOfEpsilon(precision)
 
       val l = approximate(rexpr)(context).lower
@@ -140,7 +136,7 @@ object Eval {
         println(l)
         return ;
       }
-      rexpr = refine(rexpr)(Context[Interval](new RoundingContext(0, dprec)))
+      rexpr = refine(rexpr)(Context[VarDomain](new RoundingContext(0, dprec)))
 
     }
   }
@@ -153,7 +149,7 @@ object Eval {
     println("\nEvaluating: " + expr)
 
     for (i <- 0 to 200) {
-      val context = Context[Approximation[Interval]](new RoundingContext(0, dprec))
+      val context = Context[VarDomain](new RoundingContext(0, dprec))
 
       val l = approximate(rexpr)(context)
 
@@ -164,7 +160,7 @@ object Eval {
         println(l)
         return ;
       }
-      rexpr = refine(rexpr)(Context[Interval](new RoundingContext(0, dprec)))
+      rexpr = refine(rexpr)(Context[VarDomain](new RoundingContext(0, dprec)))
 
     }
   }
