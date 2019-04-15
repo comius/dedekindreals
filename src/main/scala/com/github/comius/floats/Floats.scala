@@ -17,7 +17,7 @@ trait Floats {
   type T <: Float
 
   /** Extended floating point numbers. */
-  trait Float {
+  trait Float { self: T =>
     /**
      * Number {@code(this + b)}, with rounding according to the context settings.
      *
@@ -139,7 +139,7 @@ trait Floats {
      * @return the number whose value is the lesser of {@code this} and {@code b}. If they are equal, {@code this} is
      *         returned.
      */
-    def min(b: T): T = if (compareTo(b) <= 0) this.asInstanceOf[T] else b
+    def min(b: T): T = if (compareTo(b) <= 0) this else b
 
     /**
      * Returns the maximum of {@code this} and {@code b}.
@@ -149,7 +149,7 @@ trait Floats {
      * @return the number whose value is the greater of {@code this} and {@code b}. If they are equal, {@code this} is
      *         returned.
      */
-    def max(b: T): T = if (compareTo(b) >= 0) this.asInstanceOf[T] else b
+    def max(b: T): T = if (compareTo(b) >= 0) this else b
 
     /**
      * Returns the signum function of this {@code Float}.
@@ -163,7 +163,7 @@ trait Floats {
      *
      * @return absolute value of this {@code Float}.
      */
-    def abs(): T = if (signum() < 0) negate else this.asInstanceOf[T]
+    def abs(): T = if (signum() < 0) negate else this
 
     /**
      * Returns a midpoint/average between {@code this} and {@code b}.
