@@ -1,26 +1,26 @@
 package com.github.comius.reals
 
 import com.github.comius.RoundingContext
-import com.github.comius.reals.syntax.Var
-import com.github.comius.reals.syntax.Sub
-import com.github.comius.reals.syntax.Real
-import com.github.comius.reals.syntax.Or
-import com.github.comius.reals.syntax.Mul
-import com.github.comius.reals.syntax.Less
-import com.github.comius.reals.syntax.Integrate
-import com.github.comius.reals.syntax.Formula
-import com.github.comius.reals.syntax.Forall
-import com.github.comius.reals.syntax.Exists
-import com.github.comius.reals.syntax.Div
-import com.github.comius.reals.syntax.CutR
-import com.github.comius.reals.syntax.Cut
-import com.github.comius.reals.syntax.ConstFormula
-import com.github.comius.reals.syntax.Const
-import com.github.comius.reals.syntax.And
 import com.github.comius.reals.syntax.Add
+import com.github.comius.reals.syntax.And
+import com.github.comius.reals.syntax.Const
+import com.github.comius.reals.syntax.ConstFormula
+import com.github.comius.reals.syntax.Cut
+import com.github.comius.reals.syntax.CutR
+import com.github.comius.reals.syntax.Div
+import com.github.comius.reals.syntax.Exists
+import com.github.comius.reals.syntax.Forall
+import com.github.comius.reals.syntax.Formula
+import com.github.comius.reals.syntax.Integrate
+import com.github.comius.reals.syntax.Less
+import com.github.comius.reals.syntax.Mul
+import com.github.comius.reals.syntax.Or
+import com.github.comius.reals.syntax.Real
+import com.github.comius.reals.syntax.Sub
+import com.github.comius.reals.syntax.Var
 
 object Approximations {
-  import com.github.comius.floats.Floats.{impl => D}
+  import com.github.comius.floats.Floats.{ impl => D }
 
   case class Approximation[T](lower: T, upper: T)
   
@@ -74,11 +74,10 @@ object Approximations {
     case CutR(_, _, _, _, _) => Approximation(Interval(D.negInf, D.posInf), Interval(D.posInf, D.negInf))
     case Integrate(x, a, b, e) =>
       val Approximation(l1, u1) = approximate(e)(ctx + (x -> CutDomain(a,b)))
+      val ba = Interval(b,b).subtract(Interval(a,a), ctx.roundingContext)
       Approximation(
-          Interval(l1.d.multiply(b.subtract(a, ctx.roundingContext.down), ctx.roundingContext.down),
-              l1.u.multiply(b.subtract(a, ctx.roundingContext.up), ctx.roundingContext.up)),
-          Interval(u1.d.multiply(b.subtract(a, ctx.roundingContext.down), ctx.roundingContext.up),
-              u1.u.multiply(b.subtract(a, ctx.roundingContext.up), ctx.roundingContext.down)))    
+          l1.multiply(ba, ctx.roundingContext),              
+          u1.multiply(ba, ctx.roundingContext.swap))    
           
     case Const(a)            => Approximation(Interval(a, a), Interval(a, a))
     case Add(x, y)           => lift(_.add(_, _))(x, y)

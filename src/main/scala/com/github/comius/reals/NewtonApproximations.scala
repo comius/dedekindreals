@@ -143,9 +143,8 @@ object NewtonApproximations {
             .divide(b._1.multiply(b._1, r), r.swap())))(x, y) // TODO rounding
       case Integrate(x, a, b, e) =>
           val l1 = evalr(e)(ctx + (x -> (Interval(a,b), zeroInt)))
-          val (baDown, baUp) = (b.subtract(a, ctx.roundingContext.down), b.subtract(a, ctx.roundingContext.up)) 
-          (Interval(l1._1.d.multiply(baDown, ctx.roundingContext.down), l1._1.u.multiply(baUp, ctx.roundingContext.up)), 
-              Interval(l1._2.d.multiply(baDown, ctx.roundingContext.down), l1._2.u.multiply(baUp, ctx.roundingContext.up)))    
+          val ba = Interval(b,b).subtract(Interval(a,a), ctx.roundingContext) 
+          (l1._1.multiply(ba, ctx.roundingContext), l1._2.multiply(ba, ctx.roundingContext))    
       case Var(name) => ctx.vars.get(name).get
     }
   }
