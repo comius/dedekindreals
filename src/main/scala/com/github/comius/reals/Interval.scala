@@ -165,27 +165,15 @@ case class Interval(d: D.T, u: D.T) {
    */
   def inverse(r: RoundingContext): Interval = (d.signum(), u.signum()) match {
     case (-1, -1) if d == D.negInf && u == D.negInf => Interval(D.ZERO, D.posInf)
-    case (-1, -1) if d == D.negInf                  => Interval(D.ONE.divide(u, r.down), D.posInf)
-    case (-1, -1) if u == D.negInf                  => Interval(D.ZERO, D.ONE.divide(d, r.up))
-
-    case (1, 1) if u == D.posInf && d == D.posInf   => Interval(D.negInf, D.ZERO)
-    case (1, 1) if u == D.posInf                    => Interval(D.negInf, D.ONE.divide(d, r.up))
-    case (1, 1) if d == D.posInf                    => Interval(D.ONE.divide(u, r.down), D.ZERO)
-
-    case (1, 1) | (-1, -1)                          => Interval(D.ONE.divide(u, r.down), D.ONE.divide(d, r.up))
-
-    case (0, -1) if u == D.negInf                   => Interval(D.ZERO, D.negInf)
-    case (0, -1)                                    => Interval(D.ONE.divide(u, r.down), D.negInf)
-
-    case (1, 0) if d == D.posInf                    => Interval(D.posInf, D.ZERO) //BAD
-    case (1, 0)                                     => Interval(D.posInf, D.ONE.divide(d, r.up)) //BAD
-
-    case (1, -1)                                    => Interval(D.posInf, D.negInf)
-    case (-1, 1)                                    => Interval(D.negInf, D.posInf)
-    case (-1, 0) if d == D.negInf                   => Interval(D.negInf, D.posInf)
-    case (-1, 0)                                    => Interval(D.negInf, D.posInf)
-    case (0, 0)                                     => Interval(D.negInf, D.posInf)
-    case (0, 1)                                     => Interval(D.negInf, D.posInf)
+    case (-1, -1) if d == D.negInf => Interval(D.ONE.divide(u, r.down), D.posInf)
+    case (1, 1) if u == D.posInf && d == D.posInf => Interval(D.negInf, D.ZERO)
+    case (1, 1) if u == D.posInf => Interval(D.negInf, D.ONE.divide(d, r.up))
+    case (1, 1) if d == D.posInf => Interval(D.ONE.divide(u, r.down), D.ZERO)
+    case (1, 1) | (-1, -1) => Interval(D.ONE.divide(u, r.down), D.ONE.divide(d, r.up))
+    case (0, -1) => Interval(D.ONE.divide(u, r.down), D.negInf)
+    case (1, 0) => Interval(D.posInf, D.ONE.divide(d, r.up))
+    case (1, -1) => Interval(D.posInf, D.negInf)
+    case _ => Interval(D.negInf, D.posInf)
   }
 
   /**
