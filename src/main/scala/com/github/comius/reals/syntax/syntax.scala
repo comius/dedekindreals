@@ -1,7 +1,6 @@
 package com.github.comius.reals.syntax
 
 import com.github.comius.floats.Floats.{ impl => D }
-import scala.language.implicitConversions
 import com.github.comius.reals.Interval
 
 /* Our syntax is made of Reals and Formulas */
