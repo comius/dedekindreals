@@ -22,11 +22,7 @@ object Examples {
    def main(args: Array[String]) = {
     // e
     eval(Cut('y, 2, 3, Integrate('x, 0, 1, 1 / ('x + 1/('y-1))) < 1,
-      1 < Integrate('x, 0, 1, 1 / ('x + 1/('y-1)))), 3)      
-      
-    val u = Integrate('x, 0, 1, 1 / ('x + 1/('y-1)))
-    eval(Cut('y, 2, 3, u < 1, 1 < u), 2)  
-      
+      1 < Integrate('x, 0, 1, 1 / ('x + 1/('y-1)))), 5)      
       
     // == log(2) = 0.693
     eval(Integrate('x, 1, 2, Const(1) / 'x), 5)

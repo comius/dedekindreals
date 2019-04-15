@@ -5,6 +5,7 @@ import org.junit.Assert.assertEquals
 import com.github.comius.floats.Floats.{impl => D}
 import com.github.comius.RoundingContext
 import com.github.comius.reals.syntax.Const
+import com.github.comius.reals.syntax.Integrate
 
 class NewtonApproximationsTest {
   import NewtonApproximations._
@@ -38,4 +39,11 @@ class NewtonApproximationsTest {
     println(estimate(0 < 'x * 'x)(new Context(new RoundingContext(10,10)), 'x, Interval(-1,1))) // []
     println(estimate( 'x * 'x < 0)(new Context(new RoundingContext(10,10)), 'x, Interval(-1,1))) // []
   }
+  
+  @Test
+  def testIntegrate(): Unit = {
+    println("->"+evalr(Integrate('x, 0,1, 'x*'x))(Context(new RoundingContext(10,10)))) // ([0,1],0) // ([0.000,0.5],0)
+
+  }
+  
 }
