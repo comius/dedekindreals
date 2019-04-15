@@ -28,7 +28,7 @@ class ApproximationsTest {
     test(Exists('x, 2, 4, Const(0) < 'x), true)
     test(Exists('x, 2, 4, Const(1) < 'x), true)
     test(Exists('x, 2, 4, Const(2) < 'x), true)
-    testna(Exists('x, 2, 4, Const(3) < 'x))
+    test(Exists('x, 2, 4, Const(3) < 'x), true)
     test(Exists('x, 2, 4, Const(4) < 'x), false)
     test(Exists('x, 2, 4, Const(5) < 'x), false)
 
@@ -52,6 +52,10 @@ class ApproximationsTest {
 
     // Verify rounded values
     testna(Exists('x, D.negInf, 422, Const(420) + Const(5) < 'x))
+    test(Exists('x, D.negInf, 420, Const(420) + Const(5) < 'x), false)
+    
+    // Test approximations with back-to-front intervals (split returns 2, !2<2)
+    test(Exists('x, 1, 3, Const(2) < 'x), true)
   }
   
   @Test
