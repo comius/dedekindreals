@@ -216,7 +216,8 @@ object NewtonApproximations {
       }
 
       val lwr = ConstraintSet(Interval(i.d, i.u), xm, halfLowerL(lf, ud), halfLowerR(lf, ld))
-      Approximation(lwr, ConstraintSet(i, false))
+      val upr = ConstraintSet(Interval(i.d, i.u), xm, halfLowerL(uf, ld), halfLowerR(uf, ud))
+      Approximation(lwr, upr)
 
     case Exists(x, a, b, phi) =>
       estimate(phi)(ctx + (x -> ExistsDomain(a, b)), x0, i)
