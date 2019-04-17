@@ -30,14 +30,34 @@ object NewtonApproximations {
   val zeroInt = Interval(D.ZERO, D.ZERO)
   val oneInt = Interval(D.ONE, D.ONE)
 
-  sealed class Constraint(val x: D.T)
-  case class MoreThan(override val x: D.T) extends Constraint(x)
-  case class LessThan(override val x: D.T) extends Constraint(x)
+  sealed trait Constraint {
+    val x: D.T
+  }
+  case object All extends Constraint {
+    val x = D.negInf
+  }
+  case object None extends Constraint {
+    val x = D.posInf
+  }
+  case class MoreThan(val x: D.T) extends Constraint
+  case class LessThan(val x: D.T) extends Constraint
 
   case class ConstraintSet private (domain: Interval, constraints: List[Constraint]) {
+    require(constraints.size > 0, "empty constraint set")
+    require(!constraints.contains(All) || constraints.size == 1, s"All with additional elements $constraints")
+    require(!constraints.contains(None) || constraints.size == 1, s"None with additional elements $constraints")
+    require(
+      constraints.zip(constraints.tail).forall {
+        case (LessThan(x), MoreThan(y)) => x.compareTo(y) <= 0
+        case (MoreThan(x), LessThan(y)) => x.compareTo(y) <= 0
+        case _                          => false
+      },
+      s"LessThan and MoreThan are not exchanging or not ordered: $constraints")
 
     def supremum(): D.T = {
       constraints.last match {
+        case None         => domain.d
+        case All          => domain.u
         case LessThan(x0) => x0
         case MoreThan(_)  => domain.u
       }
@@ -45,37 +65,55 @@ object NewtonApproximations {
 
     def infimum(): D.T = {
       constraints.head match {
+        case None         => domain.u
+        case All          => domain.d
         case LessThan(_)  => domain.d
         case MoreThan(x0) => x0
       }
     }
 
     def union(s: ConstraintSet): ConstraintSet = {
-      
-      if (domain == s.domain) {
-        var h1 = constraints
-        var h2 = s.constraints
-        var r = List[Constraint]()
-        while (!h1.isEmpty && !h2.isEmpty) {
-          if (h1.head.x.compareTo(h2.head.x) > 0) { val h = h1; h1 = h2; h2 = h }
-          (h1.head, h2.head) match {
-            case (LessThan(_), LessThan(_)) => h1 = h1.tail
-            case (LessThan(_), MoreThan(_)) => r = r :+ h1.head; h1 = h1.tail
-            case (MoreThan(_), MoreThan(_)) => h2 = h2.tail
-            case (MoreThan(_), LessThan(_)) => r = r :+ h1.head; h1 = h1.tail
-          }
+      require(domain == s.domain, "Union of diffrent domains")
+      if (constraints == List(All) || s.constraints == List(None)) return this
+      if (s.constraints == List(All) || constraints == List(None)) return s
+
+      def union(l1: List[Constraint], l2: List[Constraint]): List[Constraint] = {
+        (l1, l2) match {
+          case (Nil, _)                                     => l2
+          case (_, Nil)                                     => l1
+
+          case (a :: at, b :: bt) if a.x.compareTo(b.x) > 0 => union(l2, l1)
+
+          case (LessThan(x) :: at, LessThan(y) :: _)        => union(at, l2)
+          case (MoreThan(x) :: _, MoreThan(y) :: bt)        => union(l1, bt)
+
+          case (a :: at, _)                                 => a :: union(at, l2)
         }
-        r = r ++ h1 ++ h2
-        println(s"$constraints union ${s.constraints} = $r ")
-        ConstraintSet(domain, r)
-      } else {
-        throw new Exception()
       }
+      val u = union(constraints, s.constraints)
+      ConstraintSet(domain, u)
     }
 
     def intersection(s: ConstraintSet): ConstraintSet = {
-      println("hease")
-      this
+      require(domain == s.domain, "Intersection of diffrent domains")
+      if (s.constraints == List(All) || constraints == List(None)) return this
+      if (constraints == List(All) || s.constraints == List(None)) return s
+
+      def intersection(l1: List[Constraint], l2: List[Constraint]): List[Constraint] = {
+        (l1, l2) match {
+          case (Nil, _)                                     => l2
+          case (_, Nil)                                     => l1
+
+          case (a :: at, b :: bt) if a.x.compareTo(b.x) > 0 => intersection(l2, l1)
+
+          case (LessThan(x) :: _, LessThan(y) :: bt)        => intersection(l1, bt)
+          case (MoreThan(x) :: at, MoreThan(y) :: _)        => intersection(at, l2)
+
+          case (a :: at, _)                                 => a :: intersection(at, l2)
+        }
+      }
+      val u = intersection(constraints, s.constraints)
+      ConstraintSet(domain, u)
     }
   }
 
@@ -84,13 +122,14 @@ object NewtonApproximations {
     // Check if constraint lies in the domain
     private def sanitizeConstraint(domain: Interval, constraint: Constraint): Constraint = constraint match {
       case LessThan(x) =>
-        if (x.compareTo(domain.d) <= 0) LessThan(domain.d)
-        else if (domain.u.compareTo(x) < 0) LessThan(domain.u)
+        if (x.compareTo(domain.d) <= 0) None
+        else if (domain.u.compareTo(x) < 0) All
         else constraint
       case MoreThan(x) =>
-        if (x.compareTo(domain.d) < 0) MoreThan(domain.d)
-        else if (domain.u.compareTo(x) <= 0) MoreThan(domain.u)
+        if (x.compareTo(domain.d) < 0) All
+        else if (domain.u.compareTo(x) <= 0) None
         else constraint
+      case All | None => constraint
     }
 
     def apply(domain: Interval, constraint: Constraint): ConstraintSet = {
@@ -100,19 +139,28 @@ object NewtonApproximations {
     def apply(domain: Interval, xm: D.T, c1: Constraint, c2: Constraint): ConstraintSet = {
       val c1s = sanitizeConstraint(Interval(domain.d, xm), c1)
       val c2s = sanitizeConstraint(Interval(xm, domain.u), c2)
+
       val constraints = (c1s, c2s) match {
-        case (MoreThan(`xm`), LessThan(`xm`)) => List(LessThan(domain.d))
         case (MoreThan(_), LessThan(_)) => List(c1s, c2s)
         case (LessThan(_), MoreThan(_)) => List(c1s, c2s)
 
-        case (MoreThan(_), MoreThan(`xm`)) => List(c1s)
-        case (LessThan(`xm`), LessThan(_)) => List(c2s)
-        case (MoreThan(`xm`), MoreThan(_)) => List(c2s)
-        case (LessThan(_), LessThan(`xm`)) => List(c1s)
-        
-        // following cases shouldn't happen        
-        case (MoreThan(_), MoreThan(_)) => List(c1s, LessThan(xm), c2s)
+        case (All, All)                 => List(All)
+        case (None, None)               => List(None)
+        case (All, None)                => List(LessThan(xm))
+        case (None, All)                => List(MoreThan(xm))
+
+        case (MoreThan(_), All)         => List(c1s)
+        case (LessThan(_), None)        => List(c1s)
+        case (All, LessThan(_))         => List(c2s)
+        case (None, MoreThan(_))        => List(c2s)
+
+        case (MoreThan(_), None)        => List(c1s, LessThan(xm))
+        case (LessThan(_), All)         => List(c1s, MoreThan(xm))
+        case (None, LessThan(_))        => List(MoreThan(xm), c2s)
+        case (All, MoreThan(_))         => List(LessThan(xm), c2s)
+
         case (LessThan(_), LessThan(_)) => List(c1s, MoreThan(xm), c2s)
+        case (MoreThan(_), MoreThan(_)) => List(c1s, LessThan(xm), c2s)
       }
       ConstraintSet(domain, constraints)
     }
@@ -152,35 +200,22 @@ object NewtonApproximations {
 
       def halfLowerR(lf: D.T, ld: D.T) = {
         (ld.signum, lf.signum()) match {
-          case (1, _) =>
-            val r = xm.subtract(divD(lf, ld), ctx.roundingContext.up)
-            MoreThan(r)
-          case (-1, _) =>
-            val r = xm.subtract(divU(lf, ld), ctx.roundingContext.down)
-            LessThan(r)
-          case (0, 1) =>
-            MoreThan(xm)
-          case (0, _) =>
-            LessThan(xm)
+          case (1, _)  => MoreThan(xm.subtract(divD(lf, ld), ctx.roundingContext.up))
+          case (-1, _) => LessThan(xm.subtract(divU(lf, ld), ctx.roundingContext.down))
+          case (0, 1)  => All
+          case (0, _)  => None
         }
       }
       def halfLowerL(lf: D.T, ud: D.T) = {
         (ud.signum, lf.signum()) match {
-          case (1, _) =>
-            val r = xm.subtract(divU(lf, ud), ctx.roundingContext.down)
-            MoreThan(r)
-          case (-1, _) =>
-            val r = xm.subtract(divU(lf, ud), ctx.roundingContext.down)
-            LessThan(r)
-          case (0, 1) =>
-            LessThan(xm)
-          case (0, _) =>
-            MoreThan(xm)
+          case (1, _)  => MoreThan(xm.subtract(divU(lf, ud), ctx.roundingContext.up))
+          case (-1, _) => LessThan(xm.subtract(divU(lf, ud), ctx.roundingContext.down))
+          case (0, 1)  => All
+          case (0, _)  => None
         }
       }
-      val lwr =
-        ConstraintSet(Interval(i.d, i.u), xm, halfLowerL(lf, ud), halfLowerR(lf, ld))
 
+      val lwr = ConstraintSet(Interval(i.d, i.u), xm, halfLowerL(lf, ud), halfLowerR(lf, ld))
       Approximation(lwr, ConstraintSet(i, false))
 
     case Exists(x, a, b, phi) =>
@@ -189,9 +224,9 @@ object NewtonApproximations {
     case Forall(x, a, b, phi) =>
       estimate(phi)(ctx + (x -> ForallDomain(a, b)), x0, i)
 
-    case And(x, y)                => lift(_.union(_))(x, y)
+    case And(x, y)                => lift(_.intersection(_))(x, y)
 
-    case Or(x, y)                 => lift(_.intersection(_))(x, y)
+    case Or(x, y)                 => lift(_.union(_))(x, y)
 
     case ConstFormula(a: Boolean) => Approximation(ConstraintSet(i, a), ConstraintSet(i, a))
   }

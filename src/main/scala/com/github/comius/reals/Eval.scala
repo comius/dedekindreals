@@ -75,7 +75,6 @@ object Eval {
 
   def refine(expr: Real)(implicit ctx: Context[VarDomain]): Real = expr match {
     case CutR(x, l, u, a, b) =>
-
       val aFound = approximate(l)(ctx + (x -> CutDomain(a, a))).lower
       val bFound = approximate(u)(ctx + (x -> CutDomain(b, b))).lower
       if (aFound && bFound) {
@@ -94,9 +93,9 @@ object Eval {
       
       val t1 = NewtonApproximations.estimate(l)(ctx, x, Interval(a,b))
       val t2 = NewtonApproximations.estimate(u)(ctx, x, Interval(a,b))
-      val a3 = t1.lower.lastOption.fold(a)(_.u)
-      val b3 = t2.lower.headOption.fold(b)(_.d)
       
+      val a3 = t1.lower.supremum()
+      val b3 = t2.lower.infimum()
       // TODO find bugs
       //println(s"debug> ${Interval(a3,b3)} ${t1.lower} ${t2.lower}")
       val an = a2.max(a3)
@@ -131,6 +130,7 @@ object Eval {
       val width = l.u.subtract(l.d, context.roundingContext.up)
       val ctime = System.currentTimeMillis()
       println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString.length}, time ${ctime - stime}")
+      
       stime = ctime
       if (width.compareTo(prec) < 0) {
         println(l)
