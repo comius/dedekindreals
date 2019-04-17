@@ -19,7 +19,7 @@ import com.github.comius.reals.syntax.Real
 import com.github.comius.reals.syntax.Sub
 import com.github.comius.reals.syntax.Var
 
-object Approximations {
+object BisectionApproximations {
   import com.github.comius.floats.Floats.{ impl => D }
 
   case class Approximation[T](lower: T, upper: T)

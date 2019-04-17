@@ -6,7 +6,7 @@ import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.reals.syntax.Const
 import com.github.comius.RoundingContext
 import org.junit.Assert
-import com.github.comius.reals.Approximations.Approximation
+import com.github.comius.reals.BisectionApproximations.Approximation
 import com.github.comius.reals.syntax.Formula
 import com.github.comius.reals.syntax.Forall
 
@@ -14,12 +14,12 @@ class ApproximationsTest {
   import syntax.Real._
   
   def test(f: Formula, result: Boolean) = {
-    val a = Approximations.approximate(f)(Context(new RoundingContext(0, 2)))
+    val a = BisectionApproximations.approximate(f)(Context(new RoundingContext(0, 2)))
     Assert.assertEquals(s"Formula $f", Approximation(result, result), a)
   }
 
   def testna(f: Formula) = {
-    val a = Approximations.approximate(f)(Context(new RoundingContext(0, 2)))
+    val a = BisectionApproximations.approximate(f)(Context(new RoundingContext(0, 2)))
     Assert.assertEquals(s"Formula $f", Approximation(false, true), a)
   }
 

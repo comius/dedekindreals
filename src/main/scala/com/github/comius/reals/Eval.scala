@@ -22,7 +22,7 @@ import com.github.comius.reals.syntax.Add
 
 object Eval {
   import com.github.comius.floats.Floats.{impl => D}
-  import Approximations._
+  import BisectionApproximations._
 
   def refine(formula: Formula)(implicit ctx: Context[VarDomain]): Formula = {
     approximate(formula)(ctx) match {

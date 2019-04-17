@@ -18,14 +18,14 @@ import com.github.comius.reals.syntax.ConstFormula
 import com.github.comius.reals.syntax.Const
 import com.github.comius.reals.syntax.And
 import com.github.comius.reals.syntax.Add
-import com.github.comius.reals.Approximations.VarDomain
-import com.github.comius.reals.Approximations.ExistsDomain
-import com.github.comius.reals.Approximations.ForallDomain
-import com.github.comius.reals.Approximations.CutDomain
+import com.github.comius.reals.BisectionApproximations.VarDomain
+import com.github.comius.reals.BisectionApproximations.ExistsDomain
+import com.github.comius.reals.BisectionApproximations.ForallDomain
+import com.github.comius.reals.BisectionApproximations.CutDomain
 
 object NewtonApproximations {
   import com.github.comius.floats.Floats.{ impl => D }
-  import Approximations.Approximation
+  import BisectionApproximations.Approximation
 
   val zeroInt = Interval(D.ZERO, D.ZERO)
   val oneInt = Interval(D.ONE, D.ONE)
