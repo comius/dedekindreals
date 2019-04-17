@@ -6,9 +6,9 @@ import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.reals.syntax.Const
 import com.github.comius.RoundingContext
 import org.junit.Assert
-import com.github.comius.reals.BisectionApproximations.Approximation
 import com.github.comius.reals.syntax.Formula
 import com.github.comius.reals.syntax.Forall
+import com.github.comius.reals.BisectionApproximations.Approximation
 
 class ApproximationsTest {
   import syntax.Real._

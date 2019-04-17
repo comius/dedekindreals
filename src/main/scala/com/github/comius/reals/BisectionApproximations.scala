@@ -19,22 +19,9 @@ import com.github.comius.reals.syntax.Real
 import com.github.comius.reals.syntax.Sub
 import com.github.comius.reals.syntax.Var
 
-object BisectionApproximations {
+
+object BisectionApproximations extends Approximations {
   import com.github.comius.floats.Floats.{ impl => D }
-
-  case class Approximation[T](lower: T, upper: T)
-  
-  sealed trait VarDomain {
-    val lower: D.T
-    val upper: D.T
-  }
-    
-  
-  case class ExistsDomain(lower: D.T, upper: D.T) extends VarDomain
-  case class CutDomain(lower: D.T, upper: D.T) extends VarDomain
-  case class ForallDomain(lower: D.T, upper: D.T) extends VarDomain
-
-  
   
   def lift(op: (Boolean, Boolean) => Boolean)(x: Formula, y: Formula)(implicit ctx: Context[VarDomain]) =
     {
