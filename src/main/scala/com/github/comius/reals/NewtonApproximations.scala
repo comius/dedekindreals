@@ -179,7 +179,7 @@ object NewtonApproximations {
 
   def estimate(formula: Formula)(implicit ctx: Context[VarDomain], x0: Symbol, i: Interval): Approximation[ConstraintSet] = formula match {
     case Less(x, y) =>
-      def extendContext(ctx: Context[VarDomain]): Context[(Interval, Interval)] = {
+      def extendContextLower(ctx: Context[VarDomain]): Context[(Interval, Interval)] = {
         ctx.mapValues(v => (v match {
           case ExistsDomain(a, b) =>
             val m = a.split(b); Interval(m, m)
@@ -187,13 +187,22 @@ object NewtonApproximations {
           case CutDomain(a, b)    => Interval(a, b)
         }, zeroInt))
       }
+      
+      def extendContextUpper(ctx: Context[VarDomain]): Context[(Interval, Interval)] = {
+        ctx.mapValues(v => (v match {
+          case ExistsDomain(a, b) =>
+            Interval(b,a)
+          case ForallDomain(a, b) => val m = a.split(b); Interval(m,m)
+          case CutDomain(a, b)    => Interval(a, b)
+        }, zeroInt))
+      }
 
       val xm = i.d.split(i.u)
       val xi = Interval(xm, xm)
       // value at the middle point, we don't need interval
-      val a @ (Interval(lf, uf), _) = evalr(Sub(y, x))(extendContext(ctx) + (x0 -> (xi, zeroInt)))
+      val a @ (Interval(lf, _), _) = evalr(Sub(y, x))(extendContextLower(ctx) + (x0 -> (xi, zeroInt)))
       // derivative over the whole interval
-      val b @ (_, Interval(ld, ud)) = evalr(Sub(y, x))(extendContext(ctx) + (x0 -> (i, oneInt)))
+      val b @ (_, Interval(ld, ud)) = evalr(Sub(y, x))(extendContextLower(ctx) + (x0 -> (i, oneInt)))
 
       val divU: (D.T, D.T) => D.T = _.divide(_, ctx.roundingContext.up)
       val divD: (D.T, D.T) => D.T = _.divide(_, ctx.roundingContext.down)
@@ -216,7 +225,13 @@ object NewtonApproximations {
       }
 
       val lwr = ConstraintSet(Interval(i.d, i.u), xm, halfLowerL(lf, ud), halfLowerR(lf, ld))
-      val upr = ConstraintSet(Interval(i.d, i.u), xm, halfLowerL(uf, ld), halfLowerR(uf, ud))
+      
+       // value at the middle point, we don't need interval
+      val (Interval(uf, _), _) = evalr(Sub(y, x))(extendContextUpper(ctx) + (x0 -> (xi, zeroInt)))
+      // derivative over the whole interval
+      val (_, Interval(uld, uud)) = evalr(Sub(y, x))(extendContextUpper(ctx) + (x0 -> (i, oneInt)))
+      
+      val upr = ConstraintSet(Interval(i.d, i.u), xm, halfLowerL(uf, uld), halfLowerR(uf, uud))
       Approximation(lwr, upr)
 
     case Exists(x, a, b, phi) =>
