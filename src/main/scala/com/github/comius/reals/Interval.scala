@@ -226,8 +226,10 @@ case class Interval(d: D.T, u: D.T) {
 
         s"${xp.substring(0, p2)}[${xp.substring(p2)},${yp.substring(p2)}]"
       } else {
+          val xp = d.add(D.ZERO, new MathContext(prec, RoundingMode.FLOOR))
+          val yp = u.add(D.ZERO, new MathContext(prec, RoundingMode.CEILING))
         // We are printing numbers of different magnitude. We're more interested in the magnitude than anything else.
-        s"[${x1},${y1}]"
+        s"[${xp},${yp}]"
       }
     }
   }
