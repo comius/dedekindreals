@@ -1,23 +1,20 @@
 package com.github.comius.reals.newton
 
 import org.junit.runner.RunWith
-import org.scalacheck.Properties
-import com.github.comius.floats.FloatSpec
 import org.scalacheck.Arbitrary
-import com.github.comius.reals.newton.ConstraintSet.MoreThan
-import com.github.comius.reals.newton.ConstraintSet.LessThan
-import com.github.comius.reals.newton.ConstraintSet.RealConstraint
-import org.scalatest.prop.Generator
 import org.scalacheck.Gen
-import org.scalatest.prop.Generator
+import org.scalacheck.Prop.BooleanOperators
+import org.scalacheck.Prop.forAll
+import org.scalacheck.Properties
+
+import com.github.comius.floats.FloatSpec
 import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.reals.Interval
-import org.scalatest.prop.Generator
 import com.github.comius.reals.newton.ConstraintSet.ConstraintSetAll
-import com.github.comius.reals.newton.ConstraintSet.ConstraintSetNone
-import org.scalacheck.Prop.forAll
-import org.scalacheck.Prop.BooleanOperators
 import com.github.comius.reals.newton.ConstraintSet.ConstraintSetList
+import com.github.comius.reals.newton.ConstraintSet.ConstraintSetNone
+import com.github.comius.reals.newton.ConstraintSet.LessThan
+import com.github.comius.reals.newton.ConstraintSet.MoreThan
 
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class ConstraintSetSpec extends Properties("ConstraintSet") {
@@ -30,10 +27,10 @@ class ConstraintSetSpec extends Properties("ConstraintSet") {
       c <- Gen.oneOf(0, 1)
     } yield ConstraintSetList(
       d,
-      cl.sortWith(_.compareTo(_) <= 0).distinct.zipWithIndex.map {
+      cl.sortWith(_.compareTo(_) <= 0).distinct.zipWithIndex.map({
         case (d, i) if i % 2 == c => MoreThan(d)
         case (d, _)               => LessThan(d)
-      })
+      }) )
 
   implicit def arbConstraintSet: Arbitrary[ConstraintSet] = Arbitrary {
     Gen.frequency((1, ConstraintSetAll(d)), (1, ConstraintSetNone(d)), (5, listConstraintSet))

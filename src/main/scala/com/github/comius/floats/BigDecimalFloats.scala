@@ -178,5 +178,18 @@ object BigDecimalFloats extends Floats {
         case _              => false
       }
     }
+
+    /**
+     * HashCode is sometimes used for quick comparison. We need 0 == 0.00.
+     *
+     * @return hash code
+     */
+    override def hashCode(): Int = {
+      if (x.compareTo(BigDecimal.ZERO) == 0) {
+        BigDecimal.ZERO.hashCode()
+      } else {
+        x.hashCode()
+      }
+    }
   }
 }
