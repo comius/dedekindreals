@@ -94,8 +94,8 @@ object Eval {
       
       val t1 = NewtonApproximations.estimate(l)(ctx, x, Interval(a,b))
       val t2 = NewtonApproximations.estimate(u)(ctx, x, Interval(a,b))      
-      val a3 = t1.lower.supremum().max(t2.upper.infimum())
-      val b3 = t2.lower.infimum().min(t1.upper.supremum())
+      val a3 = t1.lower.supremum()//.max(t2.upper.infimum())
+      val b3 = t2.lower.infimum()//.min(t1.upper.supremum())
       // TODO find bugs
       //println(s"debug> ${Interval(a3,b3)} ${t1.lower} ${t2.lower}")
       val an = a2.max(a3)
