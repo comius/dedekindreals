@@ -2,6 +2,7 @@ package com.github.comius.reals.newton
 
 import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.reals.Interval
+import scala.collection.mutable.ListBuffer
 
 abstract class ConstraintSet(val domain: Interval) {
   import ConstraintSet._
@@ -12,48 +13,78 @@ abstract class ConstraintSet(val domain: Interval) {
   def union(s: ConstraintSet): ConstraintSet = {
     require(domain == s.domain, "Union of diffrent domains")
 
-    def union(l1: List[RealConstraint], l2: List[RealConstraint]): List[RealConstraint] = {
-      (l1, l2) match {
-        case (Nil, _)                                     => l2
-        case (_, Nil)                                     => l1
+    def union(l1: List[RealConstraint], l2: List[RealConstraint]): ConstraintSet = {
 
-        case (a :: at, b :: bt) if a.x.compareTo(b.x) > 0 => union(l2, l1)
+      val u0 = (l1.map((_, true)) ++ l2.map((_, false))).sortWith {
+        case ((a, _), (b, _)) =>
+          val c = a.x.compareTo(b.x)
+          if (c == 0) (a,b) match {
+            case (_:LessThan, _:MoreThan) => true
+            case _ => false
+          } else c<0
+      }
+      
+      val r = ListBuffer[RealConstraint]()
+      var in1 = l1.head.isInstanceOf[LessThan]
+      var in2 = l2.head.isInstanceOf[LessThan]      
+      
+      for (t <- u0) t match {
+        case (a: MoreThan, b) =>
+          if (!(in1 || in2)) r.append(a)
+          if (b) in1 = true else in2 = true
+        case (a: LessThan, b)  => 
+          val prev = in1 || in2
+          if (b) in1 = false else in2 = false
+          if (prev && (!(in1 || in2))) r.append(a)         
+      }
 
-        case (LessThan(x) :: at, LessThan(y) :: _)        => union(at, l2)
-        case (MoreThan(x) :: _, MoreThan(y) :: bt)        => union(l1, bt)
-
-        case (a :: at, _)                                 => a :: union(at, l2)
+      if (r.size == 0) {
+        ConstraintSetAll(domain)
+      } else {
+        ConstraintSetList(domain, r.toList)
       }
     }
 
     (this, s) match {
       case (_: ConstraintSetAll, _) | (_, _: ConstraintSetNone)   => this
       case (_, _: ConstraintSetAll) | (_: ConstraintSetNone, _)   => s
-      case (ConstraintSetList(_, l1), (ConstraintSetList(_, l2))) => ConstraintSetList(domain, union(l1, l2))
+      case (ConstraintSetList(_, l1), (ConstraintSetList(_, l2))) => union(l1, l2)
     }
   }
 
   def intersection(s: ConstraintSet): ConstraintSet = {
     require(domain == s.domain, "Intersection of diffrent domains")
 
-    def intersection(l1: List[RealConstraint], l2: List[RealConstraint]): List[RealConstraint] = {
-      (l1, l2) match {
-        case (Nil, _)                                     => l2
-        case (_, Nil)                                     => l1
+    def intersection(l1: List[RealConstraint], l2: List[RealConstraint]): ConstraintSet = {
+      val u0 = (l1.map((_, true)) ++ l2.map((_, false))).sortWith {
+        case ((a, _), (b, _)) => a.x.compareTo(b.x) < 0
+      }
+      
+      val r = ListBuffer[RealConstraint]()
+      var in1 = l1.head.isInstanceOf[LessThan]
+      var in2 = l2.head.isInstanceOf[LessThan]
+      
+      for (t <- u0) t match {
+        case (a: MoreThan, b) =>   
+          val prev = in1 && in2
+          if (b) in1 = true else in2 = true
+          if (!prev && in1 && in2) r.append(a)
+        case (a: LessThan, b)  => 
+          if (in1 && in2) r.append(a)         
+          if (b) in1 = false else in2 = false          
+      }
 
-        case (a :: at, b :: bt) if a.x.compareTo(b.x) > 0 => intersection(l2, l1)
-
-        case (LessThan(x) :: _, LessThan(y) :: bt)        => intersection(l1, bt)
-        case (MoreThan(x) :: at, MoreThan(y) :: _)        => intersection(at, l2)
-
-        case (a :: at, _)                                 => a :: intersection(at, l2)
+      if (r.size == 0) {
+        ConstraintSetNone(domain)
+      } else {
+        ConstraintSetList(domain, r.toList)
       }
     }
 
     (this, s) match {
       case (_: ConstraintSetAll, _) | (_, _: ConstraintSetNone)   => s
       case (_, _: ConstraintSetAll) | (_: ConstraintSetNone, _)   => this
-      case (ConstraintSetList(_, l1), (ConstraintSetList(_, l2))) => ConstraintSetList(domain, intersection(l1, l2))
+      case (ConstraintSetList(_, l1), (ConstraintSetList(_, l2))) => intersection(l1, l2)
     }
   }
 
