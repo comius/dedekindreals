@@ -1,29 +1,16 @@
 package com.github.comius.reals
 
-import com.github.comius.RoundingContext
-import com.github.comius.reals.syntax.Var
-import com.github.comius.reals.syntax.Sub
-import com.github.comius.reals.syntax.Real
-import com.github.comius.reals.syntax.Or
-import com.github.comius.reals.syntax.Mul
-import com.github.comius.reals.syntax.Less
-import com.github.comius.reals.syntax.Integrate
-import com.github.comius.reals.syntax.Formula
-import com.github.comius.reals.syntax.Forall
-import com.github.comius.reals.syntax.Exists
-import com.github.comius.reals.syntax.Div
-import com.github.comius.reals.syntax.CutR
-import com.github.comius.reals.syntax.Cut
-import com.github.comius.reals.syntax.ConstFormula
-import com.github.comius.reals.syntax.Const
 import com.github.comius.reals.syntax.And
-import com.github.comius.reals.syntax.Add
+import com.github.comius.reals.syntax.ConstFormula
+import com.github.comius.reals.syntax.Exists
+import com.github.comius.reals.syntax.Forall
+import com.github.comius.reals.syntax.Formula
+import com.github.comius.reals.syntax.Less
+import com.github.comius.reals.syntax.Or
+import com.github.comius.reals.syntax.Sub
 
 object NewtonApproximations extends Approximations {
   import com.github.comius.floats.Floats.{ impl => D }
-
-  val zeroInt = Interval(D.ZERO, D.ZERO)
-  val oneInt = Interval(D.ONE, D.ONE)
 
   sealed trait Constraint {
     val x: D.T
@@ -180,7 +167,7 @@ object NewtonApproximations extends Approximations {
             val m = a.split(b); Interval(m, m)
           case ForallDomain(a, b) => Interval(a, b)
           case CutDomain(a, b)    => Interval(a, b)
-        }, zeroInt))
+        }, Interval.ZERO))
       }
       
       def extendContextUpper(ctx: Context[VarDomain]): Context[(Interval, Interval)] = {
@@ -189,15 +176,15 @@ object NewtonApproximations extends Approximations {
             Interval(b,a)
           case ForallDomain(a, b) => val m = a.split(b); Interval(m,m)
           case CutDomain(a, b)    => Interval(a, b)
-        }, zeroInt))
+        }, Interval.ZERO))
       }
 
       val xm = i.d.split(i.u)
       val xi = Interval(xm, xm)
       // value at the middle point, we don't need interval
-      val a @ (Interval(lf, _), _) = evalr(Sub(y, x))(extendContextLower(ctx) + (x0 -> (xi, zeroInt)))
+      val a @ (Interval(lf, _), _) = AutomaticDifferentiation.evalr(Sub(y, x))(extendContextLower(ctx) + (x0 -> (xi, Interval.ZERO)))
       // derivative over the whole interval
-      val b @ (_, Interval(ld, ud)) = evalr(Sub(y, x))(extendContextLower(ctx) + (x0 -> (i, oneInt)))
+      val b @ (_, Interval(ld, ud)) = AutomaticDifferentiation.evalr(Sub(y, x))(extendContextLower(ctx) + (x0 -> (i, Interval.ONE)))
 
       val divU: (D.T, D.T) => D.T = _.divide(_, ctx.roundingContext.up)
       val divD: (D.T, D.T) => D.T = _.divide(_, ctx.roundingContext.down)
@@ -222,9 +209,9 @@ object NewtonApproximations extends Approximations {
       val lwr = ConstraintSet(Interval(i.d, i.u), xm, halfLowerL(lf, ud), halfLowerR(lf, ld))
       
        // value at the middle point, we don't need interval
-      val (Interval(uf, _), _) = evalr(Sub(y, x))(extendContextUpper(ctx) + (x0 -> (xi, zeroInt)))
+      val (Interval(uf, _), _) = AutomaticDifferentiation.evalr(Sub(y, x))(extendContextUpper(ctx) + (x0 -> (xi, Interval.ZERO)))
       // derivative over the whole interval
-      val (_, Interval(uld, uud)) = evalr(Sub(y, x))(extendContextUpper(ctx) + (x0 -> (i, oneInt)))
+      val (_, Interval(uld, uud)) = AutomaticDifferentiation.evalr(Sub(y, x))(extendContextUpper(ctx) + (x0 -> (i, Interval.ONE)))
       
       val upr = ConstraintSet(Interval(i.d, i.u), xm, halfLowerL(uf, uld), halfLowerR(uf, uud))
       Approximation(lwr, upr)
@@ -240,49 +227,5 @@ object NewtonApproximations extends Approximations {
     case Or(x, y)                 => lift(_.union(_))(x, y)
 
     case ConstFormula(a: Boolean) => Approximation(ConstraintSet(i, a), ConstraintSet(i, a))
-  }
-
-  type A = (Interval, Interval)
-
-  def liftr(op: (A, A, RoundingContext) => A)(x: Real, y: Real)(implicit ctx: Context[(Interval, Interval)]): A = {
-    val l1 = evalr(x)
-    val l2 = evalr(y)
-    op(l1, l2, ctx.roundingContext)
-  }
-
-  def evalr(expr: Real)(implicit ctx: Context[(Interval, Interval)]): (Interval, Interval) = {
-
-    expr match {
-      case Cut(_, a, b, _, _)  => (Interval(a, b), zeroInt)
-      case CutR(_, _, _, _, _) => (Interval(D.negInf, D.posInf), zeroInt)
-      case Const(a)            => (Interval(a, a), zeroInt)
-      case Add(x, y) =>
-        liftr((a, b, r) => (a._1.add(b._1, r), a._2.add(b._2, r)))(x, y)
-      case Sub(x, y) =>
-        liftr((a, b, r) => (a._1.subtract(b._1, r), a._2.subtract(b._2, r)))(x, y)
-      case Mul(x, y) =>
-        liftr((a, b, r) => (a._1.multiply(b._1, r), a._1.multiply(b._2, r).add(b._1.multiply(a._2, r), r)))(x, y)
-      case Div(x, y) =>
-        liftr((a, b, r) => (a._1.divide(b._1, r), a._2.multiply(b._1, r).subtract(b._2.multiply(a._1, r.swap), r.swap)
-          .divide(b._1.multiply(b._1, r), r.swap())))(x, y) // TODO rounding
-      case Integrate(x, a, b, e) =>
-        val rc = ctx.roundingContext
-        val xm = a.split(b)
-        val xmi = Interval(xm, xm)
-        val l1 = evalr(e)(ctx + (x -> (xmi, zeroInt)))
-        val dl1 = evalr(e)(ctx + (x -> (Interval(a, b), oneInt)))
-        val ddl1 = dl1._2.subtract(dl1._2, rc)
-        val ba = Interval(b, b).subtract(Interval(a, a), rc)
-        val i8 = Interval(D.valueOf(8), D.valueOf(8))
-        val ba28 = ba.multiply(ba, rc).divide(i8, rc)
-
-        (ba.multiply(l1._1, rc).add(ba28.multiply(ddl1, rc), rc), l1._2.multiply(ba, rc))
-      /*
-        val l1 = evalr(e)(ctx + (x -> (Interval(a, b), zeroInt)))
-        val ba = Interval(b, b).subtract(Interval(a, a), ctx.roundingContext)
-        (l1._1.multiply(ba, ctx.roundingContext), l1._2.multiply(ba, ctx.roundingContext))
-        */
-      case Var(name) => ctx.vars.get(name).get
-    }
   }
 }

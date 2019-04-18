@@ -27,7 +27,7 @@ class NewtonApproximationsTest {
 
   @Test
   def testIntegrate(): Unit = {
-    println("->" + evalr(Integrate('x, 0, 1, 'x * 'x))(Context(new RoundingContext(10, 10)))) // ([0,1],0) // ([0.000,0.5],0)
+    println("->" + AutomaticDifferentiation.evalr(Integrate('x, 0, 1, 'x * 'x))(Context(new RoundingContext(10, 10)))) // ([0,1],0) // ([0.000,0.5],0)
 
   }
 

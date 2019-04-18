@@ -235,4 +235,17 @@ case class Interval(d: D.T, u: D.T) {
   }
 }
 
- 
+/**
+ * Companion object for interval.
+ */
+object Interval {
+  /**
+   * Zero.
+   */
+  val ZERO = Interval(D.ZERO, D.ZERO)
+  
+  /**
+   * One.
+   */
+  val ONE = Interval(D.ONE, D.ONE)
+}
