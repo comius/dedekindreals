@@ -8,11 +8,16 @@ import com.github.comius.reals.syntax.Formula
 import com.github.comius.reals.syntax.Less
 import com.github.comius.reals.syntax.Or
 import com.github.comius.reals.syntax.Sub
+import com.github.comius.reals.ConstraintSet.Constraint
+import com.github.comius.reals.ConstraintSet.MoreThan
+import com.github.comius.BaByMarshall.LessThan
+import java.util.regex.Pattern.All
+import com.github.comius.reals.ConstraintSet.LessThan
+import com.github.comius.reals.ConstraintSet.All
+import com.github.comius.reals.ConstraintSet.None
 
 object NewtonApproximations extends Approximations {
   import com.github.comius.floats.Floats.{ impl => D }
-
- 
 
   def lift(op: (ConstraintSet, ConstraintSet) => ConstraintSet)(x: Formula, y: Formula)(implicit ctx: Context[VarDomain], x0: Symbol, i: Interval) =
     {
@@ -52,7 +57,7 @@ object NewtonApproximations extends Approximations {
       val divU: (D.T, D.T) => D.T = _.divide(_, ctx.roundingContext.up)
       val divD: (D.T, D.T) => D.T = _.divide(_, ctx.roundingContext.down)
 
-      def halfLowerR(lf: D.T, ld: D.T): ExtraConstraint = {
+      def halfLowerR(lf: D.T, ld: D.T): Constraint = {
         (ld.signum, lf.signum()) match {
           case (1, _)  => MoreThan(xm.subtract(divD(lf, ld), ctx.roundingContext.up))
           case (-1, _) => LessThan(xm.subtract(divU(lf, ld), ctx.roundingContext.down))
@@ -60,7 +65,7 @@ object NewtonApproximations extends Approximations {
           case (0, _)  => None
         }
       }
-      def halfLowerL(lf: D.T, ud: D.T): ExtraConstraint = {
+      def halfLowerL(lf: D.T, ud: D.T): Constraint = {
         (ud.signum, lf.signum()) match {
           case (1, _)  => MoreThan(xm.subtract(divU(lf, ud), ctx.roundingContext.up))
           case (-1, _) => LessThan(xm.subtract(divU(lf, ud), ctx.roundingContext.down))

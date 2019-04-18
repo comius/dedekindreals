@@ -2,24 +2,16 @@ package com.github.comius.reals
 
 import com.github.comius.floats.Floats.{ impl => D }
 
-sealed trait Constraint {
-  val x: D.T
-}
-case class MoreThan(val x: D.T) extends ExtraConstraint with Constraint
-case class LessThan(val x: D.T) extends ExtraConstraint with Constraint
-
-sealed trait ExtraConstraint
-case object All extends ExtraConstraint
-case object None extends ExtraConstraint
-
 abstract class ConstraintSet(val domain: Interval) {
+  import ConstraintSet._
+
   def supremum(): D.T
   def infimum(): D.T
 
   def union(s: ConstraintSet): ConstraintSet = {
     require(domain == s.domain, "Union of diffrent domains")
 
-    def union(l1: List[Constraint], l2: List[Constraint]): List[Constraint] = {
+    def union(l1: List[RealConstraint], l2: List[RealConstraint]): List[RealConstraint] = {
       (l1, l2) match {
         case (Nil, _)                                     => l2
         case (_, Nil)                                     => l1
@@ -43,7 +35,7 @@ abstract class ConstraintSet(val domain: Interval) {
   def intersection(s: ConstraintSet): ConstraintSet = {
     require(domain == s.domain, "Intersection of diffrent domains")
 
-    def intersection(l1: List[Constraint], l2: List[Constraint]): List[Constraint] = {
+    def intersection(l1: List[RealConstraint], l2: List[RealConstraint]): List[RealConstraint] = {
       (l1, l2) match {
         case (Nil, _)                                     => l2
         case (_, Nil)                                     => l1
@@ -66,40 +58,18 @@ abstract class ConstraintSet(val domain: Interval) {
 
 }
 
-case class ConstraintSetAll(override val domain: Interval) extends ConstraintSet(domain) {
-  override def supremum(): D.T = domain.u
-  override def infimum(): D.T = domain.d
-}
-case class ConstraintSetNone(override val domain: Interval) extends ConstraintSet(domain) {
-  override def supremum(): D.T = domain.d
-  override def infimum(): D.T = domain.u
-}
-
-case class ConstraintSetList private (override val domain: Interval, constraints: List[Constraint]) extends ConstraintSet(domain) {
-  require(constraints.size > 0, "empty constraint set")
-  require(
-    constraints.zip(constraints.tail).forall {
-      case (LessThan(x), MoreThan(y)) => x.compareTo(y) <= 0
-      case (MoreThan(x), LessThan(y)) => x.compareTo(y) <= 0
-      case _                          => false
-    },
-    s"LessThan and MoreThan are not exchanging or not ordered: $constraints")
-
-  override def supremum(): D.T = constraints.last match {
-    case LessThan(x0) => x0
-    case MoreThan(_)  => domain.u
-  }
-
-  override def infimum(): D.T = constraints.head match {
-    case LessThan(_)  => domain.d
-    case MoreThan(x0) => x0
-  }
-}
-
 object ConstraintSet {
+  sealed trait RealConstraint {
+    val x: D.T
+  }
+  sealed trait Constraint
+  case object All extends Constraint
+  case object None extends Constraint
+  case class MoreThan(val x: D.T) extends Constraint with RealConstraint
+  case class LessThan(val x: D.T) extends Constraint with RealConstraint
 
   // Check if constraint lies in the domain
-  private def sanitizeConstraint(domain: Interval, constraint: ExtraConstraint): ExtraConstraint = constraint match {
+  private def sanitizeConstraint(domain: Interval, constraint: Constraint): Constraint = constraint match {
     case LessThan(x) =>
       if (x.compareTo(domain.d) <= 0) None
       else if (domain.u.compareTo(x) < 0) All
@@ -115,7 +85,7 @@ object ConstraintSet {
       ConstraintSet(domain, List(sanitizeConstraint(domain, constraint)))
     }*/
 
-  def apply(domain: Interval, xm: D.T, c1: ExtraConstraint, c2: ExtraConstraint): ConstraintSet = {
+  def apply(domain: Interval, xm: D.T, c1: Constraint, c2: Constraint): ConstraintSet = {
     val c1s = sanitizeConstraint(Interval(domain.d, xm), c1)
     val c2s = sanitizeConstraint(Interval(xm, domain.u), c2)
 
@@ -146,4 +116,35 @@ object ConstraintSet {
   def apply(domain: Interval, b: Boolean): ConstraintSet = {
     if (b) ConstraintSetList(domain, List(MoreThan(domain.d))) else ConstraintSetList(domain, List(LessThan(domain.d)))
   }
+
+  case class ConstraintSetAll(override val domain: Interval) extends ConstraintSet(domain) {
+    override def supremum(): D.T = domain.u
+    override def infimum(): D.T = domain.d
+  }
+  case class ConstraintSetNone(override val domain: Interval) extends ConstraintSet(domain) {
+    override def supremum(): D.T = domain.d
+    override def infimum(): D.T = domain.u
+  }
+
+  case class ConstraintSetList private (override val domain: Interval, constraints: List[RealConstraint]) extends ConstraintSet(domain) {
+    require(constraints.size > 0, "empty constraint set")
+    require(
+      constraints.zip(constraints.tail).forall {
+        case (LessThan(x), MoreThan(y)) => x.compareTo(y) <= 0
+        case (MoreThan(x), LessThan(y)) => x.compareTo(y) <= 0
+        case _                          => false
+      },
+      s"LessThan and MoreThan are not exchanging or not ordered: $constraints")
+
+    override def supremum(): D.T = constraints.last match {
+      case LessThan(x0) => x0
+      case MoreThan(_)  => domain.u
+    }
+
+    override def infimum(): D.T = constraints.head match {
+      case LessThan(_)  => domain.d
+      case MoreThan(x0) => x0
+    }
+  }
+
 }
