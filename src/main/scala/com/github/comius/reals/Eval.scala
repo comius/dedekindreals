@@ -3,26 +3,27 @@ package com.github.comius.reals
 
 
 
-import com.github.comius.RoundingContext;
-import com.github.comius.reals.syntax.Sub
-import com.github.comius.reals.syntax.Real
-import com.github.comius.reals.syntax.Or
-import com.github.comius.reals.syntax.Mul
-import com.github.comius.reals.syntax.Less
-import com.github.comius.reals.syntax.Integrate
-import com.github.comius.reals.syntax.Formula
-import com.github.comius.reals.syntax.Forall
-import com.github.comius.reals.syntax.Exists
-import com.github.comius.reals.syntax.Div
-import com.github.comius.reals.syntax.CutR
-import com.github.comius.reals.syntax.Cut
-import com.github.comius.reals.syntax.ConstFormula
-import com.github.comius.reals.syntax.And
+import com.github.comius.RoundingContext
+import com.github.comius.reals.newton.NewtonApproximations
 import com.github.comius.reals.syntax.Add
+import com.github.comius.reals.syntax.And
+import com.github.comius.reals.syntax.ConstFormula
+import com.github.comius.reals.syntax.Cut
+import com.github.comius.reals.syntax.CutR
+import com.github.comius.reals.syntax.Div
+import com.github.comius.reals.syntax.Exists
+import com.github.comius.reals.syntax.Forall
+import com.github.comius.reals.syntax.Formula
+import com.github.comius.reals.syntax.Integrate
+import com.github.comius.reals.syntax.Less
+import com.github.comius.reals.syntax.Mul
+import com.github.comius.reals.syntax.Or
+import com.github.comius.reals.syntax.Real
+import com.github.comius.reals.syntax.Sub
 
 object Eval {
-  import com.github.comius.floats.Floats.{impl => D}
   import BisectionApproximations._
+  import com.github.comius.floats.Floats.{ impl => D }
 
   def refine(formula: Formula)(implicit ctx: Context[VarDomain]): Formula = {
     approximate(formula)(ctx) match {

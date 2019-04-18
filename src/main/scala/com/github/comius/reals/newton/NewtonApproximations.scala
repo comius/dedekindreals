@@ -1,4 +1,4 @@
-package com.github.comius.reals
+package com.github.comius.reals.newton
 
 import com.github.comius.reals.syntax.And
 import com.github.comius.reals.syntax.ConstFormula
@@ -8,13 +8,21 @@ import com.github.comius.reals.syntax.Formula
 import com.github.comius.reals.syntax.Less
 import com.github.comius.reals.syntax.Or
 import com.github.comius.reals.syntax.Sub
-import com.github.comius.reals.ConstraintSet.Constraint
-import com.github.comius.reals.ConstraintSet.MoreThan
 import com.github.comius.BaByMarshall.LessThan
 import java.util.regex.Pattern.All
-import com.github.comius.reals.ConstraintSet.LessThan
-import com.github.comius.reals.ConstraintSet.All
-import com.github.comius.reals.ConstraintSet.None
+import com.github.comius.reals.newton.ConstraintSet.Constraint
+import com.github.comius.reals.newton.ConstraintSet.MoreThan
+import com.github.comius.reals.newton.ConstraintSet.LessThan
+import com.github.comius.reals.newton.ConstraintSet.All
+import com.github.comius.reals.newton.ConstraintSet.None
+import com.github.comius.reals.Approximations
+import com.github.comius.reals.Approximations
+import com.github.comius.reals.Interval
+import com.github.comius.reals.Context
+import com.github.comius.reals.VarDomain
+import com.github.comius.reals.ExistsDomain
+import com.github.comius.reals.ForallDomain
+import com.github.comius.reals.CutDomain
 
 object NewtonApproximations extends Approximations {
   import com.github.comius.floats.Floats.{ impl => D }

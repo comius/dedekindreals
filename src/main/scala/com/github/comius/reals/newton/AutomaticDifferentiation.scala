@@ -1,6 +1,8 @@
-package com.github.comius.reals
+package com.github.comius.reals.newton
 
 import com.github.comius.RoundingContext
+import com.github.comius.reals.Context
+import com.github.comius.reals.Interval
 import com.github.comius.reals.syntax.Add
 import com.github.comius.reals.syntax.Const
 import com.github.comius.reals.syntax.Cut

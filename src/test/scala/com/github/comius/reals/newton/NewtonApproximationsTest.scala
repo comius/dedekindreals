@@ -1,13 +1,16 @@
-package com.github.comius.reals
+package com.github.comius.reals.newton
 
 import org.junit.Test
+
 import com.github.comius.RoundingContext
+import com.github.comius.reals.Context
+import com.github.comius.reals.Interval
 import com.github.comius.reals.syntax.Const
 import com.github.comius.reals.syntax.Integrate
 
 class NewtonApproximationsTest {
   import NewtonApproximations._
-  import syntax.Real._
+  import com.github.comius.reals.syntax.Real._
 
   @Test
   def testEstimate(): Unit = {
