@@ -2,7 +2,6 @@ package com.github.comius.reals.newton
 
 import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.reals.Interval
-import scala.collection.mutable.ListBuffer
 
 abstract class ConstraintSet(val domain: Interval) {
   import ConstraintSet._
@@ -10,46 +9,54 @@ abstract class ConstraintSet(val domain: Interval) {
   def supremum(): D.T
   def infimum(): D.T
 
-  private implicit def ord = new Ordering[(RealConstraint, Boolean)] {
-    def compare(a: (RealConstraint, Boolean), b: (RealConstraint, Boolean)): Int = {
-      val c = a._1.x.compareTo(b._1.x)
-      if (c == 0)
-        (if (a._1.isInstanceOf[LessThan]) 0 else 1) - (if (b._1.isInstanceOf[LessThan]) 0 else 1)
-      else c
-    }
-  }
 
+  private def moreThan(a: RealConstraint, b: RealConstraint): Boolean = {
+    a.x.compareTo(b.x) match {
+      case 0 =>
+        (a,b) match {
+          case (_:MoreThan, _:LessThan) => true
+          case _ => false
+        }        
+      case c => c > 0
+    }    
+  }
+  
   def union(s: ConstraintSet): ConstraintSet = {
     require(domain == s.domain, "Union of diffrent domains")
 
     def union(l1: List[RealConstraint], l2: List[RealConstraint]): ConstraintSet = {
-      val u0 = (l1.map((_, true)) ++ l2.map((_, false))).sorted
-
-      val r = ListBuffer[RealConstraint]()
+      val acc = List.newBuilder[RealConstraint]
+      var p1 = l1
+      var p2 = l2
       var in1 = l1.head.isInstanceOf[LessThan]
       var in2 = l2.head.isInstanceOf[LessThan]
 
-      for (t <- u0) t match {
-        case (a: MoreThan, b) =>
-          if (!(in1 || in2)) r.append(a)
-          if (b) in1 = true else in2 = true
-        case (a: LessThan, b) =>
-          val prev = in1 || in2
-          if (b) in1 = false else in2 = false
-          if (prev && (!(in1 || in2))) r.append(a)
+      while (p1 != Nil || p2 != Nil) {
+        if (p1 == Nil || (p2 != Nil && moreThan(p1.head, p2.head))) {
+          val px = p1; p1 = p2; p2 = px;
+          val inx = in1; in1 = in2; in2 = inx;
+        }
+        p1.head match {
+          case a: LessThan =>
+            if (in1 && !in2) acc += a
+            in1 = false
+          case a: MoreThan =>
+            if (!(in1 || in2)) acc += a
+            in1 = true
+        }
+        p1 = p1.tail
       }
 
-      if (r.size == 0) {
-        ConstraintSetAll(domain)
-      } else {
-        ConstraintSetList(domain, r.toList)
-      }
+      val result = acc.result
+      if (result.isEmpty) ConstraintSetAll(domain) else ConstraintSetList(domain, result)
     }
 
     (this, s) match {
-      case (_: ConstraintSetAll, _) | (_, _: ConstraintSetNone)   => this
-      case (_, _: ConstraintSetAll) | (_: ConstraintSetNone, _)   => s
-      case (ConstraintSetList(_, l1), (ConstraintSetList(_, l2))) => union(l1, l2)
+      case (_: ConstraintSetAll, _) | (_, _: ConstraintSetNone) => this
+      case (_, _: ConstraintSetAll) | (_: ConstraintSetNone, _) => s
+      case (ConstraintSetList(_, l1), (ConstraintSetList(_, l2))) => {
+        union(l1, l2)
+      }
     }
   }
 
@@ -57,27 +64,31 @@ abstract class ConstraintSet(val domain: Interval) {
     require(domain == s.domain, "Intersection of diffrent domains")
 
     def intersection(l1: List[RealConstraint], l2: List[RealConstraint]): ConstraintSet = {
-      val u0 = (l1.map((_, true)) ++ l2.map((_, false))).sorted
-
-      val r = ListBuffer[RealConstraint]()
+      val acc = List.newBuilder[RealConstraint]
+      var p1 = l1
+      var p2 = l2
       var in1 = l1.head.isInstanceOf[LessThan]
       var in2 = l2.head.isInstanceOf[LessThan]
 
-      for (t <- u0) t match {
-        case (a: MoreThan, b) =>
-          val prev = in1 && in2
-          if (b) in1 = true else in2 = true
-          if (!prev && in1 && in2) r.append(a)
-        case (a: LessThan, b) =>
-          if (in1 && in2) r.append(a)
-          if (b) in1 = false else in2 = false
+      while (p1 != Nil || p2 != Nil) {
+        if (p1 == Nil || (p2 != Nil && moreThan(p1.head, p2.head))) {
+          val px = p1; p1 = p2; p2 = px;
+          val inx = in1; in1 = in2; in2 = inx;
+        }
+        p1.head match {
+          case a: LessThan =>
+            if (in1 && in2) acc += a
+            in1 = false
+          case a: MoreThan =>
+            if (!in1 && in2) acc += a
+            in1 = true
+        }
+        p1 = p1.tail
       }
 
-      if (r.size == 0) {
-        ConstraintSetNone(domain)
-      } else {
-        ConstraintSetList(domain, r.toList)
-      }
+      val result = acc.result
+      if (result.isEmpty) ConstraintSetNone(domain) else ConstraintSetList(domain, result)
+
     }
 
     (this, s) match {
