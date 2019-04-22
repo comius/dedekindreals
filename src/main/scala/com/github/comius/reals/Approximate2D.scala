@@ -21,10 +21,14 @@ object Approximate2D extends Approximations {
         val acc2 = List.newBuilder[Point]
 
         for ((p1, p2) <- hull.zip(hull.tail :+ hull.head)) {
+
           val in1 = l.inside(p1)
+         // println(s" p1> $p1 in> $in1")
           if (in1) acc1 += p1 else acc2 += p1
           if (in1 != l.inside(p2)) {
+
             val intersect = l.intersection(p1, p2)
+         //   println(s" intersection> $p2 $intersect")
             acc1 += intersect
             acc2 += intersect
           }
@@ -81,13 +85,15 @@ object Approximate2D extends Approximations {
         val x1x2 = p1.x.subtract(p2.x, r.down)
         val y1y2 = p1.y.subtract(p2.y, r.down)
 
-        val D = dfyi.multiply(x1x2, r.down).add(dfxi.multiply(y1y2, r.down), r.down)
+        val D = dfxi.multiply(x1x2, r.down).add(dfyi.multiply(y1y2, r.down), r.down)
 
-        val xN1 = dfxi.multiply(xm, r.down).subtract(f0, r.down).multiply(y1y2, r.down)
-        val xN2 = dfyi.multiply(p1.x.negate.multiply(x1x2, r.down).add(y1y2.multiply(p1.y.subtract(ym, r.down), r.down), r.down), r.down)
+        val xN1 = dfxi.multiply(xm, r.down).subtract(f0, r.down).multiply(x1x2, r.down)
 
-        val yN1 = dfyi.multiply(ym, r.down).subtract(f0, r.down).multiply(x1x2, r.down)
-        val yN2 = dfxi.multiply(p1.y.negate.multiply(y1y2, r.down).add(x1x2.multiply(p1.x.subtract(xm, r.down), r.down), r.down), r.down)
+        val N = p1.y.multiply(p2.x, r.down).subtract(p1.x.multiply(p2.y, r.down), r.down)
+        val xN2 = dfyi.multiply(N.add(ym.multiply(x1x2, r.down), r.down), r.down)
+        val yN1 = dfyi.multiply(ym, r.down).subtract(f0, r.down).multiply(y1y2, r.down)
+        val yN2 = dfxi.multiply(xm.multiply(y1y2, r.down).subtract(N, r.down), r.down)
+
         try {
           Point(xN1.add(xN2, r.down).divide(D, r.down), yN1.add(yN2, r.down).divide(D, r.down))
         } catch {
