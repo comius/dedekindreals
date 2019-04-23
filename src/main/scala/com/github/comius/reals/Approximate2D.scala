@@ -1,6 +1,5 @@
 package com.github.comius.reals
 
-import com.github.comius.reals.syntax.Formula
 import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.reals.syntax.Less
 import com.github.comius.reals.syntax.Sub
@@ -13,9 +12,17 @@ object Approximate2D extends Approximations {
   case class Point(x: D.T, y: D.T)
 
   case class ConstraintSet2D private (xi: Interval, yi: Interval, hull: List[Point]) {
-    def split(llines: List[Line], ulines: List[Line]): (Approximation[ConstraintSet2D], ConstraintSet2D) = {
-      // go round and compute intersection
-
+    def split(llines: List[Line], ulines: List[Line]): (Approximation[ConstraintSet2D], List[ConstraintSet2D]) = {
+      def filterDuplicate[A](l:List[A]): List[A] = {
+        if (l.isEmpty) l 
+        else {
+          val acc = List.newBuilder[A]
+          for ((p1, p2) <- l.zip(l.tail :+ l.head))
+            if (p1 != p2) acc += p1
+          acc.result
+        }
+      }
+      // go round and compute intersection     
       def split(hull: List[Point], l: Line) = {
         if (hull.isEmpty) {
           (List(), List())
@@ -36,26 +43,41 @@ object Approximate2D extends Approximations {
               acc2 += intersect
             }
           }
-          (acc1.result, acc2.result)
+          (filterDuplicate(acc1.result), filterDuplicate(acc2.result))
         }
       }
 
+      // compute lower hull, keeping rest
       var lhull = hull
+      val rest = List.newBuilder[List[Point]]
       for (l <- llines) {
-        val (llhull, rest) = split(lhull, l)
-        lhull = llhull
+        val (lhull1, rest1) = split(lhull, l)
+        lhull = lhull1
+        rest += rest1
       }
-      
+
+      // compute upper hull
       var uhull = hull
       for (l <- ulines) {
-        val (uuhull, rest) = split(uhull, l)
-        uhull = uuhull
+        val (uhull1, _) = split(uhull, l)
+        uhull = uhull1
+      }
+
+      // now compute upper hull from the rest
+
+      val rest3 = List.newBuilder[List[Point]]
+      for (r1 <- rest.result) {
+        var uhull = r1
+        for (l <- ulines) {
+          val (uhull1, rest1) = split(uhull, l)
+          uhull = uhull1
+          rest3 += rest1
+        }
       }
 
       (
         Approximation(ConstraintSet2D(xi, yi, lhull), ConstraintSet2D(xi, yi, uhull)),
-        ConstraintSet2D(xi, yi, List()))
-
+        rest3.result.filter(_.size > 2).map(ConstraintSet2D(xi, yi, _)))
     }
 
     def ccw(a: Point, b: Point, c: Point): Boolean = {
@@ -120,8 +142,8 @@ object Approximate2D extends Approximations {
         }
       }
     }
-   override def toString(): String = {
-     //fmxmy + (x - mx) dfxi + (y - my) dfyi
+    override def toString(): String = {
+      //fmxmy + (x - mx) dfxi + (y - my) dfyi
       s"$f0 + (x - $xm)($dfxi) + (y - $ym) ($dfyi) > 0"
     }
   }
@@ -133,7 +155,7 @@ object Approximate2D extends Approximations {
       else
         new Line(f0, xm, ym, dfxi, dfyi, r)
     }
-   
+
   }
 
   def extendContextLower(ctx: Context[VarDomain]): Context[(Interval, Interval)] = {
@@ -157,7 +179,7 @@ object Approximate2D extends Approximations {
 
   // given f and search space, returns new lower and upper approximation and new search space (one iteration)
   def refine(lss: Less, search: ConstraintSet2D, xs: Symbol,
-             ys: Symbol)(implicit ctx: Context[VarDomain]): (Approximation[ConstraintSet2D], ConstraintSet2D) = {
+             ys: Symbol)(implicit ctx: Context[VarDomain]): (Approximation[ConstraintSet2D], List[ConstraintSet2D]) = {
     val Less(x, y) = lss
     val f = Sub(y, x)
     val mx = search.xi.d.split(search.yi.u)
@@ -170,18 +192,15 @@ object Approximate2D extends Approximations {
     val ldfxi = AutomaticDifferentiation.evalr(f)(lctx + (xs -> (search.xi, Interval.ONE)) + (ys -> (search.yi, Interval.ZERO)))._2
     val ldfyi = AutomaticDifferentiation.evalr(f)(lctx + (xs -> (search.xi, Interval.ZERO)) + (ys -> (search.yi, Interval.ONE)))._2
 
-    val llines = for (ldx <- List(ldfxi.d, ldfxi.u); ldy <- List(ldfyi.d, ldfyi.u)) yield      
-      Line(lfmxmy.d, mx, my, ldx, ldy, ctx.roundingContext, 1)
-    
-    
+    val llines = for (ldx <- List(ldfxi.d, ldfxi.u); ldy <- List(ldfyi.d, ldfyi.u)) yield Line(lfmxmy.d, mx, my, ldx, ldy, ctx.roundingContext, 1)
+
     val ufmxmy = AutomaticDifferentiation.evalr(f)(
       (uctx + (xs -> (Interval(mx, mx), Interval.ZERO))) + (ys -> (Interval(my, my), Interval.ZERO)))._1
     val udfxi = AutomaticDifferentiation.evalr(f)(uctx + (xs -> (search.xi, Interval.ONE)) + (ys -> (search.yi, Interval.ZERO)))._2
     val udfyi = AutomaticDifferentiation.evalr(f)(uctx + (xs -> (search.xi, Interval.ZERO)) + (ys -> (search.yi, Interval.ONE)))._2
 
-    val ulines = for (ldx <- List(udfxi.d, udfxi.u); ldy <- List(udfyi.d, udfyi.u)) yield      
-      Line(lfmxmy.d, mx, my, ldx, ldy, ctx.roundingContext, -1)
-    
+    val ulines = for (ldx <- List(udfxi.d, udfxi.u); ldy <- List(udfyi.d, udfyi.u)) yield Line(lfmxmy.d, mx, my, ldx, ldy, ctx.roundingContext, -1)
+
     search.split(llines, ulines)
     // fmxmy + (x - mx) dfxi + (y - my) dfyi
   }
