@@ -38,8 +38,8 @@ class Approximate2DSpec extends Properties("Approximate2d") {
       }
   }
     
-  val (Approximation(l, u), s) = // Approximate2D.refine('y+Const(5)*'x*'y < 'x * (Const(1) - 'x), cs0, 'x, 'y)(ctx0) 
-     Approximate2D.refine('y < 'x * (Const(1) - 'x), cs0, 'x, 'y)(ctx0)
+  val (Approximation(l, u), s) = Approximate2D.refine('y+Const(5)*'x*'y < 'x * (Const(1) - 'x), cs0, 'x, 'y)(ctx0) 
+     //Approximate2D.refine('y < 'x * (Const(1) - 'x), cs0, 'x, 'y)(ctx0)
   println(l)
   println(u)
   println(s)

@@ -13,7 +13,7 @@ object Approximate2D extends Approximations {
   case class Point(x: D.T, y: D.T)
 
   case class ConstraintSet2D private (xi: Interval, yi: Interval, hull: List[Point]) {
-    def split(lline: Line, lline2: Line, uline: Line, uline2: Line): (Approximation[ConstraintSet2D], ConstraintSet2D) = {
+    def split(llines: List[Line], ulines: List[Line]): (Approximation[ConstraintSet2D], ConstraintSet2D) = {
       // go round and compute intersection
 
       def split(hull: List[Point], l: Line) = {
@@ -40,14 +40,21 @@ object Approximate2D extends Approximations {
         }
       }
 
-      val (lhull1, rest1) = split(hull, lline)
-      val (lhull, rest2) = split(lhull1, lline2)
-      val (uhull1, rest3) = split(hull, uline)
-      val (uhull, rest4) = split(uhull1, uline2)
+      var lhull = hull
+      for (l <- llines) {
+        val (llhull, rest) = split(lhull, l)
+        lhull = llhull
+      }
+      
+      var uhull = hull
+      for (l <- ulines) {
+        val (uuhull, rest) = split(uhull, l)
+        uhull = uuhull
+      }
 
       (
         Approximation(ConstraintSet2D(xi, yi, lhull), ConstraintSet2D(xi, yi, uhull)),
-        ConstraintSet2D(xi, yi, rest4))
+        ConstraintSet2D(xi, yi, List()))
 
     }
 
@@ -113,7 +120,10 @@ object Approximate2D extends Approximations {
         }
       }
     }
-
+   override def toString(): String = {
+     //fmxmy + (x - mx) dfxi + (y - my) dfyi
+      s"$f0 + (x - $xm)($dfxi) + (y - $ym) ($dfyi) > 0"
+    }
   }
 
   object Line {
@@ -123,6 +133,7 @@ object Approximate2D extends Approximations {
       else
         new Line(f0, xm, ym, dfxi, dfyi, r)
     }
+   
   }
 
   def extendContextLower(ctx: Context[VarDomain]): Context[(Interval, Interval)] = {
@@ -159,30 +170,19 @@ object Approximate2D extends Approximations {
     val ldfxi = AutomaticDifferentiation.evalr(f)(lctx + (xs -> (search.xi, Interval.ONE)) + (ys -> (search.yi, Interval.ZERO)))._2
     val ldfyi = AutomaticDifferentiation.evalr(f)(lctx + (xs -> (search.xi, Interval.ZERO)) + (ys -> (search.yi, Interval.ONE)))._2
 
-    def sortByAngle(i1: Interval, i2: Interval) = {
-      val u = MathContext.UNLIMITED
-      List((i1.d, i2.d), (i1.d, i2.u), (i1.u, i2.d), (i1.u, i2.u)).sortWith {
-        case ((dx1, dy1), (dx2, dy2)) => dx1.multiply(dy2, u).compareTo(dx2.multiply(dy1, u)) < 0
-      }
-    }
-
-    val (ldx1, ldy1) :: _ :: _ :: (ldx2, ldy2) :: _ = sortByAngle(ldfxi, ldfyi)
-
-    val lline = Line(lfmxmy.d, mx, my, ldx1, ldy1, ctx.roundingContext, 1)
-    val lline2 = Line(lfmxmy.d, mx, my, ldx2, ldy2, ctx.roundingContext, 1)
-    val u = MathContext.UNLIMITED
-
+    val llines = for (ldx <- List(ldfxi.d, ldfxi.u); ldy <- List(ldfyi.d, ldfyi.u)) yield      
+      Line(lfmxmy.d, mx, my, ldx, ldy, ctx.roundingContext, 1)
+    
+    
     val ufmxmy = AutomaticDifferentiation.evalr(f)(
       (uctx + (xs -> (Interval(mx, mx), Interval.ZERO))) + (ys -> (Interval(my, my), Interval.ZERO)))._1
     val udfxi = AutomaticDifferentiation.evalr(f)(uctx + (xs -> (search.xi, Interval.ONE)) + (ys -> (search.yi, Interval.ZERO)))._2
     val udfyi = AutomaticDifferentiation.evalr(f)(uctx + (xs -> (search.xi, Interval.ZERO)) + (ys -> (search.yi, Interval.ONE)))._2
 
-    val (udx1, udy1) :: _ :: _ :: (udx2, udy2) :: _ = sortByAngle(udfxi, udfyi)
-
-    val uline = Line(ufmxmy.u, mx, my, udx1, udy1, ctx.roundingContext.swap, -1)
-    val uline2 = Line(ufmxmy.u, mx, my, udx2, udy2, ctx.roundingContext.swap, -1)
-
-    search.split(lline, lline2, uline, uline2)
+    val ulines = for (ldx <- List(udfxi.d, udfxi.u); ldy <- List(udfyi.d, udfyi.u)) yield      
+      Line(lfmxmy.d, mx, my, ldx, ldy, ctx.roundingContext, -1)
+    
+    search.split(llines, ulines)
     // fmxmy + (x - mx) dfxi + (y - my) dfyi
   }
 
