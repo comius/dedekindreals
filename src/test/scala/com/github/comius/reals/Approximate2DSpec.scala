@@ -33,12 +33,13 @@ class Approximate2DSpec extends Properties("Approximate2d") {
     forAll(gen01Float, gen01Float) {
         (x:D.T, y: D.T) =>
           
-          l.isIn(Point(x, y)) == (x.multiply(a, m).add(y.multiply(b, m), m).add(c, m).compareTo(D.ZERO) < 0) &&
-          u.isIn(Point(x, y)) == (x.multiply(a, m).add(y.multiply(b, m), m).add(c, m).compareTo(D.ZERO) > 0)
+          l.isIn(Point(x, y)) == (x.multiply(a, m).add(y.multiply(b, m), m).add(c, m).compareTo(D.ZERO) > 0) &&
+          u.isIn(Point(x, y)) == (x.multiply(a, m).add(y.multiply(b, m), m).add(c, m).compareTo(D.ZERO) < 0)
       }
   }
     
-  val (Approximation(l, u), s) = Approximate2D.refine('y < 'x * (Const(1) - 'x), cs0, 'x, 'y)(ctx0)
+  val (Approximation(l, u), s) = // Approximate2D.refine('y+Const(5)*'x*'y < 'x * (Const(1) - 'x), cs0, 'x, 'y)(ctx0) 
+     Approximate2D.refine('y < 'x * (Const(1) - 'x), cs0, 'x, 'y)(ctx0)
   println(l)
   println(u)
   println(s)
@@ -46,9 +47,8 @@ class Approximate2DSpec extends Properties("Approximate2d") {
     forAll(gen01Float, gen01Float) {
         (x:D.T, y: D.T) =>
           val m = MathContext.UNLIMITED
-          l.isIn(Point(x, y)) ==> (x.multiply(D.ONE.subtract(x, m),m).compareTo(y) < 0)
-              //&&
-          //u.isIn(Point(x, y)) == (x.multiply(a, m).add(y.multiply(b, m), m).add(c, m).compareTo(D.ZERO) > 0)
+          (!l.isIn(Point(x, y)) || x.multiply(D.ONE.subtract(x, m),m).compareTo(y) > 0) &&
+          (!u.isIn(Point(x, y)) || x.multiply(D.ONE.subtract(x, m),m).compareTo(y) < 0)
      
   }   
 
