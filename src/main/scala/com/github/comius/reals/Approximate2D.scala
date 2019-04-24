@@ -32,8 +32,8 @@ object Approximate2D extends Approximations {
           for (((l1, l2), l3) <- hull.zip(hull.tail :+ hull.head).zip(hull.tail.tail :+ hull.head :+ hull.tail.head)) {
 
             val in1 = l.inside(l1, l2)
-
             if (in1) acc1 += l1 else acc2 += l1
+            // TODO optimise
             if (in1 != l.inside(l2, l3)) {
               if (in1) acc1 += l2 else acc2 += l2
               acc1 += l
@@ -48,8 +48,10 @@ object Approximate2D extends Approximations {
       var lhull = hull
       val rest = List.newBuilder[List[Line]]
       for (l <- llines) {
+
         val (lhull1, rest1) = split(lhull, l)
         lhull = lhull1
+
         rest += rest1
       }
 
@@ -78,7 +80,9 @@ object Approximate2D extends Approximations {
     }
 
     def isIn(p: Point): Boolean = {
-      hull.forall(_.inside(p))
+      if (hull.isEmpty) false
+      else
+        hull.forall(_.inside(p))
     }
 
     override def toString() = {
@@ -122,7 +126,7 @@ object Approximate2D extends Approximations {
       val x = det(c1, b1, c2, b2)
       val y = det(a1, c1, a2, c2)
 
-      a.multiply(x, u).add(b.multiply(y, u), u).subtract(c.multiply(Det, u), u).compareTo(D.ZERO) > 0
+      a.multiply(x, u).add(b.multiply(y, u), u).subtract(c.multiply(Det, u), u).signum * Det.signum > 0
     }
 
     def invert() = {
@@ -174,7 +178,6 @@ object Approximate2D extends Approximations {
     val llines =
       for (ldx <- List(ldfxi.d, ldfxi.u); ldy <- List(ldfyi.d, ldfyi.u))
         yield Line(lfmxmy.d, mx, my, ldx, ldy)
-
     val ufmxmy = AutomaticDifferentiation.evalr(f)(
       (uctx + (xs -> (Interval(mx, mx), Interval.ZERO))) + (ys -> (Interval(my, my), Interval.ZERO)))._1
     val udfxi = AutomaticDifferentiation.
@@ -184,7 +187,7 @@ object Approximate2D extends Approximations {
 
     val ulines =
       for (ldx <- List(udfxi.d, udfxi.u); ldy <- List(udfyi.d, udfyi.u))
-        yield Line(lfmxmy.d, mx, my, ldx, ldy).invert()
+        yield Line(ufmxmy.d, mx, my, ldx, ldy).invert()
 
     search.split(llines, ulines)
     // fmxmy + (x - mx) dfxi + (y - my) dfyi
