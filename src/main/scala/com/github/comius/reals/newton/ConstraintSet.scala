@@ -9,18 +9,17 @@ abstract class ConstraintSet(val domain: Interval) {
   def supremum(): D.T
   def infimum(): D.T
 
-
   private def moreThan(a: RealConstraint, b: RealConstraint): Boolean = {
     a.x.compareTo(b.x) match {
       case 0 =>
-        (a,b) match {
-          case (_:MoreThan, _:LessThan) => true
-          case _ => false
-        }        
+        (a, b) match {
+          case (_: MoreThan, _: LessThan) => true
+          case _                          => false
+        }
       case c => c > 0
-    }    
+    }
   }
-  
+
   def union(s: ConstraintSet): ConstraintSet = {
     require(domain == s.domain, "Union of diffrent domains")
 
@@ -96,6 +95,38 @@ abstract class ConstraintSet(val domain: Interval) {
       case (_, _: ConstraintSetAll) | (_: ConstraintSetNone, _)   => this
       case (ConstraintSetList(_, l1), (ConstraintSetList(_, l2))) => intersection(l1, l2)
     }
+  }
+
+  def complement() = {
+    this match {
+      case _: ConstraintSetAll  => ConstraintSetNone(domain)
+      case _: ConstraintSetNone => ConstraintSetAll(domain)
+      case ConstraintSetList(_, l1) =>
+        val l = l1.sliding(2).flatMap(_ match {
+          case List(LessThan(a), b) if a != b.x => List(MoreThan(a))
+          case List(MoreThan(a), b) if a != b.x => List(LessThan(a))
+          case _                                => List()
+        }).toList
+        if (l.isEmpty) 
+          ConstraintSetAll(domain)
+        else
+          ConstraintSetList(domain, l)
+    }
+  }
+
+  def toIntervals(): List[Interval] = {
+    this match {
+      case _: ConstraintSetAll  => List(domain)
+      case _: ConstraintSetNone => List()
+      case ConstraintSetList(_, l1) =>
+        val endpts = if (l1.head.isInstanceOf[LessThan]) {
+          (domain.d :: l1.map(_.x)) :+ domain.u
+        } else {
+          l1.map(_.x) :+ domain.u
+        }
+        endpts.sliding(2).map { case List(a, b) => Interval(a, b) }.toList
+    }
+
   }
 
 }
