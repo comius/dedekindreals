@@ -20,7 +20,9 @@ object Examples {
    import com.github.comius.floats.Floats.{impl => D}
   
    def main(args: Array[String]) = {
-    // e
+    Eval2D.eval(Cut('y, -1, 2, Exists('x, 0, 1, 'y < 'x * (Const(1) - 'x)), Forall('x, 0, 1, 'x * (Const(1) - 'x) < 'y)), 10)
+     
+     // e
     eval(Cut('y, 2, 3, Integrate('x, 0, 1, 1 / ('x + 1/('y-1))) < 1,
       1 < Integrate('x, 0, 1, 1 / ('x + 1/('y-1)))), 5)      
       
@@ -37,6 +39,6 @@ object Examples {
     eval(Exists('x, D.negInf, D.posInf, 'x * 'x * 'x < 0), 10)
     eval(Cut('x, 1, 2, 'x * 'x < 2, 2 < 'x * 'x), 10)
     eval(CutR('x, 'x < 0 || 'x * 'x < 200, 200 < 'x * 'x && Const(0) < 'x), 10)
-    eval(Cut('y, -1, 2, Exists('x, 0, 1, 'y < 'x * (Const(1) - 'x)), Forall('x, 0, 1, 'x * (Const(1) - 'x) < 'y)), 10)
+   
   }
 }
