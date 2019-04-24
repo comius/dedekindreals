@@ -98,15 +98,19 @@ object Approximate2D extends Approximations {
 
     def projectExists(r: RoundingContext): ConstraintSet = {
       //TODO optimise
-      val ups = List.newBuilder[D.T]
-      val downs = List.newBuilder[D.T]
-      for ((l1, l2) <- hull.zip(hull.tail :+ hull.head)) {
-        if (l1.dfyi.signum != l2.dfyi.signum) {
-          downs += l1.intersection(l2, r.down, r.down).x
-          ups += l1.intersection(l2, r.up, r.up).x
+      if (hull.isEmpty) {
+        ConstraintSetNone(xi)
+      } else {
+        val ups = List.newBuilder[D.T]
+        val downs = List.newBuilder[D.T]
+        for ((l1, l2) <- hull.zip(hull.tail :+ hull.head)) {
+          if (l1.dfyi.signum != l2.dfyi.signum) {
+            downs += l1.intersection(l2, r.down, r.down).x
+            ups += l1.intersection(l2, r.up, r.up).x
+          }
         }
+        ConstraintSetList(xi, List(MoreThan(ups.result.reduce(_.min(_))), LessThan(downs.result.reduce(_.max(_)))))
       }
-      ConstraintSetList(xi, List(MoreThan(ups.result.reduce(_.min(_))), LessThan(downs.result.reduce(_.max(_)))))
     }
 
     def projectForall(r: RoundingContext): ConstraintSet = {
