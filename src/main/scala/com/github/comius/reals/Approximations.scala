@@ -3,10 +3,12 @@ import com.github.comius.floats.Floats.{ impl => D }
 
 trait Approximations {
 
-  case class Approximation[T](lower: T, upper: T)
+
 
 }
 
+case class Approximation[T](lower: T, upper: T)
+  
 sealed trait VarDomain {
   val lower: D.T
   val upper: D.T

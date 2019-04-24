@@ -8,7 +8,6 @@ import com.github.comius.RoundingContext
 import org.junit.Assert
 import com.github.comius.reals.syntax.Formula
 import com.github.comius.reals.syntax.Forall
-import com.github.comius.reals.BisectionApproximations.Approximation
 
 class ApproximationsTest {
   import syntax.Real._

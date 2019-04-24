@@ -7,10 +7,9 @@ import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.RoundingContext
 import org.scalacheck.Prop.forAll
 import com.github.comius.reals.syntax.Real._
-import com.github.comius.reals.Approximate2D.Approximation
 import org.scalacheck.Properties
-import com.github.comius.reals.Approximate2D.Point
 import com.github.comius.reals.syntax.Const
+import com.github.comius.reals.Approximate2D.Point
 
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class Approximate2DSpec extends Properties("Approximate2d") {
