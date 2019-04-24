@@ -11,7 +11,7 @@ object Approximate2D extends Approximations {
 
   case class Point(x: D.T, y: D.T)
 
-  case class ConstraintSet2D private (xi: Interval, yi: Interval, hull: List[Point]) {
+  case class ConstraintSet2D private (xi: Interval, yi: Interval, hull: List[Line]) {
     def split(llines: List[Line], ulines: List[Line]): (Approximation[ConstraintSet2D], List[ConstraintSet2D]) = {
       def filterDuplicate[A](l:List[A]): List[A] = {
         if (l.isEmpty) l 
@@ -23,24 +23,26 @@ object Approximate2D extends Approximations {
         }
       }
       // go round and compute intersection     
-      def split(hull: List[Point], l: Line) = {
+      def split(hull: List[Line], l: Line): (List[Line], List[Line]) = {
         if (hull.isEmpty) {
           (List(), List())
         } else {
-          val acc1 = List.newBuilder[Point]
-          val acc2 = List.newBuilder[Point]
+          val acc1 = List.newBuilder[Line]
+          val acc2 = List.newBuilder[Line]
 
-          for ((p1, p2) <- hull.zip(hull.tail :+ hull.head)) {
+          for (((l1, l2), l3) <- hull.zip(hull.tail :+ hull.head).zip(hull.tail.tail :+ hull.head :+ hull.tail.head)) {
 
-            val in1 = l.inside(p1)
+            val in1 = l.inside(l1,l2)
             // println(s" p1> $p1 in> $in1")
-            if (in1) acc1 += p1 else acc2 += p1
-            if (in1 != l.inside(p2)) {
+            if (in1) acc1 += l1 else acc2 += l1
+            if (in1 != l.inside(l2,l3)) {
 
-              val intersect = l.intersection(p1, p2)
+              //val intersect = l.intersection(p1, p2)
               //   println(s" intersection> $p2 $intersect")
-              acc1 += intersect
-              acc2 += intersect
+              if (in1) acc1 += l2 
+              else acc2 += l2
+              acc1 += l
+              acc2 += l.invert()              
             }
           }
           (filterDuplicate(acc1.result), filterDuplicate(acc2.result))
@@ -49,7 +51,7 @@ object Approximate2D extends Approximations {
 
       // compute lower hull, keeping rest
       var lhull = hull
-      val rest = List.newBuilder[List[Point]]
+      val rest = List.newBuilder[List[Line]]
       for (l <- llines) {
         val (lhull1, rest1) = split(lhull, l)
         lhull = lhull1
@@ -65,7 +67,7 @@ object Approximate2D extends Approximations {
 
       // now compute upper hull from the rest
 
-      val rest3 = List.newBuilder[List[Point]]
+      val rest3 = List.newBuilder[List[Line]]
       for (r1 <- rest.result) {
         var uhull = r1
         for (l <- ulines) {
@@ -86,19 +88,27 @@ object Approximate2D extends Approximations {
     }
 
     def isIn(p: Point): Boolean = {
-      if (hull.isEmpty) false
+     
+      hull.forall(_.inside(p))
+      /*if (hull.isEmpty) false
       else
-        hull.zip(hull.tail :+ hull.head).forall { case (a, b) => ccw(a, b, p) }
+        hull.zip(hull.tail :+ hull.head).forall { case (a, b) => ccw(a, b, p) }*/
     }
 
     override def toString() = {
-      hull.map(p => s"{${p.x}, ${p.y}}").mkString("Polygon[{", ", ", "}]")
+      hull.mkString("RegionPlot[{", " && ", s"},{x,${xi.d},${xi.u}},{y,${yi.d},${yi.u}}]")
     }
   }
 
   object ConstraintSet2D {
     def apply(xi: Interval, yi: Interval): ConstraintSet2D = {
-      ConstraintSet2D(xi, yi, List(Point(xi.d, yi.d), Point(xi.u, yi.d), Point(xi.u, yi.u), Point(xi.d, yi.u)))
+      var r =  new RoundingContext(0,10)
+      ConstraintSet2D(xi, yi, 
+          List(Line(D.ZERO, D.ZERO, yi.d, D.ZERO, D.ONE,r),
+          Line(D.ZERO, xi.u, D.ZERO, D.ONE.negate, D.ZERO,r),
+          Line(D.ZERO, D.ZERO, yi.u, D.ZERO, D.ONE.negate,r),
+          Line(D.ZERO, xi.d, D.ZERO, D.ONE, D.ZERO,r)))
+          //List(Point(xi.d, yi.d), Point(xi.u, yi.d), Point(xi.u, yi.u), Point(xi.d, yi.u)))
     }
   }
 
@@ -107,6 +117,27 @@ object Approximate2D extends Approximations {
       val rd = r.down
       // fmxmy + (x - mx) dfxi + (y - my) dfyi
       f0.add((p.x.subtract(xm, rd)).multiply(dfxi, rd).add((p.y.subtract(ym, rd).multiply(dfyi, rd)), rd), rd).compareTo(D.ZERO) > 0
+    }
+    
+    def inside(l1: Line, l2: Line): Boolean = {
+      var u = MathContext.UNLIMITED
+      
+      def abc(l:Line): (D.T,D.T,D.T) = {
+        (l.dfxi, l.dfyi, l.f0.negate.add(l.xm.multiply(l.dfxi,u),u).add(l.ym.multiply(l.dfyi,u),u))
+      }
+      def det(a: D.T, b: D.T, c:D.T, d:D.T): D.T = {
+        a.multiply(d,u).subtract(b.multiply(c,u),u)        
+      }
+      
+      val (a1,b1,c1) = abc(l1)
+      val (a2,b2,c2) = abc(l2)
+      val (a,b,c) = abc(this)
+      
+      val Det = det(a1,b1,a2,b2)
+      val x = det(c1,b1,c2,b2)
+      val y = det(a1,c1,a2,c2)
+      
+      a.multiply(x,u).add(b.multiply(y,u),u).subtract(c.multiply(Det,u),u).compareTo(D.ZERO) > 0
     }
 
     def distance(p: Point): D.T = {

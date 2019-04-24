@@ -24,6 +24,7 @@ class Approximate2DSpec extends Properties("Approximate2d") {
 
   val i01 = Interval(D.ZERO, D.ONE)
   val cs0 = Approximate2D.ConstraintSet2D(i01, i01)
+  println(cs0)
   val ctx0 = Context[VarDomain](new RoundingContext(0, 32))
   val m = MathContext.UNLIMITED
   
@@ -38,8 +39,8 @@ class Approximate2DSpec extends Properties("Approximate2d") {
       }
   }
     
-  val (Approximation(l, u), s) = Approximate2D.refine('y+Const(5)*'x*'y < 'x * (Const(1) - 'x), cs0, 'x, 'y)(ctx0) 
-     //Approximate2D.refine('y < 'x * (Const(1) - 'x), cs0, 'x, 'y)(ctx0)
+  val (Approximation(l, u), s) = //Approximate2D.refine('y+Const(5)*'x*'y < 'x * (Const(1) - 'x), cs0, 'x, 'y)(ctx0) 
+     Approximate2D.refine('y < 'x * (Const(1) - 'x), cs0, 'x, 'y)(ctx0)
   println(l)
   println(u)
   println(s)

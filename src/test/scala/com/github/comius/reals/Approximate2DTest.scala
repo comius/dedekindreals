@@ -40,5 +40,11 @@ class Approximate2dTest {
     println("In: " + ConstraintSet2D(Interval(0, 2), Interval(0, 2)).isIn(Point(2, 2)))
     println("In: " + ConstraintSet2D(Interval(0, 2), Interval(0, 2)).isIn(Point(3, 2)))
   }
+  
+  
+  @Test
+  def testInitial() = {
+    println("In: " + ConstraintSet2D(Interval(0, 2), Interval(0, 2)).isIn(Point(1, 1)))
+  }
 
 }
