@@ -5,6 +5,13 @@ import com.github.comius.reals.syntax.Less
 import com.github.comius.reals.syntax.Sub
 import com.github.comius.reals.newton.AutomaticDifferentiation
 import java.math.MathContext
+import com.github.comius.reals.newton.ConstraintSet
+import com.github.comius.RoundingContext
+import com.github.comius.reals.newton.ConstraintSet.LessThan
+import com.github.comius.reals.newton.ConstraintSet.MoreThan
+import com.github.comius.reals.newton.ConstraintSet.RealConstraint
+import com.github.comius.reals.newton.ConstraintSet.ConstraintSetList
+import com.github.comius.reals.newton.ConstraintSet.ConstraintSetNone
 
 object Approximate2D extends Approximations {
 
@@ -88,6 +95,49 @@ object Approximate2D extends Approximations {
     override def toString() = {
       hull.mkString("RegionPlot[{", " && ", s"},{x,${xi.d},${xi.u}},{y,${yi.d},${yi.u}}]")
     }
+
+    def projectExists(r: RoundingContext): ConstraintSet = {
+      //TODO optimise
+      val ups = List.newBuilder[D.T]
+      val downs = List.newBuilder[D.T]
+      for ((l1, l2) <- hull.zip(hull.tail :+ hull.head)) {
+        if (l1.dfyi.signum != l2.dfyi.signum) {
+          downs += l1.intersection(l2, r.down, r.down).x
+          ups += l1.intersection(l2, r.up, r.up).x
+        }
+      }
+      ConstraintSetList(xi, List(MoreThan(ups.result.reduce(_.min(_))), LessThan(downs.result.reduce(_.max(_)))))
+    }
+
+    def projectForall(r: RoundingContext): ConstraintSet = {
+      val dups = List.newBuilder[D.T]
+      val ddowns = List.newBuilder[D.T]
+      val uups = List.newBuilder[D.T]
+      val udowns = List.newBuilder[D.T]
+      for (((l1, l2), l3) <- hull.zip(hull.tail :+ hull.head).zip(hull.tail.tail :+ hull.head :+ hull.tail.head)) {
+        if (l2.dfxi == D.ZERO) {
+          if (l2.ym == yi.d) {
+            dups += l1.intersection(l2, r.up, r.up).x
+            ddowns += l1.intersection(l2, r.down, r.down).x
+            dups += l2.intersection(l3, r.up, r.up).x
+            ddowns += l2.intersection(l3, r.down, r.down).x
+          } else if (l2.ym == yi.u) {
+            uups += l1.intersection(l2, r.up, r.up).x
+            udowns += l1.intersection(l2, r.down, r.down).x
+            uups += l2.intersection(l3, r.up, r.up).x
+            udowns += l2.intersection(l3, r.down, r.down).x
+          }
+        }
+
+      }
+      if (uups.result().isEmpty || dups.result.isEmpty || udowns.result.isEmpty || ddowns.result.isEmpty) {
+        ConstraintSetNone(xi)
+      } else {
+        val d = ConstraintSetList(xi, List(MoreThan(dups.result.reduce(_.min(_))), LessThan(ddowns.result.reduce(_.max(_)))))
+        val u = ConstraintSetList(xi, List(MoreThan(uups.result.reduce(_.min(_))), LessThan(udowns.result.reduce(_.max(_)))))
+        d.intersection(u)
+      }
+    }
   }
 
   object ConstraintSet2D {
@@ -108,16 +158,16 @@ object Approximate2D extends Approximations {
       f0.add((p.x.subtract(xm, u)).multiply(dfxi, u).add((p.y.subtract(ym, u).multiply(dfyi, u)), u), u).compareTo(D.ZERO) > 0
     }
 
+    private val u = MathContext.UNLIMITED
+
+    private def abc(l: Line): (D.T, D.T, D.T) = {
+      (l.dfxi, l.dfyi, l.f0.negate.add(l.xm.multiply(l.dfxi, u), u).add(l.ym.multiply(l.dfyi, u), u))
+    }
+    private def det(a: D.T, b: D.T, c: D.T, d: D.T): D.T = {
+      a.multiply(d, u).subtract(b.multiply(c, u), u)
+    }
+
     def inside(l1: Line, l2: Line): Boolean = {
-      val u = MathContext.UNLIMITED
-
-      def abc(l: Line): (D.T, D.T, D.T) = {
-        (l.dfxi, l.dfyi, l.f0.negate.add(l.xm.multiply(l.dfxi, u), u).add(l.ym.multiply(l.dfyi, u), u))
-      }
-      def det(a: D.T, b: D.T, c: D.T, d: D.T): D.T = {
-        a.multiply(d, u).subtract(b.multiply(c, u), u)
-      }
-
       val (a1, b1, c1) = abc(l1)
       val (a2, b2, c2) = abc(l2)
       val (a, b, c) = abc(this)
@@ -127,6 +177,15 @@ object Approximate2D extends Approximations {
       val y = det(a1, c1, a2, c2)
 
       a.multiply(x, u).add(b.multiply(y, u), u).subtract(c.multiply(Det, u), u).signum * Det.signum > 0
+    }
+
+    def intersection(l2: Line, xc: MathContext, yc: MathContext): Point = {
+      val (a1, b1, c1) = abc(this)
+      val (a2, b2, c2) = abc(l2)
+      val Det = det(a1, b1, a2, b2)
+      val x = det(c1, b1, c2, b2)
+      val y = det(a1, c1, a2, c2)
+      Point(x.divide(Det, xc), y.divide(Det, yc))
     }
 
     def invert() = {

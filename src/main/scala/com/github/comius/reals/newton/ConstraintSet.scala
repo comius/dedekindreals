@@ -168,7 +168,7 @@ object ConstraintSet {
     override def infimum(): D.T = domain.u
   }
 
-  case class ConstraintSetList private (override val domain: Interval, constraints: List[RealConstraint]) extends ConstraintSet(domain) {
+  case class ConstraintSetList(override val domain: Interval, constraints: List[RealConstraint]) extends ConstraintSet(domain) {
     require(constraints.size > 0, "empty constraint set")
     require(
       constraints.zip(constraints.tail).forall {

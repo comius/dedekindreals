@@ -41,7 +41,11 @@ class Approximate2DSpec extends Properties("Approximate2d") {
   println(l)
   println(u)
   println(s)
-
+  
+  println("le:"+l.projectExists(ctx0.roundingContext))
+  println("ue:"+u.projectExists(ctx0.roundingContext))
+  println("la:"+l.projectForall(ctx0.roundingContext))
+  println("uu:"+u.projectForall(ctx0.roundingContext))
   property("x1xApproximate") = {
     forAll(gen01Float, gen01Float) {
       (x: D.T, y: D.T) =>
