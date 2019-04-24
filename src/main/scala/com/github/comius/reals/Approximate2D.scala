@@ -102,7 +102,7 @@ object Approximate2D extends Approximations {
     }
   }
 
-  case class Line private (f0: D.T, xm: D.T, ym: D.T, dfxi: D.T, dfyi: D.T, val r: RoundingContext) {
+  case class Line(f0: D.T, xm: D.T, ym: D.T, dfxi: D.T, dfyi: D.T, val r: RoundingContext) {
     def inside(p: Point): Boolean = {
       val rd = r.down
       // fmxmy + (x - mx) dfxi + (y - my) dfyi
@@ -142,20 +142,13 @@ object Approximate2D extends Approximations {
         }
       }
     }
+    def invert() = {
+      Line(f0.negate, xm, ym, dfxi.negate, dfyi.negate, r)
+    }
     override def toString(): String = {
       //fmxmy + (x - mx) dfxi + (y - my) dfyi
       s"$f0 + (x - $xm)($dfxi) + (y - $ym) ($dfyi) > 0"
     }
-  }
-
-  object Line {
-    def apply(f0: D.T, xm: D.T, ym: D.T, dfxi: D.T, dfyi: D.T, r: RoundingContext, sgn: Int): Line = {
-      if (sgn < 0)
-        new Line(f0.negate, xm, ym, dfxi.negate, dfyi.negate, r)
-      else
-        new Line(f0, xm, ym, dfxi, dfyi, r)
-    }
-
   }
 
   def extendContextLower(ctx: Context[VarDomain]): Context[(Interval, Interval)] = {
@@ -192,14 +185,14 @@ object Approximate2D extends Approximations {
     val ldfxi = AutomaticDifferentiation.evalr(f)(lctx + (xs -> (search.xi, Interval.ONE)) + (ys -> (search.yi, Interval.ZERO)))._2
     val ldfyi = AutomaticDifferentiation.evalr(f)(lctx + (xs -> (search.xi, Interval.ZERO)) + (ys -> (search.yi, Interval.ONE)))._2
 
-    val llines = for (ldx <- List(ldfxi.d, ldfxi.u); ldy <- List(ldfyi.d, ldfyi.u)) yield Line(lfmxmy.d, mx, my, ldx, ldy, ctx.roundingContext, 1)
+    val llines = for (ldx <- List(ldfxi.d, ldfxi.u); ldy <- List(ldfyi.d, ldfyi.u)) yield Line(lfmxmy.d, mx, my, ldx, ldy, ctx.roundingContext)
 
     val ufmxmy = AutomaticDifferentiation.evalr(f)(
       (uctx + (xs -> (Interval(mx, mx), Interval.ZERO))) + (ys -> (Interval(my, my), Interval.ZERO)))._1
     val udfxi = AutomaticDifferentiation.evalr(f)(uctx + (xs -> (search.xi, Interval.ONE)) + (ys -> (search.yi, Interval.ZERO)))._2
     val udfyi = AutomaticDifferentiation.evalr(f)(uctx + (xs -> (search.xi, Interval.ZERO)) + (ys -> (search.yi, Interval.ONE)))._2
 
-    val ulines = for (ldx <- List(udfxi.d, udfxi.u); ldy <- List(udfyi.d, udfyi.u)) yield Line(lfmxmy.d, mx, my, ldx, ldy, ctx.roundingContext, -1)
+    val ulines = for (ldx <- List(udfxi.d, udfxi.u); ldy <- List(udfyi.d, udfyi.u)) yield Line(lfmxmy.d, mx, my, ldx, ldy, ctx.roundingContext).invert()
 
     search.split(llines, ulines)
     // fmxmy + (x - mx) dfxi + (y - my) dfyi
