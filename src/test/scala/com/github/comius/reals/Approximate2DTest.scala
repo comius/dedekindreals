@@ -12,12 +12,9 @@ class Approximate2dTest {
   @Test
   def testIntersection() = {
     //   case class Line(f0: D.T, xm: D.T, ym: D.T, dfxi: D.T, dfyi: D.T, val r: RoundingContext) {
-    val r = new RoundingContext(0, 100)
-    val l = Line(0, 1, 1, 1, 0, r)
+    val l = Line(0, 1, 1, 1, 0)
     val p1 = Point(10, 10)
     val p2 = Point(0, 0)
-    println(l.intersection(p1, p2))
-    println(l.intersection(p2, p1))
     println(l.inside(p1))
     println(l.inside(p2))
 

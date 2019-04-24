@@ -4,7 +4,6 @@ import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.reals.syntax.Less
 import com.github.comius.reals.syntax.Sub
 import com.github.comius.reals.newton.AutomaticDifferentiation
-import com.github.comius.RoundingContext
 import java.math.MathContext
 
 object Approximate2D extends Approximations {
@@ -13,8 +12,8 @@ object Approximate2D extends Approximations {
 
   case class ConstraintSet2D private (xi: Interval, yi: Interval, hull: List[Line]) {
     def split(llines: List[Line], ulines: List[Line]): (Approximation[ConstraintSet2D], List[ConstraintSet2D]) = {
-      def filterDuplicate[A](l:List[A]): List[A] = {
-        if (l.isEmpty) l 
+      def filterDuplicate[A](l: List[A]): List[A] = {
+        if (l.isEmpty) l
         else {
           val acc = List.newBuilder[A]
           for ((p1, p2) <- l.zip(l.tail :+ l.head))
@@ -22,7 +21,7 @@ object Approximate2D extends Approximations {
           acc.result
         }
       }
-      // go round and compute intersection     
+      // go round and compute intersection
       def split(hull: List[Line], l: Line): (List[Line], List[Line]) = {
         if (hull.isEmpty) {
           (List(), List())
@@ -32,17 +31,13 @@ object Approximate2D extends Approximations {
 
           for (((l1, l2), l3) <- hull.zip(hull.tail :+ hull.head).zip(hull.tail.tail :+ hull.head :+ hull.tail.head)) {
 
-            val in1 = l.inside(l1,l2)
-            // println(s" p1> $p1 in> $in1")
-            if (in1) acc1 += l1 else acc2 += l1
-            if (in1 != l.inside(l2,l3)) {
+            val in1 = l.inside(l1, l2)
 
-              //val intersect = l.intersection(p1, p2)
-              //   println(s" intersection> $p2 $intersect")
-              if (in1) acc1 += l2 
-              else acc2 += l2
+            if (in1) acc1 += l1 else acc2 += l1
+            if (in1 != l.inside(l2, l3)) {
+              if (in1) acc1 += l2 else acc2 += l2
               acc1 += l
-              acc2 += l.invert()              
+              acc2 += l.invert()
             }
           }
           (filterDuplicate(acc1.result), filterDuplicate(acc2.result))
@@ -82,17 +77,8 @@ object Approximate2D extends Approximations {
         rest3.result.filter(_.size > 2).map(ConstraintSet2D(xi, yi, _)))
     }
 
-    def ccw(a: Point, b: Point, c: Point): Boolean = {
-      val u = MathContext.UNLIMITED
-      b.x.subtract(a.x, u).multiply(c.y.subtract(a.y, u), u).subtract(c.x.subtract(a.x, u).multiply(b.y.subtract(a.y, u), u), u).compareTo(D.ZERO) > 0
-    }
-
     def isIn(p: Point): Boolean = {
-     
       hull.forall(_.inside(p))
-      /*if (hull.isEmpty) false
-      else
-        hull.zip(hull.tail :+ hull.head).forall { case (a, b) => ccw(a, b, p) }*/
     }
 
     override def toString() = {
@@ -102,80 +88,47 @@ object Approximate2D extends Approximations {
 
   object ConstraintSet2D {
     def apply(xi: Interval, yi: Interval): ConstraintSet2D = {
-      var r =  new RoundingContext(0,10)
-      ConstraintSet2D(xi, yi, 
-          List(Line(D.ZERO, D.ZERO, yi.d, D.ZERO, D.ONE,r),
-          Line(D.ZERO, xi.u, D.ZERO, D.ONE.negate, D.ZERO,r),
-          Line(D.ZERO, D.ZERO, yi.u, D.ZERO, D.ONE.negate,r),
-          Line(D.ZERO, xi.d, D.ZERO, D.ONE, D.ZERO,r)))
-          //List(Point(xi.d, yi.d), Point(xi.u, yi.d), Point(xi.u, yi.u), Point(xi.d, yi.u)))
+      ConstraintSet2D(xi, yi,
+        List(
+          Line(D.ZERO, D.ZERO, yi.d, D.ZERO, D.ONE),
+          Line(D.ZERO, xi.u, D.ZERO, D.ONE.negate, D.ZERO),
+          Line(D.ZERO, D.ZERO, yi.u, D.ZERO, D.ONE.negate),
+          Line(D.ZERO, xi.d, D.ZERO, D.ONE, D.ZERO)))
     }
   }
 
-  case class Line(f0: D.T, xm: D.T, ym: D.T, dfxi: D.T, dfyi: D.T, val r: RoundingContext) {
+  case class Line(f0: D.T, xm: D.T, ym: D.T, dfxi: D.T, dfyi: D.T) {
     def inside(p: Point): Boolean = {
-      val rd = r.down
+      val u = MathContext.UNLIMITED
       // fmxmy + (x - mx) dfxi + (y - my) dfyi
-      f0.add((p.x.subtract(xm, rd)).multiply(dfxi, rd).add((p.y.subtract(ym, rd).multiply(dfyi, rd)), rd), rd).compareTo(D.ZERO) > 0
+      f0.add((p.x.subtract(xm, u)).multiply(dfxi, u).add((p.y.subtract(ym, u).multiply(dfyi, u)), u), u).compareTo(D.ZERO) > 0
     }
-    
+
     def inside(l1: Line, l2: Line): Boolean = {
-      var u = MathContext.UNLIMITED
-      
-      def abc(l:Line): (D.T,D.T,D.T) = {
-        (l.dfxi, l.dfyi, l.f0.negate.add(l.xm.multiply(l.dfxi,u),u).add(l.ym.multiply(l.dfyi,u),u))
+      val u = MathContext.UNLIMITED
+
+      def abc(l: Line): (D.T, D.T, D.T) = {
+        (l.dfxi, l.dfyi, l.f0.negate.add(l.xm.multiply(l.dfxi, u), u).add(l.ym.multiply(l.dfyi, u), u))
       }
-      def det(a: D.T, b: D.T, c:D.T, d:D.T): D.T = {
-        a.multiply(d,u).subtract(b.multiply(c,u),u)        
+      def det(a: D.T, b: D.T, c: D.T, d: D.T): D.T = {
+        a.multiply(d, u).subtract(b.multiply(c, u), u)
       }
-      
-      val (a1,b1,c1) = abc(l1)
-      val (a2,b2,c2) = abc(l2)
-      val (a,b,c) = abc(this)
-      
-      val Det = det(a1,b1,a2,b2)
-      val x = det(c1,b1,c2,b2)
-      val y = det(a1,c1,a2,c2)
-      
-      a.multiply(x,u).add(b.multiply(y,u),u).subtract(c.multiply(Det,u),u).compareTo(D.ZERO) > 0
+
+      val (a1, b1, c1) = abc(l1)
+      val (a2, b2, c2) = abc(l2)
+      val (a, b, c) = abc(this)
+
+      val Det = det(a1, b1, a2, b2)
+      val x = det(c1, b1, c2, b2)
+      val y = det(a1, c1, a2, c2)
+
+      a.multiply(x, u).add(b.multiply(y, u), u).subtract(c.multiply(Det, u), u).compareTo(D.ZERO) > 0
     }
 
-    def distance(p: Point): D.T = {
-      val rd = r.down
-      // fmxmy + (x - mx) dfxi + (y - my) dfyi
-      f0.add((p.x.subtract(xm, rd)).multiply(dfxi, rd).add((p.y.subtract(ym, rd).multiply(dfyi, rd)), rd), rd)
-    }
-
-    def intersection(p1: Point, p2: Point): Point = {
-
-      if (p1.x == p2.x) {
-
-        Point(p1.x, ym.subtract(f0.add(dfxi.multiply(p1.x.subtract(xm, r.down), r.down), r.down).divide(dfyi, r.down), r.down))
-      } else {
-        val x1x2 = p1.x.subtract(p2.x, r.down)
-        val y1y2 = p1.y.subtract(p2.y, r.down)
-
-        val D = dfxi.multiply(x1x2, r.down).add(dfyi.multiply(y1y2, r.down), r.down)
-
-        val xN1 = dfxi.multiply(xm, r.down).subtract(f0, r.down).multiply(x1x2, r.down)
-
-        val N = p1.y.multiply(p2.x, r.down).subtract(p1.x.multiply(p2.y, r.down), r.down)
-        val xN2 = dfyi.multiply(N.add(ym.multiply(x1x2, r.down), r.down), r.down)
-        val yN1 = dfyi.multiply(ym, r.down).subtract(f0, r.down).multiply(y1y2, r.down)
-        val yN2 = dfxi.multiply(xm.multiply(y1y2, r.down).subtract(N, r.down), r.down)
-
-        try {
-          Point(xN1.add(xN2, r.down).divide(D, r.down), yN1.add(yN2, r.down).divide(D, r.down))
-        } catch {
-          case e: ArithmeticException =>
-            println(s"$this $p1 $p2 $D ${distance(p1)} ${distance(p2)}")
-            throw e
-        }
-      }
-    }
     def invert() = {
-      Line(f0.negate, xm, ym, dfxi.negate, dfyi.negate, r)
+      Line(f0.negate, xm, ym, dfxi.negate, dfyi.negate)
     }
+
     override def toString(): String = {
       //fmxmy + (x - mx) dfxi + (y - my) dfyi
       s"$f0 + (x - $xm)($dfxi) + (y - $ym) ($dfyi) > 0"
@@ -213,17 +166,25 @@ object Approximate2D extends Approximations {
 
     val lfmxmy = AutomaticDifferentiation.evalr(f)(
       (lctx + (xs -> (Interval(mx, mx), Interval.ZERO))) + (ys -> (Interval(my, my), Interval.ZERO)))._1
-    val ldfxi = AutomaticDifferentiation.evalr(f)(lctx + (xs -> (search.xi, Interval.ONE)) + (ys -> (search.yi, Interval.ZERO)))._2
-    val ldfyi = AutomaticDifferentiation.evalr(f)(lctx + (xs -> (search.xi, Interval.ZERO)) + (ys -> (search.yi, Interval.ONE)))._2
+    val ldfxi = AutomaticDifferentiation.
+      evalr(f)(lctx + (xs -> (search.xi, Interval.ONE)) + (ys -> (search.yi, Interval.ZERO)))._2
+    val ldfyi = AutomaticDifferentiation.
+      evalr(f)(lctx + (xs -> (search.xi, Interval.ZERO)) + (ys -> (search.yi, Interval.ONE)))._2
 
-    val llines = for (ldx <- List(ldfxi.d, ldfxi.u); ldy <- List(ldfyi.d, ldfyi.u)) yield Line(lfmxmy.d, mx, my, ldx, ldy, ctx.roundingContext)
+    val llines =
+      for (ldx <- List(ldfxi.d, ldfxi.u); ldy <- List(ldfyi.d, ldfyi.u))
+        yield Line(lfmxmy.d, mx, my, ldx, ldy)
 
     val ufmxmy = AutomaticDifferentiation.evalr(f)(
       (uctx + (xs -> (Interval(mx, mx), Interval.ZERO))) + (ys -> (Interval(my, my), Interval.ZERO)))._1
-    val udfxi = AutomaticDifferentiation.evalr(f)(uctx + (xs -> (search.xi, Interval.ONE)) + (ys -> (search.yi, Interval.ZERO)))._2
-    val udfyi = AutomaticDifferentiation.evalr(f)(uctx + (xs -> (search.xi, Interval.ZERO)) + (ys -> (search.yi, Interval.ONE)))._2
+    val udfxi = AutomaticDifferentiation.
+      evalr(f)(uctx + (xs -> (search.xi, Interval.ONE)) + (ys -> (search.yi, Interval.ZERO)))._2
+    val udfyi = AutomaticDifferentiation.
+      evalr(f)(uctx + (xs -> (search.xi, Interval.ZERO)) + (ys -> (search.yi, Interval.ONE)))._2
 
-    val ulines = for (ldx <- List(udfxi.d, udfxi.u); ldy <- List(udfyi.d, udfyi.u)) yield Line(lfmxmy.d, mx, my, ldx, ldy, ctx.roundingContext).invert()
+    val ulines =
+      for (ldx <- List(udfxi.d, udfxi.u); ldy <- List(udfyi.d, udfyi.u))
+        yield Line(lfmxmy.d, mx, my, ldx, ldy).invert()
 
     search.split(llines, ulines)
     // fmxmy + (x - mx) dfxi + (y - my) dfyi
