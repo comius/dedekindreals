@@ -9,7 +9,6 @@ import com.github.comius.reals.newton.ConstraintSet
 import com.github.comius.RoundingContext
 import com.github.comius.reals.newton.ConstraintSet.LessThan
 import com.github.comius.reals.newton.ConstraintSet.MoreThan
-import com.github.comius.reals.newton.ConstraintSet.RealConstraint
 import com.github.comius.reals.newton.ConstraintSet.ConstraintSetList
 import com.github.comius.reals.newton.ConstraintSet.ConstraintSetNone
 
@@ -232,21 +231,21 @@ object Approximate2D extends Approximations {
     val uctx = extendContextUpper(ctx)
 
     val lfmxmy = AutomaticDifferentiation.evalr(f)(
-      (lctx + (xs -> (Interval(mx, mx), Interval.ZERO))) + (ys -> (Interval(my, my), Interval.ZERO)))._1
+      (lctx + (xs, (Interval(mx, mx), Interval.ZERO))) + (ys, (Interval(my, my), Interval.ZERO)))._1
     val ldfxi = AutomaticDifferentiation.
-      evalr(f)(lctx + (xs -> (search.xi, Interval.ONE)) + (ys -> (search.yi, Interval.ZERO)))._2
+      evalr(f)(lctx + (xs, (search.xi, Interval.ONE)) + (ys, (search.yi, Interval.ZERO)))._2
     val ldfyi = AutomaticDifferentiation.
-      evalr(f)(lctx + (xs -> (search.xi, Interval.ZERO)) + (ys -> (search.yi, Interval.ONE)))._2
+      evalr(f)(lctx + (xs, (search.xi, Interval.ZERO)) + (ys, (search.yi, Interval.ONE)))._2
 
     val llines =
       for (ldx <- List(ldfxi.d, ldfxi.u); ldy <- List(ldfyi.d, ldfyi.u))
         yield Line(lfmxmy.d, mx, my, ldx, ldy)
     val ufmxmy = AutomaticDifferentiation.evalr(f)(
-      (uctx + (xs -> (Interval(mx, mx), Interval.ZERO))) + (ys -> (Interval(my, my), Interval.ZERO)))._1
+      (uctx + (xs, (Interval(mx, mx), Interval.ZERO))) + (ys, (Interval(my, my), Interval.ZERO)))._1
     val udfxi = AutomaticDifferentiation.
-      evalr(f)(uctx + (xs -> (search.xi, Interval.ONE)) + (ys -> (search.yi, Interval.ZERO)))._2
+      evalr(f)(uctx + (xs, (search.xi, Interval.ONE)) + (ys, (search.yi, Interval.ZERO)))._2
     val udfyi = AutomaticDifferentiation.
-      evalr(f)(uctx + (xs -> (search.xi, Interval.ZERO)) + (ys -> (search.yi, Interval.ONE)))._2
+      evalr(f)(uctx + (xs, (search.xi, Interval.ZERO)) + (ys, (search.yi, Interval.ONE)))._2
 
     val ulines =
       for (ldx <- List(udfxi.d, udfxi.u); ldy <- List(udfyi.d, udfyi.u))
