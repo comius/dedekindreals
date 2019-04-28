@@ -4,10 +4,10 @@ import java.math.MathContext
 import java.math.RoundingMode
 
 import scala.annotation.tailrec
+import scala.util.control.Exception
 
 import com.github.comius.RoundingContext
 import com.github.comius.floats.Floats.{ impl => D }
-import scala.util.control.Exception
 
 /**
  * General interval with rational endpoints. There are no restrictions on the endpoints (d<u, d=u or d<u).
@@ -226,8 +226,8 @@ case class Interval(d: D.T, u: D.T) {
 
         s"${xp.substring(0, p2)}[${xp.substring(p2)},${yp.substring(p2)}]"
       } else {
-          val xp = d.add(D.ZERO, new MathContext(prec, RoundingMode.FLOOR))
-          val yp = u.add(D.ZERO, new MathContext(prec, RoundingMode.CEILING))
+        val xp = d.add(D.ZERO, new MathContext(prec, RoundingMode.FLOOR))
+        val yp = u.add(D.ZERO, new MathContext(prec, RoundingMode.CEILING))
         // We are printing numbers of different magnitude. We're more interested in the magnitude than anything else.
         s"[${xp},${yp}]"
       }
@@ -243,7 +243,7 @@ object Interval {
    * Zero.
    */
   val ZERO = Interval(D.ZERO, D.ZERO)
-  
+
   /**
    * One.
    */

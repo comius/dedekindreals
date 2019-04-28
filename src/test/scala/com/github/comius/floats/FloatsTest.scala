@@ -5,9 +5,10 @@ import java.math.RoundingMode
 
 import scala.reflect.ClassTag
 
+import org.junit.Test
+
 import com.github.comius.floats.BigDecimalFloats.BigDecimalFloat
 import com.github.comius.floats.Floats.{ impl => D }
-import org.junit.Test
 
 /**
  * Unit tests for Floats.

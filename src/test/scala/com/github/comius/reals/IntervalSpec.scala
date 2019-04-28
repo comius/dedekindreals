@@ -4,17 +4,17 @@ import java.math.RoundingMode
 
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
+import org.scalacheck.Gen
 import org.scalacheck.Prop
 import org.scalacheck.Prop.BooleanOperators
 import org.scalacheck.Prop.Result
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
+import org.scalacheck.util.Pretty
 
 import com.github.comius.RoundingContext
 import com.github.comius.floats.FloatSpec
 import com.github.comius.floats.Floats.{ impl => D }
-import org.scalacheck.util.Pretty
-import org.scalacheck.Gen
 
 /**
  * Unit tests for Intervals.
@@ -185,7 +185,7 @@ class IntervalSpec extends Properties("Interval") {
 
       val xpyp = op(xp)
       val eps3 = D.valueOfEpsilon(-1000)
-      val w = Interval(xy.d.subtract(eps3, mc), xy.u.add(eps3, mc)) // xy >> w      
+      val w = Interval(xy.d.subtract(eps3, mc), xy.u.add(eps3, mc)) // xy >> w
       approx(xpyp, w) :| s" not ${xpyp} >> ${w} ${xpyp.d.compareTo(w.d)} ${w.u.compareTo(xpyp.u)}"
     }
 
