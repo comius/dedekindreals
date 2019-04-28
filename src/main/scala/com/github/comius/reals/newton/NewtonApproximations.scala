@@ -59,9 +59,9 @@ object NewtonApproximations extends Approximations {
       val xm = i.d.split(i.u)
       val xi = Interval(xm, xm)
       // value at the middle point, we don't need interval
-      val a @ (Interval(lf, _), _) = AutomaticDifferentiation.evalr(Sub(y, x))(extendContextLower(ctx) + (x0 -> (xi, Interval.ZERO)))
+      val a @ (Interval(lf, _), _) = AutomaticDifferentiation.evalr(Sub(y, x))(extendContextLower(ctx) + (x0, (xi, Interval.ZERO)))
       // derivative over the whole interval
-      val b @ (_, Interval(ld, ud)) = AutomaticDifferentiation.evalr(Sub(y, x))(extendContextLower(ctx) + (x0 -> (i, Interval.ONE)))
+      val b @ (_, Interval(ld, ud)) = AutomaticDifferentiation.evalr(Sub(y, x))(extendContextLower(ctx) + (x0, (i, Interval.ONE)))
 
       val divU: (D.T, D.T) => D.T = _.divide(_, ctx.roundingContext.up)
       val divD: (D.T, D.T) => D.T = _.divide(_, ctx.roundingContext.down)
@@ -70,25 +70,25 @@ object NewtonApproximations extends Approximations {
         (ld.signum, lf.signum()) match {
           case (1, _)  => MoreThan(xm.subtract(divD(lf, ld), ctx.roundingContext.up))
           case (-1, _) => LessThan(xm.subtract(divU(lf, ld), ctx.roundingContext.down))
-          case (0, 1)  => All
-          case (0, _)  => None
+          case (_, 1)  => All
+          case (_, _)  => None
         }
       }
       def halfLowerL(lf: D.T, ud: D.T): Constraint = {
         (ud.signum, lf.signum()) match {
           case (1, _)  => MoreThan(xm.subtract(divU(lf, ud), ctx.roundingContext.up))
           case (-1, _) => LessThan(xm.subtract(divU(lf, ud), ctx.roundingContext.down))
-          case (0, 1)  => All
-          case (0, _)  => None
+          case (_, 1)  => All
+          case (_, _)  => None
         }
       }
 
       val lwr = ConstraintSet(Interval(i.d, i.u), xm, halfLowerL(lf, ud), halfLowerR(lf, ld))
 
       // value at the middle point, we don't need interval
-      val (Interval(uf, _), _) = AutomaticDifferentiation.evalr(Sub(y, x))(extendContextUpper(ctx) + (x0 -> (xi, Interval.ZERO)))
+      val (Interval(uf, _), _) = AutomaticDifferentiation.evalr(Sub(y, x))(extendContextUpper(ctx) + (x0, (xi, Interval.ZERO)))
       // derivative over the whole interval
-      val (_, Interval(uld, uud)) = AutomaticDifferentiation.evalr(Sub(y, x))(extendContextUpper(ctx) + (x0 -> (i, Interval.ONE)))
+      val (_, Interval(uld, uud)) = AutomaticDifferentiation.evalr(Sub(y, x))(extendContextUpper(ctx) + (x0, (i, Interval.ONE)))
 
       val upr = ConstraintSet(Interval(i.d, i.u), xm, halfLowerL(uf, uld), halfLowerR(uf, uud))
       Approximation(lwr, upr)

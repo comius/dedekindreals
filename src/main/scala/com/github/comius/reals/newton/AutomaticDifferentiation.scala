@@ -44,8 +44,8 @@ object AutomaticDifferentiation {
         val rc = ctx.roundingContext
         val xm = a.split(b)
         val xmi = Interval(xm, xm)
-        val l1 = evalr(e)(ctx + (x -> (xmi, Interval.ZERO)))
-        val dl1 = evalr(e)(ctx + (x -> (Interval(a, b), Interval.ONE)))
+        val l1 = evalr(e)(ctx + (x, (xmi, Interval.ZERO)))
+        val dl1 = evalr(e)(ctx + (x, (Interval(a, b), Interval.ONE)))
         val ddl1 = dl1._2.subtract(dl1._2, rc)
         val ba = Interval(b, b).subtract(Interval(a, a), rc)
         val i8 = Interval(D.valueOf(8), D.valueOf(8))

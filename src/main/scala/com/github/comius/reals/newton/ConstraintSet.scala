@@ -3,7 +3,7 @@ package com.github.comius.reals.newton
 import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.reals.Interval
 
-abstract class ConstraintSet(val domain: Interval) {
+abstract sealed class ConstraintSet(val domain: Interval) {
   import ConstraintSet._
 
   def supremum(): D.T

@@ -16,7 +16,6 @@ import com.github.comius.reals.syntax.Const
 
 object Examples {
    import Real._
-   import Eval.eval
    import com.github.comius.floats.Floats.{impl => D}
   
    def main(args: Array[String]) = {

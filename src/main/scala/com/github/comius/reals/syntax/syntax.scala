@@ -3,7 +3,6 @@ package com.github.comius.reals.syntax
 import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.reals.Interval
 import java.math.MathContext
-import java.math.RoundingMode
 
 /* Our syntax is made of Reals and Formulas */
 
