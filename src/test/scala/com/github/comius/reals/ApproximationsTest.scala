@@ -1,29 +1,79 @@
 package com.github.comius.reals
 
+import org.junit.Assert
 import org.junit.Test
-import com.github.comius.reals.syntax.Exists
+
+import com.github.comius.RoundingContext
 import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.reals.syntax.Const
-import com.github.comius.RoundingContext
-import org.junit.Assert
-import com.github.comius.reals.syntax.Formula
+import com.github.comius.reals.syntax.Exists
 import com.github.comius.reals.syntax.Forall
-
+import com.github.comius.reals.syntax.Formula
+import com.github.comius.reals.syntax.Real
+/**
+ * Unit tests for Approximations - simple.
+ *
+ * Environment: no specific test environment needs to be set up. Java/Scala provide everything in default installation.
+ */
 class ApproximationsTest {
-  import syntax.Real._
-  
-  def test(f: Formula, result: Boolean) = {
+  // Imports implicit conversions to Dyadic, to formulas.
+  import com.github.comius.reals.syntax.Real._
+
+  /**
+   * Verifies if approximation of real expression rounded to 2 decimal places gives expected lower and upper
+   * approximants.
+   *
+   * @param e the expression
+   * @param expected expected result
+   */
+  private def test(e: Real, expected: Interval): Unit = {
+    val a = BisectionApproximations.approximate(e)(Context(new RoundingContext(0, 2)))
+    //println(s"$a ,$expected")
+    Assert.assertTrue(
+      s"Lower ${a.lower} is below expected value $expected for real $e",
+      a.lower.d.compareTo(expected.d) <= 0 && a.lower.u.compareTo(expected.u) >= 0)
+    Assert.assertTrue(
+      s"Upper ${a.upper} is above expected value $expected for real $e",
+      expected.d.compareTo(a.upper.d) <= 0 && expected.u.compareTo(a.upper.u) >= 0)
+  }
+
+  /**
+   * Tests 'Expressions lower and upper approximation'
+   */
+  @Test
+  def testArithmetics(): Unit = {
+    test(Const(420) + Const(5), Interval(425, 425))
+    test(Const(420) - Const(5), Interval(415, 415))
+    test(Const(423) * Const(2), Interval(846, 846))
+    test(Const(423) / Const(3), Interval(141, 141))
+  }
+
+  /**
+   * Verifies if approximation of given formula gives expected result.
+   *
+   * @param f the formula
+   * @param result expected result
+   */
+  private def test(f: Formula, result: Boolean): Unit = {
     val a = BisectionApproximations.approximate(f)(Context(new RoundingContext(0, 2)))
     Assert.assertEquals(s"Formula $f", Approximation(result, result), a)
   }
 
-  def testna(f: Formula) = {
+  /**
+   * Verifies if approximation of given formula needs further refinement.
+   *
+   * @param f the formula
+   */
+  private def testna(f: Formula): Unit = {
     val a = BisectionApproximations.approximate(f)(Context(new RoundingContext(0, 2)))
     Assert.assertEquals(s"Formula $f", Approximation(false, true), a)
   }
 
+  /**
+   * Test existential quantifier lower and upper approximation.
+   */
   @Test
-  def testExists() = {
+  def testExists(): Unit = {
     test(Exists('x, 2, 4, Const(0) < 'x), true)
     test(Exists('x, 2, 4, Const(1) < 'x), true)
     test(Exists('x, 2, 4, Const(2) < 'x), true)
@@ -52,11 +102,14 @@ class ApproximationsTest {
     // Verify rounded values
     testna(Exists('x, D.negInf, 422, Const(420) + Const(5) < 'x))
     test(Exists('x, D.negInf, 420, Const(420) + Const(5) < 'x), false)
-    
+
     testna(Exists('x, 1, 3, Const(2) < 'x))
     testna(Exists('x, 0, 1, "0.5" < 'x * (Const(1) - 'x)))
   }
-  
+
+  /**
+   * Test universal quantifier lower and upper approximation.
+   */
   @Test
   def testForall() = {
     test(Forall('x, 2, 4, Const(0) < 'x), true)
@@ -70,7 +123,7 @@ class ApproximationsTest {
     test(Forall('x, -1, 0, Const(0) < 'x), false)
     testna(Forall('x, -1, 0, 'x < 0))
     testna(Forall('x, 0, 1, Const(0) < 'x))
-    test(Forall('x, 0, 1, 'x < 0),false)
+    test(Forall('x, 0, 1, 'x < 0), false)
 
     // Verify upper half,  linear positive and negative
     test(Forall('x, 40, 41, 'x < 42), true)
