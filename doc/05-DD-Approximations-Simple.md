@@ -67,4 +67,5 @@ Less is approximated comparing lower and upper endpoint in the lower and upper a
 *Verification:* Verify bounded universal quantifier and bounded and unbounded existential quantifier.
 
 
+TODO: Integrals.
 
