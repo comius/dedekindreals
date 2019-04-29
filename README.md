@@ -2,6 +2,17 @@
 # Dedekind Reals
 
 [![Build Status](https://travis-ci.org/comius/dedekindreals.svg?branch=master)](https://travis-ci.org/comius/dedekindreals)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=comius_dedekindreals&metric=bugs)](https://sonarcloud.io/dashboard?id=comius_dedekindreals)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=comius_dedekindreals&metric=code_smells)](https://sonarcloud.io/dashboard?id=comius_dedekindreals)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=comius_dedekindreals&metric=coverage)](https://sonarcloud.io/dashboard?id=comius_dedekindreals)
+[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=comius_dedekindreals&metric=duplicated_lines_density)](https://sonarcloud.io/dashboard?id=comius_dedekindreals)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=comius_dedekindreals&metric=ncloc)](https://sonarcloud.io/dashboard?id=comius_dedekindreals)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=comius_dedekindreals&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=comius_dedekindreals)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=comius_dedekindreals&metric=alert_status)](https://sonarcloud.io/dashboard?id=comius_dedekindreals)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=comius_dedekindreals&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=comius_dedekindreals)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=comius_dedekindreals&metric=security_rating)](https://sonarcloud.io/dashboard?id=comius_dedekindreals)
+[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=comius_dedekindreals&metric=sqale_index)](https://sonarcloud.io/dashboard?id=comius_dedekindreals)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=comius_dedekindreals&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=comius_dedekindreals)
 
 A Java library for computing with Dedekind Reals.
 
