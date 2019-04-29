@@ -1,6 +1,8 @@
 
 # Dedekind Reals
 
+[![Build Status](https://travis-ci.org/comius/dedekindreals.svg?branch=master)](https://travis-ci.org/comius/dedekindreals)
+
 A Java library for computing with Dedekind Reals.
 
 The project is build using maven, and developed in Scala IDE (Eclipse).
