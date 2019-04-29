@@ -130,12 +130,12 @@
  <check level="warning" class="org.scalastyle.scalariform.NotImplementedErrorUsage" enabled="true" />
  <check level="warning" class="org.scalastyle.scalariform.BlockImportChecker" enabled="false"/>
  <check level="warning" class="org.scalastyle.scalariform.ProcedureDefinitionChecker" enabled="true"/>
- <check level="warning" class="org.scalastyle.scalariform.ForBraceChecker" enabled="true"/>
+ <check level="warning" class="org.scalastyle.scalariform.ForBraceChecker" enabled="false"/>
  <check level="warning" class="org.scalastyle.scalariform.SpaceAfterCommentStartChecker" enabled="true"/>
  <check level="warning" class="org.scalastyle.scalariform.FieldNamesChecker" enabled="true">
   <parameters>
-   <parameter name="regex"><![CDATA[^[a-z][A-Za-z]*$]]></parameter>
-   <parameter name="objectFieldRegex"><![CDATA[^[A-Z][A-Za-z]*$]]></parameter>
+   <parameter name="regex"><![CDATA[^[a-z][A-Za-z0-9]*$]]></parameter>
+   <parameter name="objectFieldRegex"><![CDATA[^[A-Za-z][A-Za-z]*$]]></parameter>
   </parameters>
  </check>
  <check level="warning" class="org.scalastyle.scalariform.TodoCommentChecker" enabled="true">
