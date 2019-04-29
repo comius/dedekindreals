@@ -45,7 +45,7 @@ case class Interval(d: D.T, u: D.T) {
    * @param r rounding context
    * @return interval
    */
-  def add(i2: Interval, r: RoundingContext) = {
+  def add(i2: Interval, r: RoundingContext): Interval = {
     val Interval(e, t) = i2
 
     Interval(negInfOnException(d.add(e, r.down)), posInfOnException(u.add(t, r.up)))
@@ -56,7 +56,7 @@ case class Interval(d: D.T, u: D.T) {
    *
    * @return interval
    */
-  def negate() = {
+  def negate(): Interval = {
     Interval(u.negate, d.negate)
   }
 
@@ -67,7 +67,7 @@ case class Interval(d: D.T, u: D.T) {
    * @param r rounding context
    * @return interval
    */
-  def subtract(i2: Interval, r: RoundingContext) = {
+  def subtract(i2: Interval, r: RoundingContext): Interval = {
     val Interval(e, t) = i2
     Interval(negInfOnException(d.subtract(t, r.down)), posInfOnException(u.subtract(e, r.up)))
   }
@@ -84,7 +84,7 @@ case class Interval(d: D.T, u: D.T) {
    * @param r rounding context
    * @return interval
    */
-  def multiplyMoore(i2: Interval, r: RoundingContext) = {
+  def multiplyMoore(i2: Interval, r: RoundingContext): Interval = {
     val Interval(e, t) = i2
     def min(x: D.T*) = x.reduce(_.min(_))
     def max(x: D.T*) = x.reduce(_.max(_))
@@ -103,7 +103,7 @@ case class Interval(d: D.T, u: D.T) {
    * @param r rounding context
    * @return interval
    */
-  def multiplyKaucher(i2: Interval, r: RoundingContext) = {
+  def multiplyKaucher(i2: Interval, r: RoundingContext): Interval = {
     val Interval(e, t) = i2
 
     def mulU(a: D.T, b: D.T) = posInfOnException(a.multiply(b, r.up))
@@ -139,7 +139,7 @@ case class Interval(d: D.T, u: D.T) {
    * @param r rounding context
    * @return interval
    */
-  def multiplyLakayev(i2: Interval, r: RoundingContext) = {
+  def multiplyLakayev(i2: Interval, r: RoundingContext): Interval = {
     def pm(x: D.T): (D.T, D.T) = {
       x.signum() match {
         case 1  => (x, D.ZERO)
@@ -157,12 +157,13 @@ case class Interval(d: D.T, u: D.T) {
     def mulD(a: D.T, b: D.T): D.T = negInfOnException(a.multiply(b, r.down))
     def mulU(a: D.T, b: D.T): D.T = posInfOnException(a.multiply(b, r.up))
 
-    if (d == D.posInf || i2.d == D.posInf || u == D.negInf || i2.u == D.negInf) Interval(D.posInf, D.negInf)
-    else
+    if (d == D.posInf || i2.d == D.posInf || u == D.negInf || i2.u == D.negInf) {
+      Interval(D.posInf, D.negInf)
+    } else {
       Interval(
         negInfOnException(max(mulD(lxp, lyp), mulD(uxm, uym)).subtract(max(mulU(uxp, lym), mulU(lxm, uyp)), r.down)),
         posInfOnException(max(mulU(uxp, uyp), mulU(lxm, lym)).subtract(max(mulD(lxp, uym), mulD(uxm, lyp)), r.up)))
-
+    }
   }
 
   /**
@@ -191,7 +192,7 @@ case class Interval(d: D.T, u: D.T) {
    * @param r rounding context
    * @return interval
    */
-  def divide(i2: Interval, r: RoundingContext) = {
+  def divide(i2: Interval, r: RoundingContext): Interval = {
     multiply(i2.inverse(r), r)
   }
 
@@ -200,7 +201,7 @@ case class Interval(d: D.T, u: D.T) {
    *
    * @return a string
    */
-  override def toString() = {
+  override def toString(): String = {
     val prec = 2
 
     if (d == u) {

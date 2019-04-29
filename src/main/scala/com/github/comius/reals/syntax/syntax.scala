@@ -21,11 +21,11 @@ import java.math.MathContext
  * syntax.
  */
 sealed trait Real {
-  def +(other: Real) = Add(this, other)
-  def -(other: Real) = Sub(this, other)
-  def *(other: Real) = Mul(this, other)
-  def /(other: Real) = Div(this, other)
-  def <(other: Real) = Less(this, other)
+  def +(other: Real): Real = Add(this, other) // scalastyle:ignore method.name
+  def -(other: Real): Real = Sub(this, other) // scalastyle:ignore method.name
+  def *(other: Real): Real = Mul(this, other) // scalastyle:ignore method.name
+  def /(other: Real): Real = Div(this, other) // scalastyle:ignore method.name
+  def <(other: Real): Less = Less(this, other) // scalastyle:ignore method.name
 }
 
 /**
@@ -35,8 +35,8 @@ sealed trait Real {
  * into a syntax tree.
  */
 sealed trait Formula {
-  def &&(other: Formula) = And(this, other)
-  def ||(other: Formula) = Or(this, other)
+  def &&(other: Formula): Formula = And(this, other) // scalastyle:ignore method.name
+  def ||(other: Formula): Formula = Or(this, other) // scalastyle:ignore method.name
 }
 
 /* Constructors for Real: constants, variables arithmetic operations, Cut, CutR, integration */
@@ -52,7 +52,7 @@ case class Const(a: D.T) extends Real {
 
 /**
  * A variable.
- * 
+ *
  * @param name name of the variable.
  */
 case class Var(name: Symbol) extends Real {
@@ -82,8 +82,7 @@ case class Cut(x: Symbol, a: D.T, b: D.T, lower: Formula, upper: Formula) extend
 case class CutR(x: Symbol, lower: Formula, upper: Formula,
                 a: D.T = D.valueOf(-1), b: D.T = D.valueOf(1)) extends Real
 
-
-/** Integration. */                
+/** Integration. */
 case class Integrate(x: Symbol, a: D.T, b: D.T, expr: Real) extends Real
 
 /* Constructors for Formula: constants, logical operations, forall, exists. */
@@ -112,7 +111,7 @@ object Real {
   implicit def int2Const(x: Int): Const = {
     Const(D.valueOf(x))
   }
-  
+
   implicit def str2Const(x: String): Const = {
     Const(D.valueOf(x, MathContext.UNLIMITED))
   }

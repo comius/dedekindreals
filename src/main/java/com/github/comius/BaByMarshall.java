@@ -296,8 +296,7 @@ public class BaByMarshall {
     }
 
     public static void main(String args[]) {
-	MathContext mc = new MathContext(10, RoundingMode.FLOOR);
-	BigDecimal d = new BigDecimal(1.414, mc).pow(2);
+	BigDecimal d = BigDecimal.valueOf(1.414).pow(2);
 
 	MyReal sqrt2 = new Cut(BigDecimal.ZERO, TWO, x -> new LessThan(new Times(x, x), RTWO),
 		x -> new LessThan(RTWO, new Times(x, x)));

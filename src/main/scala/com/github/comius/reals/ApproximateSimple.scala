@@ -103,7 +103,9 @@ case object BisectionApproximations extends Approximations {
     case Sub(x, y) => lift(_.subtract(_, _))(x, y)
     case Mul(x, y) => lift(_.multiply(_, _))(x, y)
     case Div(x, y) => lift(_.divide(_, _))(x, y)
-    case Var(name) => approximate(ctx.vars.get(name).get)
+    case Var(name) => 
+      val Some(value) = ctx.vars.get(name)
+      approximate(value)
   }
 
   /**

@@ -22,15 +22,27 @@ import com.github.comius.reals.newton.ConstraintSet.ConstraintSetNone
 
 object Approximate2D extends Approximations {
 
+  private def zipConsPairs[A](l: List[A]): List[(A, A)] = l match {
+    case x::xs => l.zip(xs :+ x)
+    case Nil => Nil
+  }
+
+  private def zipConsTriples[A](l: List[A]): List[((A, A), A)] = l match {
+    case x1::x2::xs => l.zip((x2::xs) :+ x1).zip(xs :+ x1 :+ x2)
+    case _ => Nil
+  }
+
+  
   case class Point(x: D.T, y: D.T)
 
   case class ConstraintSet2D private (xi: Interval, yi: Interval, hull: List[Line]) {
     def split(llines: List[Line], ulines: List[Line]): (Approximation[ConstraintSet2D], List[ConstraintSet2D]) = {
       def filterDuplicate[A](l: List[A]): List[A] = {
-        if (l.isEmpty) l
-        else {
+        if (l.isEmpty) {
+          l
+        } else {
           val acc = List.newBuilder[A]
-          for ((p1, p2) <- l.zip(l.tail :+ l.head))
+          for ((p1, p2) <- zipConsPairs(l))
             if (p1 != p2) acc += p1
           acc.result
         }
@@ -43,7 +55,7 @@ object Approximate2D extends Approximations {
           val acc1 = List.newBuilder[Line]
           val acc2 = List.newBuilder[Line]
 
-          for (((l1, l2), l3) <- hull.zip(hull.tail :+ hull.head).zip(hull.tail.tail :+ hull.head :+ hull.tail.head)) {
+          for (((l1, l2), l3) <- zipConsTriples(hull)) {
 
             val in1 = l.inside(l1, l2)
             if (in1) acc1 += l1 else acc2 += l1
@@ -94,12 +106,10 @@ object Approximate2D extends Approximations {
     }
 
     def isIn(p: Point): Boolean = {
-      if (hull.isEmpty) false
-      else
-        hull.forall(_.inside(p))
+      if (hull.isEmpty) false else hull.forall(_.inside(p))
     }
 
-    override def toString() = {
+    override def toString(): String = {
       hull.mkString("RegionPlot[{", " && ", s"},{x,${xi.d},${xi.u}},{y,${yi.d},${yi.u}}]")
     }
 
@@ -110,7 +120,7 @@ object Approximate2D extends Approximations {
       } else {
         val ups = List.newBuilder[D.T]
         val downs = List.newBuilder[D.T]
-        for ((l1, l2) <- hull.zip(hull.tail :+ hull.head)) {
+        for ((l1, l2) <- zipConsPairs(hull)) {
           if (l1.dfyi.signum != l2.dfyi.signum) {
             downs += l1.intersection(l2, r.down, r.down).x
             ups += l1.intersection(l2, r.up, r.up).x
@@ -125,7 +135,7 @@ object Approximate2D extends Approximations {
       val ddowns = List.newBuilder[D.T]
       val uups = List.newBuilder[D.T]
       val udowns = List.newBuilder[D.T]
-      for (((l1, l2), l3) <- hull.zip(hull.tail :+ hull.head).zip(hull.tail.tail :+ hull.head :+ hull.tail.head)) {
+      for (((l1, l2), l3) <- zipConsTriples(hull)) {
         if (l2.dfxi == D.ZERO) {
           if (l2.ym == yi.d) {
             dups += l1.intersection(l2, r.up, r.up).x
@@ -199,12 +209,12 @@ object Approximate2D extends Approximations {
       Point(x.divide(Det, xc), y.divide(Det, yc))
     }
 
-    def invert() = {
+    def invert(): Line = {
       Line(f0.negate, xm, ym, dfxi.negate, dfyi.negate)
     }
 
     override def toString(): String = {
-      //fmxmy + (x - mx) dfxi + (y - my) dfyi
+      // fmxmy + (x - mx) dfxi + (y - my) dfyi
       s"$f0 + (x - $xm)($dfxi) + (y - $ym) ($dfyi) > 0"
     }
   }

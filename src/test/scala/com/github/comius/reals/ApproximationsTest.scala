@@ -36,7 +36,7 @@ class ApproximationsTest {
    */
   private def test(e: Real, expected: Interval): Unit = {
     val a = BisectionApproximations.approximate(e)(Context(new RoundingContext(0, 2)))
-    //println(s"$a ,$expected")
+    // println(s"$a ,$expected")
     Assert.assertTrue(
       s"Lower ${a.lower} is below expected value $expected for real $e",
       a.lower.d.compareTo(expected.d) <= 0 && a.lower.u.compareTo(expected.u) >= 0)

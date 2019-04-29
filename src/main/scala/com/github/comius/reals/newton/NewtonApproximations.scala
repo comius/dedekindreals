@@ -36,7 +36,8 @@ import com.github.comius.reals.Approximation
 object NewtonApproximations extends Approximations {
   import com.github.comius.floats.Floats.{ impl => D }
 
-  def lift(op: (ConstraintSet, ConstraintSet) => ConstraintSet)(x: Formula, y: Formula)(implicit ctx: Context[VarDomain], x0: Symbol, i: Interval) =
+  private def lift(op: (ConstraintSet, ConstraintSet) => ConstraintSet)(
+      x: Formula, y: Formula)(implicit ctx: Context[VarDomain], x0: Symbol, i: Interval): Approximation[ConstraintSet] =
     {
       val Approximation(l1, u1) = estimate(x)
       val Approximation(l2, u2) = estimate(y)

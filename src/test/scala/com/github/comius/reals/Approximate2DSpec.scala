@@ -34,7 +34,7 @@ class Approximate2DSpec extends Properties("Approximate2d") {
   val m = MathContext.UNLIMITED
 
   property("lowerApproximate") = forAll(gen01Float, gen01Float, gen01Float) {
-    (a: D.T, b: D.T, c: D.T) =>      
+    (a: D.T, b: D.T, c: D.T) =>
       val (Approximation(l, u), s) = Approximate2D.refine(0 < 'x * a + 'y * b - c, cs0, 'x, 'y)(ctx0)
       forAll(gen01Float, gen01Float) {
         (x: D.T, y: D.T) =>
@@ -49,11 +49,11 @@ class Approximate2DSpec extends Properties("Approximate2d") {
   println(l)
   println(u)
   println(s)
-  
-  println("le:"+l.projectExists(ctx0.roundingContext))
-  println("ue:"+u.projectExists(ctx0.roundingContext))
-  println("la:"+l.projectForall(ctx0.roundingContext))
-  println("uu:"+u.projectForall(ctx0.roundingContext))
+
+  println("le:" + l.projectExists(ctx0.roundingContext))
+  println("ue:" + u.projectExists(ctx0.roundingContext))
+  println("la:" + l.projectForall(ctx0.roundingContext))
+  println("uu:" + u.projectForall(ctx0.roundingContext))
   property("x1xApproximate") = {
     forAll(gen01Float, gen01Float) {
       (x: D.T, y: D.T) =>

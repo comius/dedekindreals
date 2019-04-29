@@ -115,7 +115,8 @@ class FloatsSpec extends Properties("Floats") {
               } catch {
                 case e: ArithmeticException =>
                   // Special case for division which can't be computed precisely
-                  op(a, b, new MathContext(1000, RoundingMode.HALF_EVEN))
+                  val largePrecision = 1000
+                  op(a, b, new MathContext(largePrecision, RoundingMode.HALF_EVEN))
               }
 
             val propList =

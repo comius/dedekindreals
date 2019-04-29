@@ -300,10 +300,11 @@ object IntervalSpec {
           gv2 <- g2
         } {
           r = r && f(gv1, gv2)(prms0)
-          if (r.status != Prop.True)
+          if (r.status != Prop.True) {
             return r
               .addArg(Prop.Arg("ARG1", gv2, 0, gv2, pp2(gv2), pp2(gv2)))
               .addArg(Prop.Arg("ARG0", gv1, 0, gv1, pp1(gv1), pp1(gv1)))
+          }
         }
         return Result(Prop.Proof)
       }

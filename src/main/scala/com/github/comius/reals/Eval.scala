@@ -8,8 +8,6 @@
 
 package com.github.comius.reals
 
-
-
 import com.github.comius.RoundingContext
 import com.github.comius.reals.newton.NewtonApproximations
 import com.github.comius.reals.syntax.Add
@@ -39,7 +37,7 @@ object Eval {
       case _ =>
         formula match {
 
-          case Less(x, y) => Less(refine(x),refine(y))
+          case Less(x, y) => Less(refine(x), refine(y))
 
           case Exists(x, a, b, phi) =>
             val m = a.split(b)
@@ -49,7 +47,7 @@ object Eval {
             else
               Or(Exists(x, a, m, phi), Exists(x, m, b, phi))
           case Forall(x, a, b, phi) =>
-            val m = a.split(b) //Utils.splitInterval(a, b, ctx.roundingContext)(0)
+            val m = a.split(b)
             val phi2 = refine(phi)(ctx + (x -> ForallDomain(a, b)))
             if (phi2.isInstanceOf[ConstFormula])
               phi2
@@ -98,17 +96,17 @@ object Eval {
       val a2 = if (approximate(l)(ctx + (x -> CutDomain(m1, m1))).lower) m1 else a
       val b2 = if (approximate(u)(ctx + (x -> CutDomain(m2, m2))).lower) m2 else b
       //Cut(x, a2,b2, refine(l)(ctx + (x -> CutDomain(a2, b2))), refine(u)(ctx + (x -> CutDomain(a2, b2))))
-      
-      val t1 = NewtonApproximations.estimate(l)(ctx, x, Interval(a,b))
-      val t2 = NewtonApproximations.estimate(u)(ctx, x, Interval(a,b))      
-      val a3 = t1.lower.supremum()//.max(t2.upper.infimum())
-      val b3 = t2.lower.infimum()//.min(t1.upper.supremum())
+
+      val t1 = NewtonApproximations.estimate(l)(ctx, x, Interval(a, b))
+      val t2 = NewtonApproximations.estimate(u)(ctx, x, Interval(a, b))
+      val a3 = t1.lower.supremum() //.max(t2.upper.infimum())
+      val b3 = t2.lower.infimum() //.min(t1.upper.supremum())
       // TODO find bugs
       //println(s"debug> ${Interval(a3,b3)} ${t1.lower} ${t2.lower}")
       val an = a2.max(a3)
       val bn = b2.min(b3)
-      
-      Cut(x, an,bn, refine(l)(ctx + (x -> CutDomain(an, bn))), refine(u)(ctx + (x -> CutDomain(an, bn))))
+
+      Cut(x, an, bn, refine(l)(ctx + (x -> CutDomain(an, bn))), refine(u)(ctx + (x -> CutDomain(an, bn))))
     case Integrate(x, a, b, e) =>
       val m = a.split(b)
       val le = refine(e)(ctx + (x -> CutDomain(a, m)))
@@ -137,7 +135,7 @@ object Eval {
       val width = l.u.subtract(l.d, context.roundingContext.up)
       val ctime = System.currentTimeMillis()
       println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString.length}, time ${ctime - stime}")
-      
+
       stime = ctime
       if (width.compareTo(prec) < 0) {
         println(l)
@@ -172,5 +170,4 @@ object Eval {
     }
   }
 
- 
 }

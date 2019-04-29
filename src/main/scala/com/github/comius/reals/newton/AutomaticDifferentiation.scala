@@ -65,7 +65,9 @@ object AutomaticDifferentiation {
         val ba = Interval(b, b).subtract(Interval(a, a), ctx.roundingContext)
         (l1._1.multiply(ba, ctx.roundingContext), l1._2.multiply(ba, ctx.roundingContext))
         */
-      case Var(name) => ctx.vars.get(name).get
+      case Var(name) => 
+        val Some(value) = ctx.vars.get(name)
+        value
     }
   }
 }

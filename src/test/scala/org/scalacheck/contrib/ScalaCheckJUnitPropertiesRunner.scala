@@ -46,19 +46,22 @@ class ScalaCheckJUnitPropertiesRunner(suiteClass: java.lang.Class[Properties]) e
 
   // Our custom tes callback, used to keep JUnit's runner updated about test progress
   private[contrib] class CustomTestCallback(notifier: RunNotifier, desc: Description) extends Test.TestCallback {
-    def failure(res: Test.Failed) = {
-      val assertion = new AssertionError(s"Failed on arguments ${res.args.map(_.arg).mkString(",")},\n${res.labels.mkString(",\n")}")
-      assertion.setStackTrace(Array(new StackTraceElement(properties.getClass.getName, "", null, -1)))
+    def failure(res: Test.Failed): Failure = {
+      val assertion = new AssertionError(
+        s"Failed on arguments ${res.args.map(_.arg).mkString(",")},\n${res.labels.mkString(",\n")}")
+      assertion.setStackTrace(Array(
+        new StackTraceElement(properties.getClass.getName, "", null, -1))) // scalastyle:ignore null
       new Failure(desc, assertion)
     }
 
     /** Called whenever a property has finished testing */
-    override def onTestResult(name: String, res: Test.Result) = {
+    override def onTestResult(name: String, res: Test.Result): Unit = {
       consoleReporter.onTestResult(desc.getDisplayName, res)
       res.status match {
         case Test.Passed    => notifier.fireTestFinished(desc) // Test passed, nothing to do
         case Test.Proved(_) => notifier.fireTestFinished(desc) // Test passed, nothing to do
-        case Test.Exhausted => notifier.fireTestAssumptionFailed( // exhausted tests are marked as assumption problem in JUnit
+        case Test.Exhausted => notifier.fireTestAssumptionFailed(
+          // exhausted tests are marked as assumption problem in JUnit
           new Failure(desc, new AssertionError(s"Exhausted: ${res.succeeded} passed/${res.discarded} discarded")))
         case r @ Test.Failed(args, labels) =>
           notifier.fireTestFailure(failure(r)) // everything else is a failed test
@@ -66,7 +69,7 @@ class ScalaCheckJUnitPropertiesRunner(suiteClass: java.lang.Class[Properties]) e
       }
     }
 
-    override def onPropEval(n: String, t: Int, s: Int, d: Int) =
+    override def onPropEval(n: String, t: Int, s: Int, d: Int): Unit =
       consoleReporter.onPropEval(desc.getDisplayName, t, s, d)
   }
 
@@ -92,8 +95,12 @@ class ScalaCheckJUnitPropertiesRunner(suiteClass: java.lang.Class[Properties]) e
           if (filter.forall(_.shouldRun(descObj))) {
             notifier.fireTestStarted(descObj)
 
-            //.withMinSuccessfulTests(1000000).withInitialSeed(123123213)
-            Test.check(prop)(_.withMinSuccessfulTests(10000).withInitialSeed(123123213).withTestCallback(new CustomTestCallback(notifier, descObj)))
+            val minSuccessfulTest = 10000
+            val initialSeed = 123123213
+
+            Test.check(prop)(_.withMinSuccessfulTests(minSuccessfulTest)
+              .withInitialSeed(initialSeed)
+              .withTestCallback(new CustomTestCallback(notifier, descObj)))
 
           }
         }
@@ -111,5 +118,5 @@ class ScalaCheckJUnitPropertiesRunner(suiteClass: java.lang.Class[Properties]) e
    *
    * @return the expected number of tests that will run when this suite is run
    */
-  override def testCount() = properties.properties.size
+  override def testCount(): Int = properties.properties.size
 }

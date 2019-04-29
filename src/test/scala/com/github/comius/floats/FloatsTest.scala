@@ -70,11 +70,13 @@ class FloatsTest {
             val ai = testValuesInt1(i)
             val bi = testValuesInt2(j)
             val ci: Int = normalize(intOp(ai, bi))
+            val maxResult = 2
+            
             if (ci >= inf) {
               Some(D.posInf)
             } else if (ci <= -inf) {
               Some(D.negInf)
-            } else if (ci > 2 || ci < -2) {
+            } else if (ci > maxResult || ci < -maxResult) {
               None
             } else {
               Some(D.valueOf(ci))
@@ -111,23 +113,26 @@ class FloatsTest {
    */
   @Test
   def testLimits(): Unit = {
+    val precision = 10
+    
     // Test addition
-    testLimits((a, b) => a.add(b, new MathContext(10, RoundingMode.CEILING)), (a, b) => a + b, " + ");
+    testLimits((a, b) => a.add(b, new MathContext(precision, RoundingMode.CEILING)), (a, b) => a + b, " + ");
 
     // Test subtraction
-    testLimits((a, b) => a.subtract(b, new MathContext(10, RoundingMode.CEILING)), (a, b) => a - b, " - ");
+    testLimits((a, b) => a.subtract(b, new MathContext(precision, RoundingMode.CEILING)), (a, b) => a - b, " - ");
 
     val isInf = (a: Int) => Math.abs(normalize(a)) == inf;
 
     // Multiplication
     // Special case multiplication inf and 0
-    val multiply = (a: Int, b: Int) => if ((isInf(a) && b == 0) || (isInf(b) && a == 0)) throw new ArithmeticException() else a * b
-    testLimits((a, b) => a.multiply(b, new MathContext(10, RoundingMode.CEILING)), multiply, " * ");
+    val multiply = (a: Int, b: Int) => if ((isInf(a) && b == 0) || (isInf(b) && a == 0)) 
+      throw new ArithmeticException() else a * b
+    testLimits((a, b) => a.multiply(b, new MathContext(precision, RoundingMode.CEILING)), multiply, " * ");
 
     // Division
     // Special case division of infinities
     val divide = (a: Int, b: Int) => if (isInf(a) && isInf(b)) throw new ArithmeticException() else a / b;
-    testLimits((a, b) => a.divide(b, new MathContext(10, RoundingMode.CEILING)), divide, " / ");
+    testLimits((a, b) => a.divide(b, new MathContext(precision, RoundingMode.CEILING)), divide, " / ");
   }
 }
 

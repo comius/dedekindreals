@@ -72,12 +72,13 @@ object BigDecimalFloats extends Floats {
     }
 
     override def split(b: BigDecimalFloat): BigDecimalFloat = {
+      val two = BigDecimal.valueOf(2)
       (this, b) match {
         // TODO precision and rounding
         case (ZERO, Number(y)) =>
-          Number(y.divide(BigDecimal.valueOf(2), mc1Down))
+          Number(y.divide(two, mc1Down))
         case (Number(x), ZERO) =>
-          Number(x.divide(BigDecimal.valueOf(2), mc1Up))
+          Number(x.divide(two, mc1Up))
         case (Number(x), Number(y)) =>
           val mx = x.precision() - x.scale()
           val my = y.precision() - y.scale()
@@ -85,9 +86,9 @@ object BigDecimalFloats extends Floats {
             case ms if -1 <= ms && ms <= 1 =>
               val maxp = Math.max(x.precision(), y.precision())
               val mc = new MathContext(maxp + 1, RoundingMode.HALF_EVEN)
-              Number(x.add(y, mc).divide(BigDecimal.valueOf(2), mc))
-            case ms if ms > 1 => Number(x.divide(BigDecimal.valueOf(2), mc1Down))
-            case _            => Number(y.divide(BigDecimal.valueOf(2), mc1Down))
+              Number(x.add(y, mc).divide(two, mc))
+            case ms if ms > 1 => Number(x.divide(two, mc1Down))
+            case _            => Number(y.divide(two, mc1Down))
           }
         case (Number(x), PosInf()) =>
           x.signum() match {

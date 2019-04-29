@@ -52,6 +52,11 @@ abstract sealed class ConstraintSet(val domain: Interval) {
     }
   }
 
+  private def firstLessThan(l: List[RealConstraint]): Boolean = l match {
+    case (_: LessThan) :: _ => true
+    case _                  => false
+  }
+
   /**
    * Computes union of two constraint sets on the same domain.
    *
@@ -72,8 +77,8 @@ abstract sealed class ConstraintSet(val domain: Interval) {
       val acc = List.newBuilder[RealConstraint] // accumulator for the result
       var p1 = l1 // pointing to head of first list
       var p2 = l2
-      var in1 = l1.head.isInstanceOf[LessThan] // is scanline over the first constraint set inside it
-      var in2 = l2.head.isInstanceOf[LessThan]
+      var in1 = firstLessThan(l1) // is scanline over the first constraint set inside it
+      var in2 = firstLessThan(l2)
 
       while (p1 != Nil || p2 != Nil) {
         // scanline should be over the first list, so swap them if necessary
@@ -81,7 +86,7 @@ abstract sealed class ConstraintSet(val domain: Interval) {
           val px = p1; p1 = p2; p2 = px;
           val inx = in1; in1 = in2; in2 = inx;
         }
-        // process one point of the scanline
+        // process one point of the scanline        
         p1.head match {
           case a: LessThan =>
             if (in1 && !in2) acc += a
@@ -119,8 +124,8 @@ abstract sealed class ConstraintSet(val domain: Interval) {
       val acc = List.newBuilder[RealConstraint]
       var p1 = l1
       var p2 = l2
-      var in1 = l1.head.isInstanceOf[LessThan]
-      var in2 = l2.head.isInstanceOf[LessThan]
+      var in1 = firstLessThan(l1)
+      var in2 = firstLessThan(l2)
 
       while (p1 != Nil || p2 != Nil) {
         if (p1 == Nil || (p2 != Nil && moreThan(p1.head, p2.head))) {
@@ -167,10 +172,7 @@ abstract sealed class ConstraintSet(val domain: Interval) {
           case List(MoreThan(a), b) if a != b.x => List(LessThan(a))
           case _                                => List()
         }.toList
-        if (l.isEmpty)
-          ConstraintSetAll(domain)
-        else
-          ConstraintSetList(domain, l)
+        if (l.isEmpty) ConstraintSetAll(domain) else ConstraintSetList(domain, l)
     }
   }
 
@@ -184,7 +186,7 @@ abstract sealed class ConstraintSet(val domain: Interval) {
     case _: ConstraintSetNone => List()
     case ConstraintSetList(_, l1) =>
       // TODO optimisation
-      val endpts = if (l1.head.isInstanceOf[LessThan]) {
+      val endpts = if (firstLessThan(l1)) {
         (domain.d :: l1.map(_.x)) :+ domain.u
       } else {
         l1.map(_.x) :+ domain.u

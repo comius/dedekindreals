@@ -60,7 +60,7 @@ class ConstraintSetSpec extends Properties("ConstraintSet") {
 
   /**
    * Verifying a point is inside constraint set.
-   * 
+   *
    * @param d the point
    * @param c the constraint set
    * @return true if d is inside c
