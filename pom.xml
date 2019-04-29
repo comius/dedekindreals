@@ -19,8 +19,9 @@
     <sonar.tests>src/test/scala</sonar.tests>
     <sonar.sourceEncoding>UTF-8</sonar.sourceEncoding>
     <sonar.scala.version>2.12</sonar.scala.version>
-    <sonar.scoverage.reportPath>target/scoverage.xml</sonar.scoverage.reportPath>
-    <sonar.scapegoat.reportPath>target/scapegoat/scapegoat.xml</sonar.scapegoat.reportPath>
+    <sonar.scala.scoverage.reportPath>target/scoverage.xml</sonar.scala.scoverage.reportPath>
+    <sonar.scala.scapegoat.reportPaths>target/scapegoat/scapegoat-scalastyle.xml</sonar.scala.scapegoat.reportPaths>
+    <sonar.scala.scalastyle.reportPaths>target/scalastyle-output.xml</sonar.scala.scalastyle.reportPaths>
   </properties>
 
   <build>
@@ -96,6 +97,30 @@
         <groupId>org.sonarsource.scanner.maven</groupId>
         <artifactId>sonar-maven-plugin</artifactId>
         <version>3.6.0.1398</version>
+      </plugin>
+
+      <plugin>
+        <groupId>org.scalastyle</groupId>
+        <artifactId>scalastyle-maven-plugin</artifactId>
+        <version>1.0.0</version>
+        <configuration>
+          <verbose>false</verbose>
+          <failOnViolation>true</failOnViolation>
+          <includeTestSourceDirectory>true</includeTestSourceDirectory>
+          <failOnWarning>false</failOnWarning>
+          <sourceDirectory>${project.basedir}/src/main/scala</sourceDirectory>
+          <testSourceDirectory>${project.basedir}/src/test/scala</testSourceDirectory>
+          <configLocation>${project.basedir}/scalastyle_configuration.xml</configLocation>
+          <outputFile>${project.basedir}/target/scalastyle-output.xml</outputFile>
+          <outputEncoding>UTF-8</outputEncoding>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
