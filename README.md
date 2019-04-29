@@ -8,11 +8,11 @@ The project is build using maven, and developed in Scala IDE (Eclipse).
 
 # How to start
 
-A good starting point is [Examples.scala](src/main/scala/com/github/comius/reals/Example.scala)
+A good starting point is [Examples.scala](src/main/scala/com/github/comius/reals/Examples.scala)
 
 - Install Scala IDE
 - Clone the project
-- Run [Examples.scala](src/main/scala/com/github/comius/reals/Example.scala)
+- Run [Examples.scala](src/main/scala/com/github/comius/reals/Examples.scala)
 - Check the examples
 
 # Documentation
