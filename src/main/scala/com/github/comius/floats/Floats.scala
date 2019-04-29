@@ -1,3 +1,11 @@
+/*
+ * Dedekind Reals - Java Library for computing with Dedekind Reals
+ * Copyright (c) 2019 Ivo List
+ *
+ * This software is distributed under the terms found
+ * in file LICENSE.txt that is included with this distribution.
+ */
+
 package com.github.comius.floats
 
 import java.math.MathContext
@@ -256,9 +264,11 @@ trait Floats {
    * @return Positive infinity when s > 0 and Negative infinity when s < 0
    */
   def signToInfty(s: Int): T = {
-    if (s > 0) posInf
-    else if (s < 0) negInf
-    else {
+    if (s > 0) {
+      posInf
+    } else if (s < 0) {
+      negInf
+    } else {
       throw new ArithmeticException("signToInfinity called with zero.")
     }
   }

@@ -1,3 +1,11 @@
+/*
+ * Dedekind Reals - Java Library for computing with Dedekind Reals
+ * Copyright (c) 2019 Ivo List
+ *
+ * This software is distributed under the terms found
+ * in file LICENSE.txt that is included with this distribution.
+ */
+
 package com.github.comius.floats
 
 import java.math.MathContext
@@ -21,7 +29,7 @@ import com.github.comius.floats.Floats.{ impl => D }
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class FloatsSpec extends Properties("Floats") {
   import FloatSpec._
-  
+
   /**
    * Implicitly defines arbitrary float, which is used in forAll tests when no generator is given.
    */
@@ -96,7 +104,7 @@ class FloatsSpec extends Properties("Floats") {
   val mult: (D.T, D.T, MathContext) => D.T = _.multiply(_, _)
   val divide: (D.T, D.T, MathContext) => D.T = _.divide(_, _)
 
-  for ((opDesc, op) <- Map("Add" -> add, "Subtract" -> subtract, "Multiply" -> mult, "Divide" -> divide)) {
+  for { (opDesc, op) <- Map("Add" -> add, "Subtract" -> subtract, "Multiply" -> mult, "Divide" -> divide) } {
     property(s"rounding${opDesc}") = forAll(genRegularFloat, genRegularFloat) {
       (a: D.T, b: D.T) =>
         (opDesc != "Divide" || b != D.ZERO) ==> // Omitting division by zero
@@ -127,7 +135,7 @@ class FloatsSpec extends Properties("Floats") {
                   (cUp.subtract(D.valueOfEpsilon(precision), rDown).compareTo(precise) <= 0)
                   :| s"Subtracting ULP is not below precise result" &&
 
-                  // Verifies result rounded down is below precise result. 
+                  // Verifies result rounded down is below precise result.
                   (cDown.compareTo(precise) <= 0)
                   :| s"Rounding down is not below precise result ${cDown} > ${precise}" &&
 
@@ -150,16 +158,16 @@ class FloatsSpec extends Properties("Floats") {
         val (a2, b2) = if (a.compareTo(b) <= 0) (a, b) else (b, a)
         val c = a2.split(b2)
 
-        /*val precision = new BigDecimal(c.toString()).precision()
-        
+        /* val precision = new BigDecimal(c.toString()).precision()
+
         val cUp = c.add(D.ZERO, new MathContext(precision - 1, RoundingMode.CEILING))
         val cDown = c.add(D.ZERO, new MathContext(precision - 1, RoundingMode.FLOOR))
         */
-        
+
         // Verifies a < split(a,b) < b
         a2.compareTo(c) < 0 && c.compareTo(b2) < 0
-        
-        // TODO Verifies that in reduced precision a < split(a,b) < b doesn't hold. 
+
+        // TODO Verifies that in reduced precision a < split(a,b) < b doesn't hold.
         // && a2.compareTo(cDown) >= 0 && cUp.compareTo(b2) >= 0 :| c.toString()
       }
   }
@@ -178,7 +186,7 @@ class FloatsSpec extends Properties("Floats") {
  * Provides generators for Floats.
  */
 object FloatSpec {
-   /**
+  /**
    * Generates a regular float (without infinities).
    *
    * Uses scalacheck's generator for BigDecimal. Scalacheck's generator generates 3 precisions: 32, 64, and 128 bit.
@@ -198,5 +206,5 @@ object FloatSpec {
   /**
    * Generates arbitrary float.
    */
-  def genFloat: Gen[D.T] = Gen.frequency((5, genRegularFloat), (1, D.posInf), (1, D.negInf)) 
+  def genFloat: Gen[D.T] = Gen.frequency((5, genRegularFloat), (1, D.posInf), (1, D.negInf))
 }

@@ -1,3 +1,11 @@
+/*
+ * Dedekind Reals - Java Library for computing with Dedekind Reals
+ * Copyright (c) 2019 Ivo List
+ *
+ * This software is distributed under the terms found
+ * in file LICENSE.txt that is included with this distribution.
+ */
+
 package com.github.comius.floats
 
 import java.math.MathContext
@@ -34,11 +42,13 @@ class FloatsTest {
 
   /** Normalizes infinities. Anything bigger or smaller is truncated to infinity. */
   def normalize(a: Int): Int = {
-    if (a >= inf)
-      inf;
-    else if (a <= -inf)
-      -inf;
-    else a;
+    if (a >= inf) {
+      inf
+    } else if (a <= -inf) {
+      -inf
+    } else {
+      a
+    }
   }
 
   /**
@@ -51,23 +61,24 @@ class FloatsTest {
    * @param opStr
    *            the string describing the operation
    */
-  def testLimits(op: (D.T, D.T) => D.T, intOp: (Int, Int) => Int, opStr: String) = {
-    for (i <- 0 until testValuesInt1.length) {
-      for (j <- 0 until testValuesInt1.length) {
+  def testLimits(op: (D.T, D.T) => D.T, intOp: (Int, Int) => Int, opStr: String): Unit = {
+    for {i <- 0 until testValuesInt1.length} {
+      for {j <- 0 until testValuesInt1.length} {
         // Computes value using integers and embeds it into Floats
         val cprime: Option[D.T] =
           try {
-            val ai = testValuesInt1(i);
+            val ai = testValuesInt1(i)
             val bi = testValuesInt2(j)
-            val ci: Int = normalize(intOp(ai, bi));
-            if (ci >= inf)
+            val ci: Int = normalize(intOp(ai, bi))
+            if (ci >= inf) {
               Some(D.posInf)
-            else if (ci <= -inf)
+            } else if (ci <= -inf) {
               Some(D.negInf)
-            else if (ci > 2 || ci < -2)
+            } else if (ci > 2 || ci < -2) {
               None
-            else
-              Some(D.valueOf(ci));
+            } else {
+              Some(D.valueOf(ci))
+            }
           } catch {
             case e: ArithmeticException =>
               None

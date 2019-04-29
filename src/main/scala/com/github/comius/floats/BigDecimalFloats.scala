@@ -1,3 +1,11 @@
+/*
+ * Dedekind Reals - Java Library for computing with Dedekind Reals
+ * Copyright (c) 2019 Ivo List
+ *
+ * This software is distributed under the terms found
+ * in file LICENSE.txt that is included with this distribution.
+ */
+
 package com.github.comius.floats
 
 import java.math.BigDecimal
@@ -28,7 +36,7 @@ object BigDecimalFloats extends Floats {
       }
     }
 
-    override def multiply(b: BigDecimalFloat, mc: MathContext) = {
+    override def multiply(b: BigDecimalFloat, mc: MathContext): BigDecimalFloat = {
       (this, b) match {
         case (Number(x), Number(y)) => Number(x.multiply(y, mc))
         // One number is infinity
@@ -42,7 +50,7 @@ object BigDecimalFloats extends Floats {
       }
     }
 
-    override def divide(b: BigDecimalFloat, mc: MathContext) = {
+    override def divide(b: BigDecimalFloat, mc: MathContext): BigDecimalFloat = {
       (this, b) match {
         case (Number(x), ZERO)                => throw new ArithmeticException("Division by zero.")
         case (Number(x), Number(y))           => Number(x.divide(y, mc))
@@ -63,7 +71,7 @@ object BigDecimalFloats extends Floats {
       }
     }
 
-    override def split(b: BigDecimalFloat) = {
+    override def split(b: BigDecimalFloat): BigDecimalFloat = {
       (this, b) match {
         // TODO precision and rounding
         case (ZERO, Number(y)) =>
@@ -130,9 +138,9 @@ object BigDecimalFloats extends Floats {
    * Case class expressing positive infinity.
    */
   private[this] case class PosInf() extends BigDecimalFloat {
-    override def isPosInf() = true
-    override def isNegInf() = false
-    override def isRegularNumber() = false
+    override def isPosInf(): Boolean = true
+    override def isNegInf(): Boolean = false
+    override def isRegularNumber(): Boolean = false
     override def signum(): Int = 1
     override def negate(): BigDecimalFloat = NegInf()
     override def toString(): String = "Inf"
@@ -143,9 +151,9 @@ object BigDecimalFloats extends Floats {
    * Case class expressing negative infinity.
    */
   private[this] case class NegInf() extends BigDecimalFloat {
-    override def isPosInf() = false
-    override def isNegInf() = true
-    override def isRegularNumber() = false
+    override def isPosInf(): Boolean = false
+    override def isNegInf(): Boolean = true
+    override def isRegularNumber(): Boolean = false
     override def signum(): Int = -1
     override def negate(): BigDecimalFloat = PosInf()
     override def toString(): String = "-Inf"
@@ -156,9 +164,9 @@ object BigDecimalFloats extends Floats {
    * Case class expressing regular number, i.e. container for BigDecimal.
    */
   private[this] case class Number(x: BigDecimal) extends BigDecimalFloat {
-    override def isPosInf() = false
-    override def isNegInf() = false
-    override def isRegularNumber() = true
+    override def isPosInf(): Boolean = false
+    override def isNegInf(): Boolean = false
+    override def isRegularNumber(): Boolean = true
     override def signum(): Int = x.signum()
     override def negate(): BigDecimalFloat = Number(x.negate())
     override def toString(): String = x.toString()
@@ -171,7 +179,7 @@ object BigDecimalFloats extends Floats {
      * @param b the other object to compare to
      * @return true when value is equal
      */
-    override def equals(b: Any) = {
+    override def equals(b: Any): Boolean = {
       b match {
         case number: Number => number.x.compareTo(x) == 0
         case _              => false
