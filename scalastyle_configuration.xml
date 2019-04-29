@@ -134,8 +134,8 @@
  <check level="warning" class="org.scalastyle.scalariform.SpaceAfterCommentStartChecker" enabled="true"/>
  <check level="warning" class="org.scalastyle.scalariform.FieldNamesChecker" enabled="true">
   <parameters>
-   <parameter name="regex"><![CDATA[^[a-z][A-Za-z0-9]*$]]></parameter>
-   <parameter name="objectFieldRegex"><![CDATA[^[A-Za-z][A-Za-z]*$]]></parameter>
+   <parameter name="regex"><![CDATA[^[A-Za-z][A-Za-z0-9]*$]]></parameter>
+   <parameter name="objectFieldRegex"><![CDATA[^[A-Za-z][A-Za-z0-9]*$]]></parameter>
   </parameters>
  </check>
  <check level="warning" class="org.scalastyle.scalariform.TodoCommentChecker" enabled="true">
@@ -143,10 +143,10 @@
    <parameter name="words"><![CDATA[TODO|FIXME]]></parameter>
   </parameters>
  </check>
- <check level="warning" class="org.scalastyle.scalariform.NamedArgumentChecker" enabled="true">
+ <check level="warning" class="org.scalastyle.scalariform.NamedArgumentChecker" enabled="false">
   <parameters>
    <parameter name="checkString"><![CDATA[false]]></parameter>
-   <parameter name="ignoreMethod"><![CDATA[^set.+$]]></parameter>
+   <parameter name="ignoreMethod"><![CDATA[^(set.+|valueOf)$]]></parameter>
   </parameters>
  </check>
 </scalastyle>
