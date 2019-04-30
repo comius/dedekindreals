@@ -121,21 +121,26 @@ object Eval2D {
     x0: (Symbol, VarDomain))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet] = f match {
     case Exists(x, a, b, phi) =>
       val Approximation(l, u) = approximate2(phi, x0, x -> ExistsDomain(a, b))
+      // println("exists l: "+ l)
+      // println("exists u: "+ u)
       Approximation(l.projectExists(ctx.roundingContext), u.projectForall(ctx.roundingContext))
 
     case Forall(x, a, b, phi) =>
       val Approximation(l, u) = approximate2(phi, x0, x -> ForallDomain(a, b))
+      // println("forall l: "+ l)
+      // println("forall u: "+ u)
+      
       Approximation(l.projectForall(ctx.roundingContext), u.projectExists(ctx.roundingContext))
 
     case And(x, y) =>
       val Approximation(l1, u1) = approximate1(x, x0)
       val Approximation(l2, u2) = approximate1(y, x0)
-      Approximation(l1.intersection(l2), u1.intersection(u2))
+      Approximation(l1.intersection(l2), u1.union(u2))
 
     case Or(x, y) =>
       val Approximation(l1, u1) = approximate1(x, x0)
       val Approximation(l2, u2) = approximate1(y, x0)
-      Approximation(l1.union(l2), u1.union(u2))
+      Approximation(l1.union(l2), u1.intersection(u2))
 
     case Less(x, y) => // fall back to Newton
       ApproximateNewton.estimate(Less(x, y))(ctx, x0._1, Interval(x0._2.lower, x0._2.upper))
@@ -167,8 +172,13 @@ object Eval2D {
       // TODO find bugs
       // println(s"debug> ${Interval(a3,b3)} ${t1.lower} ${t2.lower}")
 
-      val a4 = approximate1(l, x -> CutDomain(a, b)).lower.supremum()
-      val b4 = approximate1(u, x -> CutDomain(a, b)).lower.infimum()
+      val Approximation(ll, lu) = approximate1(l, x -> CutDomain(a, b))
+      val Approximation(ul, uu) = approximate1(u, x -> CutDomain(a, b))   
+      
+      // println("lowe> " + ll.supremum()+ " " + uu.supremum)
+      // println("upe> " + ul.infimum()+ " " + lu.infimum)
+      val a4 = ll.supremum() // .max(uu.supremum)
+      val b4 = ul.infimum() // .min(lu.infimum)
 
       val an = a2.max(a4)
       val bn = b2.min(b4)
