@@ -15,15 +15,14 @@ import org.scalacheck.Prop.BooleanOperators
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
 
-import com.github.comius.floats.FloatsSpec
 import com.github.comius.floats.Floats.{ impl => D }
+import com.github.comius.floats.FloatsSpec
 import com.github.comius.reals.Interval
 import com.github.comius.reals.newton.ConstraintSet.ConstraintSetAll
 import com.github.comius.reals.newton.ConstraintSet.ConstraintSetList
 import com.github.comius.reals.newton.ConstraintSet.ConstraintSetNone
 import com.github.comius.reals.newton.ConstraintSet.LessThan
 import com.github.comius.reals.newton.ConstraintSet.MoreThan
-
 /**
  * Unit tests for Constraint set.
  *

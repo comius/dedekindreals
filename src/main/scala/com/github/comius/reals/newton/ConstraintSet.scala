@@ -8,6 +8,9 @@
 
 package com.github.comius.reals.newton
 
+import scala.annotation.tailrec
+import scala.collection.mutable.Builder
+
 import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.reals.Interval
 
@@ -35,7 +38,7 @@ abstract sealed class ConstraintSet(val domain: Interval) {
   def infimum(): D.T
 
   /**
-   * Comparint two constraints. Smaller values come before bigger. When values are equal LessThan is before MoreThan.
+   * Comparing two constraints. Smaller values come before bigger. When values are equal LessThan is before MoreThan.
    *
    * @param a first constraint to compare
    * @param b second constraint to compare
@@ -69,44 +72,41 @@ abstract sealed class ConstraintSet(val domain: Interval) {
     /*
      * Computes union of two lists of constraints.
      *
-     * Implementation is based on scanline algorithm. Imperative style works better than functional. In functional
-     * style, because scala is an eager language, we cannot produce tail recursion without having an additional
-     * parameter that acts as list accumulator.
+     * Implementation is based on scanline algorithm.
      */
-    def union(l1: List[RealConstraint], l2: List[RealConstraint]): ConstraintSet = {
-      val acc = List.newBuilder[RealConstraint] // accumulator for the result
-      var p1 = l1 // pointing to head of first list
-      var p2 = l2
-      var in1 = firstLessThan(l1) // is scanline over the first constraint set inside it
-      var in2 = firstLessThan(l2)
+    @tailrec
+    def union(l1: List[RealConstraint], l2: List[RealConstraint])(
+      in1: Boolean = firstLessThan(l1), in2: Boolean = firstLessThan(l2))(
+      implicit
+      acc: Builder[RealConstraint, List[RealConstraint]] = List.newBuilder[RealConstraint]): ConstraintSet = {
+      (l1, l2) match {
+        case (Nil, _ :: _) =>
+          union(l2, l1)(in1 = in2, in2 = in1)
 
-      while (p1 != Nil || p2 != Nil) {
         // scanline should be over the first list, so swap them if necessary
-        if (p1 == Nil || (p2 != Nil && moreThan(p1.head, p2.head))) {
-          val px = p1; p1 = p2; p2 = px;
-          val inx = in1; in1 = in2; in2 = inx;
-        }
-        // process one point of the scanline        
-        p1.head match {
-          case a: LessThan =>
-            if (in1 && !in2) acc += a
-            in1 = false
-          case a: MoreThan =>
-            if (!(in1 || in2)) acc += a
-            in1 = true
-        }
-        p1 = p1.tail
-      }
+        case (p1 :: _, p2 :: _) if moreThan(p1, p2) =>
+          union(l2, l1)(in1 = in2, in2 = in1)
 
-      val result = acc.result
-      if (result.isEmpty) ConstraintSetAll(domain) else ConstraintSetList(domain, result)
+        // process one point of the scanline
+        case ((a: LessThan) :: l1s, _) =>
+          if (in1 && !in2) acc += a
+          union(l1s, l2)(in1 = false, in2 = in2)
+
+        case ((a: MoreThan) :: l1s, _) =>
+          if (!(in1 || in2)) acc += a
+          union(l1s, l2)(in1 = true, in2 = in2)
+
+        case (Nil, Nil) =>
+          val result = acc.result
+          if (result.isEmpty) ConstraintSetAll(domain) else ConstraintSetList(domain, result)
+      }
     }
 
     // check edge cases
     (this, s) match {
       case (_: ConstraintSetAll, _) | (_, _: ConstraintSetNone)   => this
       case (_, _: ConstraintSetAll) | (_: ConstraintSetNone, _)   => s
-      case (ConstraintSetList(_, l1), (ConstraintSetList(_, l2))) => union(l1, l2)
+      case (ConstraintSetList(_, l1), (ConstraintSetList(_, l2))) => union(l1, l2)()()
     }
   }
 
@@ -120,37 +120,38 @@ abstract sealed class ConstraintSet(val domain: Interval) {
     require(domain == s.domain, "Intersection of diffrent domains")
 
     // See comments for the union case. This only differs how new in1 and in2 are computed.
-    def intersection(l1: List[RealConstraint], l2: List[RealConstraint]): ConstraintSet = {
-      val acc = List.newBuilder[RealConstraint]
-      var p1 = l1
-      var p2 = l2
-      var in1 = firstLessThan(l1)
-      var in2 = firstLessThan(l2)
+    @tailrec
+    def intersection(l1: List[RealConstraint], l2: List[RealConstraint])(
+      in1: Boolean = firstLessThan(l1), in2: Boolean = firstLessThan(l2))(
+      implicit
+      acc: Builder[RealConstraint, List[RealConstraint]] = List.newBuilder[RealConstraint]): ConstraintSet = {
+      (l1, l2) match {
+        case (Nil, _ :: _) =>
+          intersection(l2, l1)(in1 = in2, in2 = in1)
 
-      while (p1 != Nil || p2 != Nil) {
-        if (p1 == Nil || (p2 != Nil && moreThan(p1.head, p2.head))) {
-          val px = p1; p1 = p2; p2 = px;
-          val inx = in1; in1 = in2; in2 = inx;
-        }
-        p1.head match {
-          case a: LessThan =>
-            if (in1 && in2) acc += a
-            in1 = false
-          case a: MoreThan =>
-            if (!in1 && in2) acc += a
-            in1 = true
-        }
-        p1 = p1.tail
+        // scanline should be over the first list, so swap them if necessary
+        case (p1 :: _, p2 :: _) if moreThan(p1, p2) =>
+          intersection(l2, l1)(in1 = in2, in2 = in1)
+
+        // process one point of the scanline
+        case ((a: LessThan) :: l1s, _) =>
+          if (in1 && in2) acc += a
+          intersection(l1s, l2)(in1 = false, in2 = in2)
+
+        case ((a: MoreThan) :: l1s, _) =>
+          if (!in1 && in2) acc += a
+          intersection(l1s, l2)(in1 = true, in2 = in2)
+
+        case (Nil, Nil) =>
+          val result = acc.result
+          if (result.isEmpty) ConstraintSetNone(domain) else ConstraintSetList(domain, result)
       }
-
-      val result = acc.result
-      if (result.isEmpty) ConstraintSetNone(domain) else ConstraintSetList(domain, result)
     }
 
     (this, s) match {
       case (_: ConstraintSetAll, _) | (_, _: ConstraintSetNone)   => s
       case (_, _: ConstraintSetAll) | (_: ConstraintSetNone, _)   => this
-      case (ConstraintSetList(_, l1), (ConstraintSetList(_, l2))) => intersection(l1, l2)
+      case (ConstraintSetList(_, l1), (ConstraintSetList(_, l2))) => intersection(l1, l2)()()
     }
   }
 
@@ -336,10 +337,9 @@ object ConstraintSet {
       case MoreThan(_)  => domain.u
     }
 
-    override def infimum(): D.T = constraints.head match {
-      case LessThan(_)  => domain.d
-      case MoreThan(x0) => x0
+    override def infimum(): D.T = constraints match {
+      case MoreThan(x0) :: _ => x0
+      case _                 => domain.d
     }
   }
-
 }
