@@ -192,7 +192,7 @@ abstract sealed class ConstraintSet(val domain: Interval) {
       } else {
         l1.map(_.x) :+ domain.u
       }
-      endpts.sliding(2).map { case List(a, b) => Interval(a, b) }.toList
+      endpts.sliding(2).flatMap { case List(a, b) => if (a != b) List(Interval(a, b)) else List() }.toList
   }
 
 }
