@@ -15,14 +15,13 @@ import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.Prop
 import org.scalacheck.Prop.BooleanOperators
-import org.scalacheck.Prop.Result
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
-import org.scalacheck.util.Pretty
 
 import com.github.comius.RoundingContext
 import com.github.comius.floats.FloatSpec
 import com.github.comius.floats.Floats.{ impl => D }
+import com.github.comius.reals.TestUtil.forall
 
 /**
  * Unit tests for Intervals.
@@ -286,30 +285,6 @@ object IntervalSpec {
       u <- approxBelow(x.u)
     } yield Interval(d, u)
 
-  /**
-   * A special forall that tests all values (not just random ones).
-   *
-   * Implemented in a form of property, because aggregating Prop-s with && throws stack exception.
-   */
-  def forall[A1, A2](g1: Stream[A1], g2: Stream[A2])(f: (A1, A2) => Prop)(implicit pp1: A1 => Pretty, pp2: A2 => Pretty): Prop = Prop {
-    prms0 =>
-      def aggregate: Prop.Result = {
-        var r = Result(Prop.True)
-        for {
-          gv1 <- g1
-          gv2 <- g2
-        } {
-          r = r && f(gv1, gv2)(prms0)
-          if (r.status != Prop.True) {
-            return r
-              .addArg(Prop.Arg("ARG1", gv2, 0, gv2, pp2(gv2), pp2(gv2)))
-              .addArg(Prop.Arg("ARG0", gv1, 0, gv1, pp1(gv1), pp1(gv1)))
-          }
-        }
-        return Result(Prop.Proof)
-      }
-      aggregate
-  }
 
   /** Stream of special Floats */
   val specialFloats = Stream(D.negInf, D.posInf, D.ZERO, D.ONE, D.ONE.negate())
