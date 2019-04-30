@@ -33,7 +33,7 @@ import com.github.comius.reals.ForallDomain
 import com.github.comius.reals.CutDomain
 import com.github.comius.reals.Approximation
 
-object NewtonApproximations extends Approximations {
+object ApproximateNewton extends Approximations {
   import com.github.comius.floats.Floats.{ impl => D }
 
   private def lift(op: (ConstraintSet, ConstraintSet) => ConstraintSet)(

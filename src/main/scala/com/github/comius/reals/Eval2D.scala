@@ -10,7 +10,7 @@ package com.github.comius.reals
 
 import com.github.comius.RoundingContext
 import com.github.comius.reals.newton.ConstraintSet
-import com.github.comius.reals.newton.NewtonApproximations
+import com.github.comius.reals.newton.ApproximateNewton
 import com.github.comius.reals.syntax.Add
 import com.github.comius.reals.syntax.And
 import com.github.comius.reals.syntax.ConstFormula
@@ -132,7 +132,7 @@ object Eval2D {
       Approximation(l1.union(l2), u1.union(u2))
 
     case Less(x, y) => // fall back to Newton
-      NewtonApproximations.estimate(Less(x, y))(ctx, x0._1, Interval(x0._2.lower, x0._2.upper))
+      ApproximateNewton.estimate(Less(x, y))(ctx, x0._1, Interval(x0._2.lower, x0._2.upper))
 
     case c: ConstFormula =>
       val i = Interval(x0._2.lower, x0._2.upper)

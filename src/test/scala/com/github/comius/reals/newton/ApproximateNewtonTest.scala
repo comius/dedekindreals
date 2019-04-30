@@ -17,7 +17,7 @@ import com.github.comius.reals.syntax.Const
 import com.github.comius.reals.syntax.Integrate
 
 class NewtonApproximationsTest {
-  import NewtonApproximations._
+  import ApproximateNewton._
   import com.github.comius.reals.syntax.Real._
 
   @Test

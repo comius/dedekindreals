@@ -9,7 +9,7 @@
 package com.github.comius.reals
 
 import com.github.comius.RoundingContext
-import com.github.comius.reals.newton.NewtonApproximations
+import com.github.comius.reals.newton.ApproximateNewton
 import com.github.comius.reals.syntax.Add
 import com.github.comius.reals.syntax.And
 import com.github.comius.reals.syntax.ConstFormula
@@ -97,8 +97,8 @@ object Eval {
       val b2 = if (approximate(u)(ctx + (x -> CutDomain(m2, m2))).lower) m2 else b
       //Cut(x, a2,b2, refine(l)(ctx + (x -> CutDomain(a2, b2))), refine(u)(ctx + (x -> CutDomain(a2, b2))))
 
-      val t1 = NewtonApproximations.estimate(l)(ctx, x, Interval(a, b))
-      val t2 = NewtonApproximations.estimate(u)(ctx, x, Interval(a, b))
+      val t1 = ApproximateNewton.estimate(l)(ctx, x, Interval(a, b))
+      val t2 = ApproximateNewton.estimate(u)(ctx, x, Interval(a, b))
       val a3 = t1.lower.supremum() //.max(t2.upper.infimum())
       val b3 = t2.lower.infimum() //.min(t1.upper.supremum())
       // TODO find bugs
