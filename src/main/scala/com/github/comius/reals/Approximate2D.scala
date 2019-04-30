@@ -23,16 +23,15 @@ import com.github.comius.reals.newton.ConstraintSet.ConstraintSetNone
 object Approximate2D extends Approximations {
 
   private def zipConsPairs[A](l: List[A]): List[(A, A)] = l match {
-    case x::xs => l.zip(xs :+ x)
-    case Nil => Nil
+    case x :: xs => l.zip(xs :+ x)
+    case Nil     => Nil
   }
 
   private def zipConsTriples[A](l: List[A]): List[((A, A), A)] = l match {
-    case x1::x2::xs => l.zip((x2::xs) :+ x1).zip(xs :+ x1 :+ x2)
-    case _ => Nil
+    case x1 :: x2 :: xs => l.zip((x2 :: xs) :+ x1).zip(xs :+ x1 :+ x2)
+    case _              => Nil
   }
 
-  
   case class Point(x: D.T, y: D.T)
 
   case class ConstraintSet2D private (xi: Interval, yi: Interval, hull: List[Line]) {
@@ -188,16 +187,18 @@ object Approximate2D extends Approximations {
       a.multiply(d, u).subtract(b.multiply(c, u), u)
     }
 
+    private def det3(a: (D.T, D.T, D.T), b: (D.T, D.T, D.T), c: (D.T, D.T, D.T)): Int = {
+      val x = a._1.multiply(det(b._2, b._3, c._2, c._3), u)
+      val y = a._2.multiply(det(b._1, b._3, c._1, c._3), u)
+      val z = a._3.multiply(det(b._1, b._2, c._1, c._2), u)
+      x.subtract(y, u).add(z, u).signum
+    }
+
     def inside(l1: Line, l2: Line): Boolean = {
-      val (a1, b1, c1) = abc(l1)
-      val (a2, b2, c2) = abc(l2)
-      val (a, b, c) = abc(this)
-
-      val Det = det(a1, b1, a2, b2)
-      val x = det(c1, b1, c2, b2)
-      val y = det(a1, c1, a2, c2)
-
-      a.multiply(x, u).add(b.multiply(y, u), u).subtract(c.multiply(Det, u), u).signum * Det.signum > 0
+      val f = abc(this)
+      val g = abc(l1)
+      val h = abc(l2)
+      det3(f, g, h) < 0
     }
 
     def intersection(l2: Line, xc: MathContext, yc: MathContext): Point = {
