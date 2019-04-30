@@ -9,8 +9,10 @@
 package com.github.comius.reals
 
 import com.github.comius.RoundingContext
-import com.github.comius.reals.newton.ConstraintSet
 import com.github.comius.reals.newton.ApproximateNewton
+import com.github.comius.reals.newton.ConstraintSet
+import com.github.comius.reals.newton.ConstraintSet.ConstraintSetAll
+import com.github.comius.reals.newton.ConstraintSet.ConstraintSetNone
 import com.github.comius.reals.syntax.Add
 import com.github.comius.reals.syntax.And
 import com.github.comius.reals.syntax.ConstFormula
@@ -26,6 +28,7 @@ import com.github.comius.reals.syntax.Mul
 import com.github.comius.reals.syntax.Or
 import com.github.comius.reals.syntax.Real
 import com.github.comius.reals.syntax.Sub
+import com.github.comius.reals.Approximate2D.ConstraintSet2D
 
 object Eval2D {
   import BisectionApproximations._
@@ -44,12 +47,6 @@ object Eval2D {
     }
   }
 
-  def toIntervals2(a: Approximation[ConstraintSet]): List[Interval] = {
-    val i = a.lower.domain
-    val m = i.d.split(i.u)
-    List(Interval(i.d, m), Interval(m, i.u))
-  }
-
   def refine(formula: Formula)(implicit ctx: Context[VarDomain]): Formula = {
     approximate(formula)(ctx) match {
       case Approximation(true, _)  => ConstFormula(true)
@@ -66,7 +63,11 @@ object Eval2D {
             else {
               // Compute new intervals from approximation in 1D
               val a1 = approximate1(phi, x -> ExistsDomain(a, b))
-              toIntervals(a1).map { i => Exists(x, i.d, i.u, phi2) }.reduce[Formula](Or(_, _))
+
+              val ints = toIntervals(a1)
+              // println("Exists " + phi + "> " + ints)
+              ints.map { i => Exists(x, i.d, i.u, phi2) }
+                .reduceOption[Formula](Or(_, _)).getOrElse(ConstFormula(!a1.lower.isInstanceOf[ConstraintSetNone]))
             }
           case Forall(x, a, b, phi) =>
             val phi2 = refine(phi)(ctx + (x -> ForallDomain(a, b)))
@@ -75,8 +76,10 @@ object Eval2D {
             else {
               // Compute new intervals from approximation in 1D
               val a1 = approximate1(phi, x -> ForallDomain(a, b))
-              // TODO fix bug
-              toIntervals2(a1).map { i => Forall(x, i.d, i.u, phi2) }.reduce[Formula](And(_, _))
+              val ints = toIntervals(a1)
+              // println("forall " + phi + "> " + ints)
+              ints.map { i => Forall(x, i.d, i.u, phi2) }
+                .reduceOption[Formula](And(_, _)).getOrElse(ConstFormula(a1.lower.isInstanceOf[ConstraintSetAll]))
             }
 
           case And(x, y) =>
@@ -104,7 +107,8 @@ object Eval2D {
     }
   }
 
-  def approximate2(f: Formula, x0: (Symbol, VarDomain), y0: (Symbol, VarDomain))(implicit ctx: Context[VarDomain]) = f match {
+  def approximate2(f: Formula, x0: (Symbol, VarDomain),
+                   y0: (Symbol, VarDomain))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet2D] = f match {
     case Less(x, y) =>
       val cs = Approximate2D.ConstraintSet2D(Interval(x0._2.lower, x0._2.upper), Interval(y0._2.lower, y0._2.upper))
       val (a, s) = Approximate2D.refine(Less(x, y), cs, x0._1, y0._1)
@@ -112,7 +116,9 @@ object Eval2D {
     // TODO deeper nesting
   }
 
-  def approximate1(f: Formula, x0: (Symbol, VarDomain))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet] = f match {
+  def approximate1(
+    f:  Formula,
+    x0: (Symbol, VarDomain))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet] = f match {
     case Exists(x, a, b, phi) =>
       val Approximation(l, u) = approximate2(phi, x0, x -> ExistsDomain(a, b))
       Approximation(l.projectExists(ctx.roundingContext), u.projectForall(ctx.roundingContext))
@@ -156,10 +162,10 @@ object Eval2D {
       val (m1, m2) = a.trisect(b, ctx.roundingContext.up.getPrecision)
       val a2 = if (approximate(l)(ctx + (x -> CutDomain(m1, m1))).lower) m1 else a
       val b2 = if (approximate(u)(ctx + (x -> CutDomain(m2, m2))).lower) m2 else b
-      //Cut(x, a2,b2, refine(l)(ctx + (x -> CutDomain(a2, b2))), refine(u)(ctx + (x -> CutDomain(a2, b2))))
+      // Cut(x, a2,b2, refine(l)(ctx + (x -> CutDomain(a2, b2))), refine(u)(ctx + (x -> CutDomain(a2, b2))))
 
       // TODO find bugs
-      //println(s"debug> ${Interval(a3,b3)} ${t1.lower} ${t2.lower}")
+      // println(s"debug> ${Interval(a3,b3)} ${t1.lower} ${t2.lower}")
 
       val a4 = approximate1(l, x -> CutDomain(a, b)).lower.supremum()
       val b4 = approximate1(u, x -> CutDomain(a, b)).lower.infimum()

@@ -15,7 +15,7 @@ import org.scalacheck.Prop.BooleanOperators
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
 
-import com.github.comius.floats.FloatSpec
+import com.github.comius.floats.FloatsSpec
 import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.reals.Interval
 import com.github.comius.reals.newton.ConstraintSet.ConstraintSetAll
@@ -31,6 +31,8 @@ import com.github.comius.reals.newton.ConstraintSet.MoreThan
  */
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class ConstraintSetSpec extends Properties("ConstraintSet") {
+  import ConstraintSetSpec._
+
   val d = Interval(D.negInf, D.posInf)
 
   /**
@@ -41,7 +43,7 @@ class ConstraintSetSpec extends Properties("ConstraintSet") {
    */
   private def listConstraintSet: Gen[ConstraintSetList] =
     for {
-      cl <- Gen.listOf(FloatSpec.genRegularFloat)
+      cl <- Gen.listOf(FloatsSpec.genRegularFloat)
       if cl.size > 0
       c <- Gen.oneOf(0, 1)
     } yield ConstraintSetList(
@@ -59,13 +61,38 @@ class ConstraintSetSpec extends Properties("ConstraintSet") {
   }
 
   /**
+   * Tests intersection.
+   */
+  property("intesection") = forAll { (c1: ConstraintSet, c2: ConstraintSet) =>
+    val u = c1.intersection(c2)
+    forAll(FloatsSpec.genRegularFloat) { (d: D.T) =>
+      ((in(d, c1) && in(d, c2)) == in(d, u)) :| s"intersection = $u ${in(d, c1)} && ${in(d, c2)} != ${in(d, u)}"
+    }
+  }
+
+  /**
+   * Tests union.
+   */
+  property("union") = forAll { (c1: ConstraintSet, c2: ConstraintSet) =>
+    val u = c1.union(c2)
+    forAll(FloatsSpec.genRegularFloat) { (d: D.T) =>
+      ((in(d, c1) || in(d, c2)) == in(d, u)) :| s"union = $u, ${in(d, c1)}  || ${in(d, c2)} != ${in(d, u)}"
+    }
+  }
+}
+
+/**
+ * Defines function 'in' constraint set.
+ */
+object ConstraintSetSpec {
+  /**
    * Verifying a point is inside constraint set.
    *
    * @param d the point
    * @param c the constraint set
    * @return true if d is inside c
    */
-  private def in(d: D.T, c: ConstraintSet): Boolean = c match {
+  def in(d: D.T, c: ConstraintSet): Boolean = c match {
     case _: ConstraintSetAll  => true
     case _: ConstraintSetNone => false
     case ConstraintSetList(_, l) =>
@@ -85,25 +112,5 @@ class ConstraintSetSpec extends Properties("ConstraintSet") {
       }
 
       headMatch || tailMatch || middleMatch
-  }
-
-  /**
-   * Tests intersection.
-   */
-  property("intesection") = forAll { (c1: ConstraintSet, c2: ConstraintSet) =>
-    val u = c1.intersection(c2)
-    forAll(FloatSpec.genRegularFloat) { (d: D.T) =>
-      ((in(d, c1) && in(d, c2)) == in(d, u)) :| s"intersection = $u ${in(d, c1)} && ${in(d, c2)} != ${in(d, u)}"
-    }
-  }
-
-  /**
-   * Tests union.
-   */
-  property("union") = forAll { (c1: ConstraintSet, c2: ConstraintSet) =>
-    val u = c1.union(c2)
-    forAll(FloatSpec.genRegularFloat) { (d: D.T) =>
-      ((in(d, c1) || in(d, c2)) == in(d, u)) :| s"union = $u, ${in(d, c1)}  || ${in(d, c2)} != ${in(d, u)}"
-    }
   }
 }

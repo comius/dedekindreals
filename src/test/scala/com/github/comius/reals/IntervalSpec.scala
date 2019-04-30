@@ -19,8 +19,8 @@ import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
 
 import com.github.comius.RoundingContext
-import com.github.comius.floats.FloatSpec
 import com.github.comius.floats.Floats.{ impl => D }
+import com.github.comius.floats.FloatsSpec
 import com.github.comius.reals.TestUtil.forall
 
 /**
@@ -134,8 +134,8 @@ class IntervalSpec extends Properties("Interval") {
       assert(approx(xpyp, w))
 
       // Compute intervals only a bit above xp,yp
-      def liftD(x: D.T) = if (!x.isNegInf) x else FloatSpec.genRegularFloat.sample.get
-      def liftU(x: D.T) = if (!x.isPosInf) x else FloatSpec.genRegularFloat.sample.get
+      def liftD(x: D.T) = if (!x.isNegInf) x else FloatsSpec.genRegularFloat.sample.get
+      def liftU(x: D.T) = if (!x.isPosInf) x else FloatsSpec.genRegularFloat.sample.get
 
       val x = Interval(liftD(xp.d.add(eps, mc)), liftU(xp.u.subtract(eps, mc)))
       val y = Interval(liftD(yp.d.add(eps, mc)), liftU(yp.u.subtract(eps, mc)))
@@ -204,8 +204,8 @@ class IntervalSpec extends Properties("Interval") {
       assert(approx(xpyp, w))
 
       // Compute intervals only a bit above xp,yp
-      def liftD(x: D.T) = if (!x.isNegInf) x else FloatSpec.genRegularFloat.sample.get
-      def liftU(x: D.T) = if (!x.isPosInf) x else FloatSpec.genRegularFloat.sample.get
+      def liftD(x: D.T) = if (!x.isNegInf) x else FloatsSpec.genRegularFloat.sample.get
+      def liftU(x: D.T) = if (!x.isPosInf) x else FloatsSpec.genRegularFloat.sample.get
 
       val x = Interval(liftD(xp.d.add(eps, mc)), liftU(xp.u.subtract(eps, mc)))
 
@@ -244,8 +244,8 @@ object IntervalSpec {
   implicit def arbInterval: Arbitrary[Interval] =
     Arbitrary {
       for {
-        d <- FloatSpec.genFloat
-        u <- FloatSpec.genFloat
+        d <- FloatsSpec.genFloat
+        u <- FloatsSpec.genFloat
       } yield Interval(d, u)
     }
 
@@ -259,7 +259,7 @@ object IntervalSpec {
    */
   def approxAbove(xd: D.T): Gen[D.T] =
     for {
-      d <- FloatSpec.genRegularFloat
+      d <- FloatsSpec.genRegularFloat
     } yield if (xd == D.negInf) d else xd.add(d.abs(), mc)
 
   /**
@@ -270,7 +270,7 @@ object IntervalSpec {
    */
   def approxBelow(xu: D.T): Gen[D.T] =
     for {
-      u <- FloatSpec.genRegularFloat
+      u <- FloatsSpec.genRegularFloat
     } yield if (xu == D.posInf) u else xu.subtract(u.abs, mc)
 
   /**
@@ -285,9 +285,8 @@ object IntervalSpec {
       u <- approxBelow(x.u)
     } yield Interval(d, u)
 
-
   /** Stream of special Floats */
-  val specialFloats = Stream(D.negInf, D.posInf, D.ZERO, D.ONE, D.ONE.negate())
+  val specialFloats = List(D.negInf, D.posInf, D.ZERO, D.ONE, D.ONE.negate())
 
   /** Stream of special Intervals */
   val specialIntervals =

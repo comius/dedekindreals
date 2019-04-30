@@ -20,6 +20,7 @@ import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
 
 import com.github.comius.floats.Floats.{ impl => D }
+import com.github.comius.reals.Interval
 
 /**
  * Unit tests for Floats - property based.
@@ -28,7 +29,7 @@ import com.github.comius.floats.Floats.{ impl => D }
  */
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class FloatsSpec extends Properties("Floats") {
-  import FloatSpec._
+  import FloatsSpec._
 
   /**
    * Implicitly defines arbitrary float, which is used in forAll tests when no generator is given.
@@ -88,7 +89,7 @@ class FloatsSpec extends Properties("Floats") {
   /*
    * Testing negation.
    */
-  property(s"negate") = forAll(FloatSpec.genRegularFloat) {
+  property(s"negate") = forAll(FloatsSpec.genRegularFloat) {
     (a: D.T) =>
       // Verifies a + (-a) == 0
       a.negate.add(a, MathContext.UNLIMITED) == D.ZERO
@@ -186,7 +187,7 @@ class FloatsSpec extends Properties("Floats") {
 /**
  * Provides generators for Floats.
  */
-object FloatSpec {
+object FloatsSpec {
   /**
    * Generates a regular float (without infinities).
    *
@@ -205,7 +206,25 @@ object FloatSpec {
     } yield D.valueOf(a.underlying().toString(), new MathContext(a.underlying().precision()))
 
   /**
-   * Generates arbitrary float.
+   * Generates arbitrary float (with infinities).
    */
   def genFloat: Gen[D.T] = Gen.frequency((5, genRegularFloat), (1, D.posInf), (1, D.negInf))
+
+  /**
+   * Generates a regular float on [0,1].
+   */
+  def gen01Float: Gen[D.T] =
+    for {
+      d <- Gen.choose(0, Long.MaxValue).map(x => if (x == 0) 1 else x)
+      n <- Gen.choose(0, d)
+    } yield D.valueOf(n).divide(D.valueOf(d.toString, MathContext.DECIMAL128), MathContext.DECIMAL128)
+
+  /**
+   * Generates a regular float on interval.
+   */
+  def genFloatInterval(i: Interval): Gen[D.T] =
+    for {
+      f <- gen01Float
+    } yield f.multiply(i.d, MathContext.DECIMAL128).add(
+        D.ONE.subtract(f, MathContext.DECIMAL128).multiply(i.u, MathContext.DECIMAL128), MathContext.DECIMAL128)
 }
