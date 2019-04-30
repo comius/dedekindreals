@@ -29,6 +29,8 @@ import com.github.comius.reals.syntax.Or
 import com.github.comius.reals.syntax.Real
 import com.github.comius.reals.syntax.Sub
 import com.github.comius.reals.Approximate2D.ConstraintSet2D
+import com.github.comius.reals.syntax.Const
+import com.github.comius.reals.syntax.Var
 
 object Eval2D {
   import BisectionApproximations._
@@ -47,8 +49,9 @@ object Eval2D {
     }
   }
 
+
   def refine(formula: Formula)(implicit ctx: Context[VarDomain]): Formula = {
-    approximate(formula)(ctx) match {
+    approximate0(formula)(ctx) match {
       case Approximation(true, _)  => ConstFormula(true)
       case Approximation(_, false) => ConstFormula(false)
       case _ =>
@@ -150,10 +153,40 @@ object Eval2D {
       Approximation(ConstraintSet(i, c.b), ConstraintSet(i, !c.b))
   }
 
+    
+  def approximate0(formula: Formula)(implicit ctx: Context[VarDomain]): Approximation[Boolean] = formula match {
+    case Less(x, y) =>
+      val a @ Approximation(li1, ui1) = approximate(x)
+      val b @ Approximation(li2, ui2) = approximate(y)
+      Approximation(li1.u.compareTo(li2.d) < 0, ui1.u.compareTo(ui2.d) < 0)
+
+    case Exists(x, a, b, phi) =>
+      val Approximation(l,u) = approximate1(phi, (x, ExistsDomain(a, b)))(ctx)
+      Approximation(!l.isInstanceOf[ConstraintSetNone], !u.isInstanceOf[ConstraintSetAll])
+        
+    case Forall(x, a, b, phi) =>
+      val Approximation(l,u) = approximate1(phi, (x, ExistsDomain(a, b)))(ctx)
+      Approximation(l.isInstanceOf[ConstraintSetAll], u.isInstanceOf[ConstraintSetNone])
+   
+    case And(x, y)                =>
+      val Approximation(l1, u1) = approximate0(x)
+      val Approximation(l2, u2) = approximate0(y)
+      Approximation(l1 && l2, u1 && u2)
+
+    case Or(x, y)                 =>
+      val Approximation(l1, u1) = approximate0(x)
+      val Approximation(l2, u2) = approximate0(y)
+      Approximation(l1 || l2, u1 || u2)
+
+
+    case ConstFormula(a: Boolean) => Approximation(a, a)
+  }
+ 
+  
   def refine(expr: Real)(implicit ctx: Context[VarDomain]): Real = expr match {
     case CutR(x, l, u, a, b) =>
-      val aFound = approximate(l)(ctx + (x -> CutDomain(a, a))).lower
-      val bFound = approximate(u)(ctx + (x -> CutDomain(b, b))).lower
+      val aFound = approximate0(l)(ctx + (x -> CutDomain(a, a))).lower
+      val bFound = approximate0(u)(ctx + (x -> CutDomain(b, b))).lower
       if (aFound && bFound) {
         Cut(x, a, b, refine(l)(ctx + (x -> CutDomain(a, b))), refine(u)(ctx + (x -> CutDomain(a, b))))
       } else {
@@ -165,8 +198,8 @@ object Eval2D {
     case Cut(x, a, b, l, u) =>
 
       val (m1, m2) = a.trisect(b, ctx.roundingContext.up.getPrecision)
-      val a2 = if (approximate(l)(ctx + (x -> CutDomain(m1, m1))).lower) m1 else a
-      val b2 = if (approximate(u)(ctx + (x -> CutDomain(m2, m2))).lower) m2 else b
+      val a2 = if (approximate0(l)(ctx + (x -> CutDomain(m1, m1))).lower) m1 else a
+      val b2 = if (approximate0(u)(ctx + (x -> CutDomain(m2, m2))).lower) m2 else b
       // Cut(x, a2,b2, refine(l)(ctx + (x -> CutDomain(a2, b2))), refine(u)(ctx + (x -> CutDomain(a2, b2))))
 
       // TODO find bugs
@@ -233,7 +266,7 @@ object Eval2D {
     for (i <- 0 to 200) {
       val context = Context[VarDomain](new RoundingContext(0, dprec))
 
-      val l = approximate(rexpr)(context)
+      val l = approximate0(rexpr)(context)
 
       val ctime = System.currentTimeMillis()
       println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString.length}, time ${ctime - stime}")
