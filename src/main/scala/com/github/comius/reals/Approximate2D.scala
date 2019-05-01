@@ -35,7 +35,8 @@ object Approximate2D extends Approximations {
   case class Point(x: D.T, y: D.T)
 
   case class ConstraintSet2D private (xi: Interval, yi: Interval, hull: List[Line]) {
-    def split(llines: List[Line], ulines: List[Line]): (Approximation[ConstraintSet2D], List[ConstraintSet2D]) = {
+
+    def split(llines: List[Line]): ConstraintSet2D = {
       def filterDuplicate[A](l: List[A]): List[A] = {
         if (l.isEmpty) {
           l
@@ -69,39 +70,13 @@ object Approximate2D extends Approximations {
         }
       }
 
-      // compute lower hull, keeping rest
+      // compute hull
       var lhull = hull
-      val rest = List.newBuilder[List[Line]]
       for (l <- llines) {
-
-        val (lhull1, rest1) = split(lhull, l)
+        val (lhull1, _) = split(lhull, l)
         lhull = lhull1
-
-        rest += rest1
       }
-
-      // compute upper hull
-      var uhull = hull
-      for (l <- ulines) {
-        val (uhull1, _) = split(uhull, l)
-        uhull = uhull1
-      }
-
-      // now compute upper hull from the rest
-
-      val rest3 = List.newBuilder[List[Line]]
-      for (r1 <- rest.result) {
-        var uhull = r1
-        for (l <- ulines) {
-          val (uhull1, rest1) = split(uhull, l)
-          uhull = uhull1
-          rest3 += rest1
-        }
-      }
-
-      (
-        Approximation(ConstraintSet2D(xi, yi, lhull), ConstraintSet2D(xi, yi, uhull)),
-        rest3.result.filter(_.size > 2).map(ConstraintSet2D(xi, yi, _)))
+      ConstraintSet2D(xi, yi, lhull)
     }
 
     def isIn(p: Point): Boolean = {
@@ -162,7 +137,7 @@ object Approximate2D extends Approximations {
 
   object ConstraintSet2D {
     def apply(xi: Interval, yi: Interval): ConstraintSet2D = {
-      ConstraintSet2D(xi, yi,
+      new ConstraintSet2D(xi, yi,
         List(
           Line(D.ZERO, D.ZERO, yi.d, D.ZERO, D.ONE),
           Line(D.ZERO, xi.u, D.ZERO, D.ONE.negate, D.ZERO),
@@ -241,24 +216,24 @@ object Approximate2D extends Approximations {
 
   // given f and search space, returns new lower and upper approximation and new search space (one iteration)
   def estimate(lss: Less, x0: (Symbol, Interval),
-                   y0: (Symbol, Interval))(implicit ctx: Context[VarDomain]): (Approximation[ConstraintSet2D], List[ConstraintSet2D]) = {
-    val search = Approximate2D.ConstraintSet2D(x0._2, y0._2)
-    val xs = x0._1
-    val ys = y0._1
-     
+               y0: (Symbol, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet2D] = {
+
+    val (xs, xi) = x0
+    val (ys, yi) = y0
+
     val Less(x, y) = lss
     val f = Sub(y, x)
-    val mx = search.xi.d.split(search.yi.u)
-    val my = search.yi.d.split(search.yi.u)
+    val mx = xi.d.split(yi.u)
+    val my = yi.d.split(yi.u)
     val lctx = extendContextLower(ctx)
     val uctx = extendContextUpper(ctx)
 
     val lfmxmy = AutomaticDifferentiation.evalr(f)(
       (lctx + (xs, (Interval(mx, mx), Interval.ZERO))) + (ys, (Interval(my, my), Interval.ZERO)))._1
     val ldfxi = AutomaticDifferentiation.
-      evalr(f)(lctx + (xs, (search.xi, Interval.ONE)) + (ys, (search.yi, Interval.ZERO)))._2
+      evalr(f)(lctx + (xs, (xi, Interval.ONE)) + (ys, (yi, Interval.ZERO)))._2
     val ldfyi = AutomaticDifferentiation.
-      evalr(f)(lctx + (xs, (search.xi, Interval.ZERO)) + (ys, (search.yi, Interval.ONE)))._2
+      evalr(f)(lctx + (xs, (xi, Interval.ZERO)) + (ys, (yi, Interval.ONE)))._2
 
     val llines =
       for (ldx <- List(ldfxi.d, ldfxi.u); ldy <- List(ldfyi.d, ldfyi.u))
@@ -266,15 +241,15 @@ object Approximate2D extends Approximations {
     val ufmxmy = AutomaticDifferentiation.evalr(f)(
       (uctx + (xs, (Interval(mx, mx), Interval.ZERO))) + (ys, (Interval(my, my), Interval.ZERO)))._1
     val udfxi = AutomaticDifferentiation.
-      evalr(f)(uctx + (xs, (search.xi, Interval.ONE)) + (ys, (search.yi, Interval.ZERO)))._2
+      evalr(f)(uctx + (xs, (xi, Interval.ONE)) + (ys, (yi, Interval.ZERO)))._2
     val udfyi = AutomaticDifferentiation.
-      evalr(f)(uctx + (xs, (search.xi, Interval.ZERO)) + (ys, (search.yi, Interval.ONE)))._2
+      evalr(f)(uctx + (xs, (xi, Interval.ZERO)) + (ys, (yi, Interval.ONE)))._2
 
     val ulines =
       for (ldx <- List(udfxi.d, udfxi.u); ldy <- List(udfyi.d, udfyi.u))
         yield Line(ufmxmy.d, mx, my, ldx, ldy).invert()
 
-    search.split(llines, ulines)
+    Approximation(ConstraintSet2D(xi, yi).split(llines), ConstraintSet2D(xi, yi).split(ulines))
     // fmxmy + (x - mx) dfxi + (y - my) dfyi
   }
 

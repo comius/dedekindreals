@@ -113,8 +113,7 @@ object Eval2D {
   def approximate2(f: Formula, x0: (Symbol, Interval),
                    y0: (Symbol, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet2D] = f match {
     case Less(x, y) =>
-     val (a, rest) = Approximate2D.estimate(Less(x, y), x0, y0) 
-     a
+     Approximate2D.estimate(Less(x, y), x0, y0)      
      
     /*case And(x, y) =>
       val Approximation(l1, u1) = approximate2(x, x0, y0)
