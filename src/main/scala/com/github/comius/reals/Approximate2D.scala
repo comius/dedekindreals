@@ -240,8 +240,12 @@ object Approximate2D extends Approximations {
   }
 
   // given f and search space, returns new lower and upper approximation and new search space (one iteration)
-  def refine(lss: Less, search: ConstraintSet2D, xs: Symbol,
-             ys: Symbol)(implicit ctx: Context[VarDomain]): (Approximation[ConstraintSet2D], List[ConstraintSet2D]) = {
+  def estimate(lss: Less, x0: (Symbol, Interval),
+                   y0: (Symbol, Interval))(implicit ctx: Context[VarDomain]): (Approximation[ConstraintSet2D], List[ConstraintSet2D]) = {
+    val search = Approximate2D.ConstraintSet2D(x0._2, y0._2)
+    val xs = x0._1
+    val ys = y0._1
+     
     val Less(x, y) = lss
     val f = Sub(y, x)
     val mx = search.xi.d.split(search.yi.u)

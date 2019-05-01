@@ -65,7 +65,7 @@ object Eval2D {
               phi2
             else {
               // Compute new intervals from approximation in 1D
-              val a1 = approximate1(phi, x -> ExistsDomain(a, b))
+              val a1 = approximate1(phi, x -> Interval(a, b))
 
               val ints = toIntervals(a1)
               // println("Exists " + phi + "> " + ints)
@@ -78,7 +78,7 @@ object Eval2D {
               phi2
             else {
               // Compute new intervals from approximation in 1D
-              val a1 = approximate1(phi, x -> ForallDomain(a, b))
+              val a1 = approximate1(phi, x -> Interval(a, b))
               val ints = toIntervals(a1)
               // println("forall " + phi + "> " + ints)
               ints.map { i => Forall(x, i.d, i.u, phi2) }
@@ -110,26 +110,31 @@ object Eval2D {
     }
   }
 
-  def approximate2(f: Formula, x0: (Symbol, VarDomain),
-                   y0: (Symbol, VarDomain))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet2D] = f match {
+  def approximate2(f: Formula, x0: (Symbol, Interval),
+                   y0: (Symbol, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet2D] = f match {
     case Less(x, y) =>
-      val cs = Approximate2D.ConstraintSet2D(Interval(x0._2.lower, x0._2.upper), Interval(y0._2.lower, y0._2.upper))
-      val (a, s) = Approximate2D.refine(Less(x, y), cs, x0._1, y0._1)
-      a
+     val (a, rest) = Approximate2D.estimate(Less(x, y), x0, y0) 
+     a
+     
+    /*case And(x, y) =>
+      val Approximation(l1, u1) = approximate2(x, x0, y0)
+      val Approximation(l2, u2) = approximate2(y, x0, y0)
+      Approximation(l1.intersection(l2), u1.union(u2))
+      */
     // TODO deeper nesting
   }
 
   def approximate1(
     f:  Formula,
-    x0: (Symbol, VarDomain))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet] = f match {
+    x0: (Symbol, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet] = f match {
     case Exists(x, a, b, phi) =>
-      val Approximation(l, u) = approximate2(phi, x0, x -> ExistsDomain(a, b))
+      val Approximation(l, u) = approximate2(phi, x0, x -> Interval(a, b))
       // println("exists l: "+ l)
       // println("exists u: "+ u)
       Approximation(l.projectExists(ctx.roundingContext), u.projectForall(ctx.roundingContext))
 
     case Forall(x, a, b, phi) =>
-      val Approximation(l, u) = approximate2(phi, x0, x -> ForallDomain(a, b))
+      val Approximation(l, u) = approximate2(phi, x0, x -> Interval(a, b))
       // println("forall l: "+ l)
       // println("forall u: "+ u)
       
@@ -146,10 +151,10 @@ object Eval2D {
       Approximation(l1.union(l2), u1.intersection(u2))
 
     case Less(x, y) => // fall back to Newton
-      ApproximateNewton.estimate(Less(x, y))(ctx, x0._1, Interval(x0._2.lower, x0._2.upper))
+      ApproximateNewton.estimate(Less(x, y))(ctx, x0._1, x0._2)
 
     case c: ConstFormula =>
-      val i = Interval(x0._2.lower, x0._2.upper)
+      val i = x0._2
       Approximation(ConstraintSet(i, c.b), ConstraintSet(i, !c.b))
   }
 
@@ -161,11 +166,11 @@ object Eval2D {
       Approximation(li1.u.compareTo(li2.d) < 0, ui1.u.compareTo(ui2.d) < 0)
 
     case Exists(x, a, b, phi) =>
-      val Approximation(l,u) = approximate1(phi, (x, ExistsDomain(a, b)))(ctx)
+      val Approximation(l,u) = approximate1(phi, (x, Interval(a, b)))(ctx)
       Approximation(!l.isInstanceOf[ConstraintSetNone], !u.isInstanceOf[ConstraintSetAll])
         
     case Forall(x, a, b, phi) =>
-      val Approximation(l,u) = approximate1(phi, (x, ExistsDomain(a, b)))(ctx)
+      val Approximation(l,u) = approximate1(phi, (x, Interval(a, b)))(ctx)
       Approximation(l.isInstanceOf[ConstraintSetAll], u.isInstanceOf[ConstraintSetNone])
    
     case And(x, y)                =>
@@ -205,8 +210,8 @@ object Eval2D {
       // TODO find bugs
       // println(s"debug> ${Interval(a3,b3)} ${t1.lower} ${t2.lower}")
 
-      val Approximation(ll, lu) = approximate1(l, x -> CutDomain(a, b))
-      val Approximation(ul, uu) = approximate1(u, x -> CutDomain(a, b))   
+      val Approximation(ll, lu) = approximate1(l, x -> Interval(a, b))
+      val Approximation(ul, uu) = approximate1(u, x -> Interval(a, b))   
       
       // println("lowe> " + ll.supremum()+ " " + uu.supremum)
       // println("upe> " + ul.infimum()+ " " + lu.infimum)
@@ -269,7 +274,7 @@ object Eval2D {
       val l = approximate0(rexpr)(context)
 
       val ctime = System.currentTimeMillis()
-      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString.length}, time ${ctime - stime}")
+      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString}, time ${ctime - stime}")
       stime = ctime
       if (l.lower == l.upper) {
         println(l)
