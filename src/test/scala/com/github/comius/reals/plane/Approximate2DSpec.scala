@@ -6,7 +6,7 @@
  * in file LICENSE.txt that is included with this distribution.
  */
 
-package com.github.comius.reals
+package com.github.comius.reals.plane
 
 import java.math.MathContext
 
@@ -17,12 +17,16 @@ import org.scalacheck.Properties
 import com.github.comius.RoundingContext
 import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.floats.FloatsSpec.gen01Float
-import com.github.comius.reals.Approximate2D.Point
+import com.github.comius.reals.plane.Point
 import com.github.comius.reals.syntax.Const
 import com.github.comius.reals.syntax.Real.bigDecimal2Const
 import com.github.comius.reals.syntax.Real.int2BigDecimal
 import com.github.comius.reals.syntax.Real.int2Const
 import com.github.comius.reals.syntax.Real.symbol2Var
+import com.github.comius.reals.Interval
+import com.github.comius.reals.Context
+import com.github.comius.reals.VarDomain
+import com.github.comius.reals.Approximation
 
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class Approximate2DSpec extends Properties("Approximate2d") {

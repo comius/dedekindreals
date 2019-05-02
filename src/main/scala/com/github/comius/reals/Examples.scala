@@ -21,12 +21,15 @@ import com.github.comius.reals.syntax.CutR
 import com.github.comius.reals.syntax.Cut
 
 import com.github.comius.reals.syntax.Const
+import java.math.MathContext
 
 object Examples {
   import Real._
   import com.github.comius.floats.Floats.{ impl => D }
 
   def main(args: Array[String]): Unit = {
+    //Eval2D.eval(Forall('x, 0, 1, Exists('y, 0, 1, 'x < 'y && 'y < 1)), 10)
+
     Eval2D.eval(Cut('y, -1, 2, Exists('x, 0, 1, 'y < 'x * (Const(1) - 'x)), Forall('x, 0, 1, 'x * (Const(1) - 'x) < 'y)), 10)
 
     // e

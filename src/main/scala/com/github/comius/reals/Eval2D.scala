@@ -28,9 +28,8 @@ import com.github.comius.reals.syntax.Mul
 import com.github.comius.reals.syntax.Or
 import com.github.comius.reals.syntax.Real
 import com.github.comius.reals.syntax.Sub
-import com.github.comius.reals.Approximate2D.ConstraintSet2D
-import com.github.comius.reals.syntax.Const
-import com.github.comius.reals.syntax.Var
+import com.github.comius.reals.plane.Approximate2D
+import com.github.comius.reals.plane.ConstraintSet2D
 
 object Eval2D {
   import BisectionApproximations._
@@ -48,7 +47,6 @@ object Eval2D {
       else List(i)
     }
   }
-
 
   def refine(formula: Formula)(implicit ctx: Context[VarDomain]): Formula = {
     approximate0(formula)(ctx) match {
@@ -113,8 +111,8 @@ object Eval2D {
   def approximate2(f: Formula, x0: (Symbol, Interval),
                    y0: (Symbol, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet2D] = f match {
     case Less(x, y) =>
-     Approximate2D.estimate(Less(x, y), x0, y0)      
-     
+      Approximate2D.estimate(Less(x, y), x0, y0)
+
     /*case And(x, y) =>
       val Approximation(l1, u1) = approximate2(x, x0, y0)
       val Approximation(l2, u2) = approximate2(y, x0, y0)
@@ -136,7 +134,7 @@ object Eval2D {
       val Approximation(l, u) = approximate2(phi, x0, x -> Interval(a, b))
       // println("forall l: "+ l)
       // println("forall u: "+ u)
-      
+
       Approximation(l.projectForall(ctx.roundingContext), u.projectExists(ctx.roundingContext))
 
     case And(x, y) =>
@@ -157,7 +155,6 @@ object Eval2D {
       Approximation(ConstraintSet(i, c.b), ConstraintSet(i, !c.b))
   }
 
-    
   def approximate0(formula: Formula)(implicit ctx: Context[VarDomain]): Approximation[Boolean] = formula match {
     case Less(x, y) =>
       val a @ Approximation(li1, ui1) = approximate(x)
@@ -165,28 +162,26 @@ object Eval2D {
       Approximation(li1.u.compareTo(li2.d) < 0, ui1.u.compareTo(ui2.d) < 0)
 
     case Exists(x, a, b, phi) =>
-      val Approximation(l,u) = approximate1(phi, (x, Interval(a, b)))(ctx)
+      val Approximation(l, u) = approximate1(phi, (x, Interval(a, b)))(ctx)
       Approximation(!l.isInstanceOf[ConstraintSetNone], !u.isInstanceOf[ConstraintSetAll])
-        
+
     case Forall(x, a, b, phi) =>
-      val Approximation(l,u) = approximate1(phi, (x, Interval(a, b)))(ctx)
+      val Approximation(l, u) = approximate1(phi, (x, Interval(a, b)))(ctx)
       Approximation(l.isInstanceOf[ConstraintSetAll], u.isInstanceOf[ConstraintSetNone])
-   
-    case And(x, y)                =>
+
+    case And(x, y) =>
       val Approximation(l1, u1) = approximate0(x)
       val Approximation(l2, u2) = approximate0(y)
       Approximation(l1 && l2, u1 && u2)
 
-    case Or(x, y)                 =>
+    case Or(x, y) =>
       val Approximation(l1, u1) = approximate0(x)
       val Approximation(l2, u2) = approximate0(y)
       Approximation(l1 || l2, u1 || u2)
 
-
     case ConstFormula(a: Boolean) => Approximation(a, a)
   }
- 
-  
+
   def refine(expr: Real)(implicit ctx: Context[VarDomain]): Real = expr match {
     case CutR(x, l, u, a, b) =>
       val aFound = approximate0(l)(ctx + (x -> CutDomain(a, a))).lower
@@ -210,8 +205,8 @@ object Eval2D {
       // println(s"debug> ${Interval(a3,b3)} ${t1.lower} ${t2.lower}")
 
       val Approximation(ll, lu) = approximate1(l, x -> Interval(a, b))
-      val Approximation(ul, uu) = approximate1(u, x -> Interval(a, b))   
-      
+      val Approximation(ul, uu) = approximate1(u, x -> Interval(a, b))
+
       // println("lowe> " + ll.supremum()+ " " + uu.supremum)
       // println("upe> " + ul.infimum()+ " " + lu.infimum)
       val a4 = ll.supremum() // .max(uu.supremum)

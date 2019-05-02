@@ -6,16 +6,16 @@
  * in file LICENSE.txt that is included with this distribution.
  */
 
-package com.github.comius.reals
+package com.github.comius.reals.plane
 
 import org.junit.Test
 import com.github.comius.RoundingContext
-import com.github.comius.reals.Approximate2D.Point
-import com.github.comius.reals.Approximate2D.Line
-import com.github.comius.reals.Approximate2D.ConstraintSet2D
+import com.github.comius.reals.VarDomain
+import com.github.comius.reals.Interval
+import com.github.comius.reals.Context
 
 class Approximate2dTest {
-  import syntax.Real._
+  import com.github.comius.reals.syntax.Real._
 
   @Test
   def testIntersection(): Unit = {
