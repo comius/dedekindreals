@@ -20,7 +20,7 @@ import com.github.comius.reals.newton.ConstraintSet.LessThan
 case class ConstraintSet2D private (xi: Interval, yi: Interval, hull: List[Line]) {
   import ConstraintSet2D._
 
-  def split(llines: List[Line]): ConstraintSet2D = {
+  def split(llines: List[Line]): (ConstraintSet2D, List[List[Line]]) = {
     def filterDuplicate[A](l: List[A]): List[A] = {
       if (l.isEmpty) {
         l
@@ -42,10 +42,10 @@ case class ConstraintSet2D private (xi: Interval, yi: Interval, hull: List[Line]
         for (((l1, l2), l3) <- zipConsTriples(hull)) {
 
           val in1 = l.inside(l1, l2)
-          if (in1) acc1 += l1 else acc2 += l1
-          // TODO optimise
+          if (in1 > 0) acc1 += l1 else if (in1 < 0) acc2 += l1
+          // TODO optimise, don't compute l.inside(li, li+1) twice
           if (in1 != l.inside(l2, l3)) {
-            if (in1) acc1 += l2 else acc2 += l2
+            if (in1 > 0) acc1 += l2 else if (in1 < 0) acc2 += l2
             acc1 += l
             acc2 += l.invert()
           }
@@ -56,15 +56,18 @@ case class ConstraintSet2D private (xi: Interval, yi: Interval, hull: List[Line]
 
     // compute hull
     var lhull = hull
+    val restlist = List.newBuilder[List[Line]]
     for (l <- llines) {
-      val (lhull1, _) = split(lhull, l)
-      lhull = lhull1
+     
+      val (lhull1, rest) = split(lhull, l)
+      lhull = lhull1      
+      if (rest.length > 2) restlist += rest
     }
-    ConstraintSet2D(xi, yi, lhull)
+    (ConstraintSet2D(xi, yi, lhull), restlist.result)
   }
 
   def isIn(p: Point): Boolean = {
-    if (hull.isEmpty) false else hull.forall(_.inside(p))
+    if (hull.isEmpty) false else hull.forall(_.inside(p) > 0)
   }
 
   override def toString(): String = {
@@ -72,7 +75,7 @@ case class ConstraintSet2D private (xi: Interval, yi: Interval, hull: List[Line]
   }
 
   def projectExists(r: RoundingContext): ConstraintSet = {
-    //TODO optimise
+    //TODO optimise - if could directly assign to min and max, no need to have lists here
     if (hull.isEmpty) {
       ConstraintSetNone(xi)
     } else {
@@ -84,38 +87,15 @@ case class ConstraintSet2D private (xi: Interval, yi: Interval, hull: List[Line]
           ups += l1.intersection(l2, r.up, r.up).x
         }
       }
-      ConstraintSetList(xi, List(MoreThan(ups.result.reduce(_.min(_))), LessThan(downs.result.reduce(_.max(_)))))
+      val min = ups.result.reduce(_.min(_))
+      val max = downs.result.reduce(_.max(_))
+      if (min == max) ConstraintSetNone(xi) else ConstraintSetList(xi, List(MoreThan(min), LessThan(max)))
     }
   }
 
-  def projectForall(r: RoundingContext): ConstraintSet = {
-    val dups = List.newBuilder[D.T]
-    val ddowns = List.newBuilder[D.T]
-    val uups = List.newBuilder[D.T]
-    val udowns = List.newBuilder[D.T]
-    for (((l1, l2), l3) <- zipConsTriples(hull)) {
-      if (l2.dfxi == D.ZERO) {
-        if (l2.ym == yi.d) {
-          dups += l1.intersection(l2, r.up, r.up).x
-          ddowns += l1.intersection(l2, r.down, r.down).x
-          dups += l2.intersection(l3, r.up, r.up).x
-          ddowns += l2.intersection(l3, r.down, r.down).x
-        } else if (l2.ym == yi.u) {
-          uups += l1.intersection(l2, r.up, r.up).x
-          udowns += l1.intersection(l2, r.down, r.down).x
-          uups += l2.intersection(l3, r.up, r.up).x
-          udowns += l2.intersection(l3, r.down, r.down).x
-        }
-      }
-
-    }
-    if (uups.result().isEmpty || dups.result.isEmpty || udowns.result.isEmpty || ddowns.result.isEmpty) {
-      ConstraintSetNone(xi)
-    } else {
-      val d = ConstraintSetList(xi, List(MoreThan(dups.result.reduce(_.min(_))), LessThan(ddowns.result.reduce(_.max(_)))))
-      val u = ConstraintSetList(xi, List(MoreThan(uups.result.reduce(_.min(_))), LessThan(udowns.result.reduce(_.max(_)))))
-      d.intersection(u)
-    }
+  // subtracts a single constraint set from this one
+  def minus(cs: ConstraintSet2D): List[List[Line]] = {
+    split(cs.hull)._2
   }
 }
 
@@ -137,5 +117,38 @@ object ConstraintSet2D {
   private def zipConsTriples[A](l: List[A]): List[((A, A), A)] = l match {
     case x1 :: x2 :: xs => l.zip((x2 :: xs) :+ x1).zip(xs :+ x1 :+ x2)
     case _              => Nil
+  }
+}
+
+case class ConstraintSetSet(d1: Interval, d2: Interval, css: List[ConstraintSet2D]) { //TODO rename later
+  def projectExists(r: RoundingContext): ConstraintSet = {
+    css.map(_.projectExists(r)).reduceOption(_.union(_)).getOrElse(ConstraintSetNone(d1))
+  }
+
+  def projectForall(r: RoundingContext): ConstraintSet = {
+    var initial = ConstraintSetSet(d1, d2, List(ConstraintSet2D(d1, d2)))    
+    css.foreach { cs => initial = initial.minus(cs) }    
+    initial.projectExists(r).complement 
+  }
+
+  // subtracts a single constraint set from this one
+  def minus(cs: ConstraintSet2D): ConstraintSetSet = {
+    ConstraintSetSet(d1, d2, css.flatMap(_.minus(cs).map(ConstraintSet2D(d1, d2, _))))
+  }
+
+  def union(c2: ConstraintSetSet): ConstraintSetSet = {
+    // TODO don't duplicate polys
+    ConstraintSetSet(d1, d2, css ++ c2.css)
+  }
+
+  def intersection(c2: ConstraintSetSet): ConstraintSetSet = {
+    // compute intersections
+    var initial = this
+    c2.css.foreach { cs => initial = initial.minus(cs) }
+    initial
+  }
+
+  def isIn(p: Point): Boolean = {
+    css.exists(_.isIn(p))
   }
 }

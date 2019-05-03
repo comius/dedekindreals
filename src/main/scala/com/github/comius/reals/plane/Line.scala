@@ -12,10 +12,10 @@ import com.github.comius.floats.Floats.{ impl => D }
 import java.math.MathContext
 
 case class Line(f0: D.T, xm: D.T, ym: D.T, dfxi: D.T, dfyi: D.T) {
-  def inside(p: Point): Boolean = {
+  def inside(p: Point): Int = {
     val u = MathContext.UNLIMITED
     // fmxmy + (x - mx) dfxi + (y - my) dfyi
-    f0.add((p.x.subtract(xm, u)).multiply(dfxi, u).add((p.y.subtract(ym, u).multiply(dfyi, u)), u), u).compareTo(D.ZERO) > 0
+    f0.add((p.x.subtract(xm, u)).multiply(dfxi, u).add((p.y.subtract(ym, u).multiply(dfyi, u)), u), u).compareTo(D.ZERO)
   }
 
   private val u = MathContext.UNLIMITED
@@ -34,11 +34,11 @@ case class Line(f0: D.T, xm: D.T, ym: D.T, dfxi: D.T, dfyi: D.T) {
     x.subtract(y, u).add(z, u).signum
   }
 
-  def inside(l1: Line, l2: Line): Boolean = {
+  def inside(l1: Line, l2: Line): Int = {
     val f = abc(this)
     val g = abc(l1)
     val h = abc(l2)
-    det3(f, g, h) < 0
+    -det3(f, g, h)
   }
 
   def intersection(l2: Line, xc: MathContext, yc: MathContext): Point = {

@@ -43,7 +43,7 @@ object Approximate2D extends Approximations {
 
   // given f and search space, returns new lower and upper approximation and new search space (one iteration)
   def estimate(lss: Less, x0: (Symbol, Interval),
-               y0: (Symbol, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet2D] = {
+               y0: (Symbol, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSetSet] = {
 
     val (xs, xi) = x0
     val (ys, yi) = y0
@@ -76,7 +76,8 @@ object Approximate2D extends Approximations {
       for (ldx <- List(udfxi.d, udfxi.u); ldy <- List(udfyi.d, udfyi.u))
         yield Line(ufmxmy.d, mx, my, ldx, ldy).invert()
 
-    Approximation(ConstraintSet2D(xi, yi).split(llines), ConstraintSet2D(xi, yi).split(ulines))
+    Approximation(ConstraintSetSet(xi,yi,List(ConstraintSet2D(xi, yi).split(llines)._1)), 
+        ConstraintSetSet(xi,yi, List(ConstraintSet2D(xi, yi).split(ulines)._1)))
     // fmxmy + (x - mx) dfxi + (y - my) dfyi
   }
 
