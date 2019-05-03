@@ -168,11 +168,30 @@ abstract sealed class ConstraintSet(val domain: Interval) {
       case _: ConstraintSetAll  => ConstraintSetNone(domain)
       case _: ConstraintSetNone => ConstraintSetAll(domain)
       case ConstraintSetList(_, l1) =>
-        val l = l1.sliding(2).flatMap {
-          case List(LessThan(a), b) if a != b.x => List(MoreThan(a))
-          case List(MoreThan(a), b) if a != b.x => List(LessThan(a))
-          case _                                => List()
-        }.toList
+        var l: List[RealConstraint] = l1.map {
+          case LessThan(a) => MoreThan(a)
+          case MoreThan(a) => LessThan(a)
+        }
+        
+        // Special cases
+        // subsequences (MoreThan(a), LessThan(a)) needs to be removed
+        l = l.zip(l.tail :+ MoreThan(D.posInf)).flatMap { 
+          case (MoreThan(x),LessThan(y)) if x == y => List() 
+          case (a,_) => List(a) 
+          }
+
+        // starts with LessThan(domain.d) needs to be removed
+        l match {
+          case LessThan(x)::xs if x == domain.d => l = xs
+          case _ =>
+        }
+        
+        // ends with MoreThan(domain.u) needs to be removed
+        l.last match {
+          case MoreThan(x) if x == domain.u => l = l.dropRight(1)
+          case _ =>
+        }
+        
         if (l.isEmpty) ConstraintSetAll(domain) else ConstraintSetList(domain, l)
     }
   }
