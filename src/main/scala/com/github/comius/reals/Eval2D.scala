@@ -235,7 +235,8 @@ object Eval2D {
   def eval(expr: Real, precision: Int): Unit = {
     var rexpr = expr
     val dprec = 200 // precision *2
-    var stime = System.currentTimeMillis()
+    val evalStart = System.currentTimeMillis()
+    var iterationStart = evalStart
 
     println("\nEvaluating: " + expr)
 
@@ -246,11 +247,12 @@ object Eval2D {
       val l = approximate(rexpr)(context).lower
 
       val width = l.u.subtract(l.d, context.roundingContext.up)
-      val ctime = System.currentTimeMillis()
-      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString.length}, time ${ctime - stime}")
+      val currentTime = System.currentTimeMillis()
+      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString.length}, time ${currentTime - iterationStart}")
 
-      stime = ctime
+      iterationStart = currentTime
       if (width.compareTo(prec) < 0) {
+        println(s"Total time: ${currentTime - evalStart} ms")
         println(l)
         return ;
       }
@@ -262,7 +264,8 @@ object Eval2D {
   def eval(expr: Formula, maxSteps: Int): Unit = {
     var rexpr = expr
     val dprec = 200 // precision *2
-    var stime = System.currentTimeMillis()
+    val evalStart = System.currentTimeMillis() 
+    var iterationStart = evalStart
 
     println("\nEvaluating: " + expr)
 
@@ -271,10 +274,11 @@ object Eval2D {
 
       val l = approximate0(rexpr)(context)
 
-      val ctime = System.currentTimeMillis()
-      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString}, time ${ctime - stime}")
-      stime = ctime
+      val currentTime = System.currentTimeMillis()
+      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString}, time ${currentTime - iterationStart}")
+      iterationStart = currentTime
       if (l.lower == l.upper) {
+        println(s"Total time: ${currentTime - evalStart} ms") 
         println(l)
         return ;
       }
