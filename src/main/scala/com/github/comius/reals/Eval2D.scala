@@ -29,8 +29,8 @@ import com.github.comius.reals.syntax.Or
 import com.github.comius.reals.syntax.Real
 import com.github.comius.reals.syntax.Sub
 import com.github.comius.reals.plane.Approximate2D
+import com.github.comius.reals.plane.ConvexHull
 import com.github.comius.reals.plane.ConstraintSet2D
-import com.github.comius.reals.plane.ConstraintSetSet
 
 object Eval2D {
   import BisectionApproximations._
@@ -110,7 +110,7 @@ object Eval2D {
   }
 
   def approximate2(f: Formula, x0: (Symbol, Interval),
-                   y0: (Symbol, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSetSet] = f match {
+                   y0: (Symbol, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet2D] = f match {
     case Less(x, y) =>
       Approximate2D.estimate(Less(x, y), x0, y0)
 

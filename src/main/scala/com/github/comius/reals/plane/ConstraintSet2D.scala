@@ -17,10 +17,10 @@ import com.github.comius.reals.newton.ConstraintSet.ConstraintSetList
 import com.github.comius.reals.newton.ConstraintSet.MoreThan
 import com.github.comius.reals.newton.ConstraintSet.LessThan
 
-case class ConstraintSet2D private (xi: Interval, yi: Interval, hull: List[Line]) {
-  import ConstraintSet2D._
+case class ConvexHull private (xi: Interval, yi: Interval, hull: List[Line]) {
+  import ConvexHull._
 
-  def split(llines: List[Line]): (ConstraintSet2D, List[List[Line]]) = {
+  def split(llines: List[Line]): (ConvexHull, List[List[Line]]) = {
     def filterDuplicate[A](l: List[A]): List[A] = {
       if (l.isEmpty) {
         l
@@ -63,7 +63,7 @@ case class ConstraintSet2D private (xi: Interval, yi: Interval, hull: List[Line]
       lhull = lhull1      
       if (rest.length > 2) restlist += rest
     }
-    (ConstraintSet2D(xi, yi, lhull), restlist.result)
+    (ConvexHull(xi, yi, lhull), restlist.result)
   }
 
   def isIn(p: Point): Boolean = {
@@ -94,18 +94,18 @@ case class ConstraintSet2D private (xi: Interval, yi: Interval, hull: List[Line]
   }
 
   // subtracts a single constraint set from this one
-  def minus(cs: ConstraintSet2D): List[List[Line]] = {
+  def minus(cs: ConvexHull): List[List[Line]] = {
     split(cs.hull)._2
   }
   
-  def intersection(cs: ConstraintSet2D): ConstraintSet2D = {
+  def intersection(cs: ConvexHull): ConvexHull = {
     split(cs.hull)._1
   }
 }
 
-object ConstraintSet2D {
-  def apply(xi: Interval, yi: Interval): ConstraintSet2D = {
-    new ConstraintSet2D(xi, yi,
+object ConvexHull {
+  def apply(xi: Interval, yi: Interval): ConvexHull = {
+    new ConvexHull(xi, yi,
       List(
         Line(D.ZERO, D.ZERO, yi.d, D.ZERO, D.ONE),
         Line(D.ZERO, xi.u, D.ZERO, D.ONE.negate, D.ZERO),
@@ -124,30 +124,30 @@ object ConstraintSet2D {
   }
 }
 
-case class ConstraintSetSet(d1: Interval, d2: Interval, css: List[ConstraintSet2D]) { //TODO rename later
+case class ConstraintSet2D(d1: Interval, d2: Interval, css: List[ConvexHull]) { //TODO rename later
   def projectExists(r: RoundingContext): ConstraintSet = {
     css.map(_.projectExists(r)).reduceOption(_.union(_)).getOrElse(ConstraintSetNone(d1))
   }
 
   def projectForall(r: RoundingContext): ConstraintSet = {
-    var initial = ConstraintSetSet(d1, d2, List(ConstraintSet2D(d1, d2)))    
+    var initial = ConstraintSet2D(d1, d2, List(ConvexHull(d1, d2)))    
     css.foreach { cs => initial = initial.minus(cs) }    
     initial.projectExists(r).complement 
   }
 
   // subtracts a single constraint set from this one
-  def minus(cs: ConstraintSet2D): ConstraintSetSet = {
-    ConstraintSetSet(d1, d2, css.flatMap(_.minus(cs).map(ConstraintSet2D(d1, d2, _))))
+  def minus(cs: ConvexHull): ConstraintSet2D = {
+    ConstraintSet2D(d1, d2, css.flatMap(_.minus(cs).map(ConvexHull(d1, d2, _))))
   }
 
-  def union(c2: ConstraintSetSet): ConstraintSetSet = {
+  def union(c2: ConstraintSet2D): ConstraintSet2D = {
     // TODO don't duplicate polys
-    ConstraintSetSet(d1, d2, css ++ c2.css)
+    ConstraintSet2D(d1, d2, css ++ c2.css)
   }
 
-  def intersection(cs2: ConstraintSetSet): ConstraintSetSet = {
+  def intersection(cs2: ConstraintSet2D): ConstraintSet2D = {
     // compute intersections
-    ConstraintSetSet(d1,d2, (for {
+    ConstraintSet2D(d1,d2, (for {
         c1 <- this.css;
         c2 <- cs2.css} yield c1.intersection(c2)).toList.filter(_.hull.nonEmpty))
   }

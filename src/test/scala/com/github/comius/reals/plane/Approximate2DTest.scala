@@ -39,16 +39,16 @@ class Approximate2dTest {
 
   @Test
   def testIn(): Unit = {
-    println("In: " + ConstraintSet2D(Interval(0, 2), Interval(0, 2)).isIn(Point(1, 1)))
-    println("In: " + ConstraintSet2D(Interval(0, 2), Interval(0, 2)).isIn(Point(1, 2)))
-    println("In: " + ConstraintSet2D(Interval(0, 2), Interval(0, 2)).isIn(Point(1, 3)))
-    println("In: " + ConstraintSet2D(Interval(0, 2), Interval(0, 2)).isIn(Point(2, 2)))
-    println("In: " + ConstraintSet2D(Interval(0, 2), Interval(0, 2)).isIn(Point(3, 2)))
+    println("In: " + ConvexHull(Interval(0, 2), Interval(0, 2)).isIn(Point(1, 1)))
+    println("In: " + ConvexHull(Interval(0, 2), Interval(0, 2)).isIn(Point(1, 2)))
+    println("In: " + ConvexHull(Interval(0, 2), Interval(0, 2)).isIn(Point(1, 3)))
+    println("In: " + ConvexHull(Interval(0, 2), Interval(0, 2)).isIn(Point(2, 2)))
+    println("In: " + ConvexHull(Interval(0, 2), Interval(0, 2)).isIn(Point(3, 2)))
   }
 
   @Test
   def testInitial(): Unit = {
-    println("In: " + ConstraintSet2D(Interval(0, 2), Interval(0, 2)).isIn(Point(1, 1)))
+    println("In: " + ConvexHull(Interval(0, 2), Interval(0, 2)).isIn(Point(1, 1)))
   }
 
 }
