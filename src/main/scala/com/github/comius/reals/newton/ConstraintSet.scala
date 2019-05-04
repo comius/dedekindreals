@@ -61,6 +61,48 @@ abstract sealed class ConstraintSet(val domain: Interval) {
   }
 
   /**
+   * Computes union of two lists of constraints.
+   *
+   * Implementation is based on scanline algorithm.
+   *
+   * @param l1 first list of constraints
+   * @param l2 second list of constraitns
+   *
+   * @param in1 is a constraint in the first list currently covering scanline
+   * @param in2 is a constraint in the second list currently covering scanline
+   * @param acc accumulator used for the result (mutable)
+   *
+   * @return the resulting constraint set
+   */
+  @tailrec
+  private def union(l1: List[RealConstraint], l2: List[RealConstraint])(
+    in1: Boolean = firstLessThan(l1), in2: Boolean = firstLessThan(l2))(
+    implicit
+    acc: Builder[RealConstraint, List[RealConstraint]] = List.newBuilder[RealConstraint]): ConstraintSet = {
+    (l1, l2) match {
+      case (Nil, _ :: _) =>
+        union(l2, l1)(in1 = in2, in2 = in1)
+
+      // scanline should be over the first list, so swap them if necessary
+      case (p1 :: _, p2 :: _) if moreThan(p1, p2) =>
+        union(l2, l1)(in1 = in2, in2 = in1)
+
+      // process one point of the scanline
+      case ((a: LessThan) :: l1s, _) =>
+        if (in1 && !in2) acc += a
+        union(l1s, l2)(in1 = false, in2 = in2)
+
+      case ((a: MoreThan) :: l1s, _) =>
+        if (!(in1 || in2)) acc += a
+        union(l1s, l2)(in1 = true, in2 = in2)
+
+      case (Nil, Nil) =>
+        val result = acc.result
+        if (result.isEmpty) ConstraintSetAll(domain) else ConstraintSetList(domain, result)
+    }
+  }
+
+  /**
    * Computes union of two constraint sets on the same domain.
    *
    * @param s the constraint set to compute union with
@@ -69,44 +111,53 @@ abstract sealed class ConstraintSet(val domain: Interval) {
   def union(s: ConstraintSet): ConstraintSet = {
     require(domain == s.domain, "Union of diffrent domains")
 
-    /*
-     * Computes union of two lists of constraints.
-     *
-     * Implementation is based on scanline algorithm.
-     */
-    @tailrec
-    def union(l1: List[RealConstraint], l2: List[RealConstraint])(
-      in1: Boolean = firstLessThan(l1), in2: Boolean = firstLessThan(l2))(
-      implicit
-      acc: Builder[RealConstraint, List[RealConstraint]] = List.newBuilder[RealConstraint]): ConstraintSet = {
-      (l1, l2) match {
-        case (Nil, _ :: _) =>
-          union(l2, l1)(in1 = in2, in2 = in1)
-
-        // scanline should be over the first list, so swap them if necessary
-        case (p1 :: _, p2 :: _) if moreThan(p1, p2) =>
-          union(l2, l1)(in1 = in2, in2 = in1)
-
-        // process one point of the scanline
-        case ((a: LessThan) :: l1s, _) =>
-          if (in1 && !in2) acc += a
-          union(l1s, l2)(in1 = false, in2 = in2)
-
-        case ((a: MoreThan) :: l1s, _) =>
-          if (!(in1 || in2)) acc += a
-          union(l1s, l2)(in1 = true, in2 = in2)
-
-        case (Nil, Nil) =>
-          val result = acc.result
-          if (result.isEmpty) ConstraintSetAll(domain) else ConstraintSetList(domain, result)
-      }
-    }
-
     // check edge cases
     (this, s) match {
       case (_: ConstraintSetAll, _) | (_, _: ConstraintSetNone)   => this
       case (_, _: ConstraintSetAll) | (_: ConstraintSetNone, _)   => s
       case (ConstraintSetList(_, l1), (ConstraintSetList(_, l2))) => union(l1, l2)()()
+    }
+  }
+
+  /**
+   * Computes intesection of two lists of constraints.
+   *
+   * Implementation is based on scanline algorithm.
+   *
+   * @param l1 first list of constraints
+   * @param l2 second list of constraitns
+   *
+   * @param in1 is a constraint in the first list currently covering scanline
+   * @param in2 is a constraint in the second list currently covering scanline
+   * @param acc accumulator used for the result (mutable)
+   *
+   * @return the resulting constraint set
+   */
+  @tailrec
+  private def intersection(l1: List[RealConstraint], l2: List[RealConstraint])(
+    in1: Boolean = firstLessThan(l1), in2: Boolean = firstLessThan(l2))(
+    implicit
+    acc: Builder[RealConstraint, List[RealConstraint]] = List.newBuilder[RealConstraint]): ConstraintSet = {
+    (l1, l2) match {
+      case (Nil, _ :: _) =>
+        intersection(l2, l1)(in1 = in2, in2 = in1)
+
+      // scanline should be over the first list, so swap them if necessary
+      case (p1 :: _, p2 :: _) if moreThan(p1, p2) =>
+        intersection(l2, l1)(in1 = in2, in2 = in1)
+
+      // process one point of the scanline
+      case ((a: LessThan) :: l1s, _) =>
+        if (in1 && in2) acc += a
+        intersection(l1s, l2)(in1 = false, in2 = in2)
+
+      case ((a: MoreThan) :: l1s, _) =>
+        if (!in1 && in2) acc += a
+        intersection(l1s, l2)(in1 = true, in2 = in2)
+
+      case (Nil, Nil) =>
+        val result = acc.result
+        if (result.isEmpty) ConstraintSetNone(domain) else ConstraintSetList(domain, result)
     }
   }
 
@@ -118,35 +169,6 @@ abstract sealed class ConstraintSet(val domain: Interval) {
    */
   def intersection(s: ConstraintSet): ConstraintSet = {
     require(domain == s.domain, "Intersection of diffrent domains")
-
-    // See comments for the union case. This only differs how new in1 and in2 are computed.
-    @tailrec
-    def intersection(l1: List[RealConstraint], l2: List[RealConstraint])(
-      in1: Boolean = firstLessThan(l1), in2: Boolean = firstLessThan(l2))(
-      implicit
-      acc: Builder[RealConstraint, List[RealConstraint]] = List.newBuilder[RealConstraint]): ConstraintSet = {
-      (l1, l2) match {
-        case (Nil, _ :: _) =>
-          intersection(l2, l1)(in1 = in2, in2 = in1)
-
-        // scanline should be over the first list, so swap them if necessary
-        case (p1 :: _, p2 :: _) if moreThan(p1, p2) =>
-          intersection(l2, l1)(in1 = in2, in2 = in1)
-
-        // process one point of the scanline
-        case ((a: LessThan) :: l1s, _) =>
-          if (in1 && in2) acc += a
-          intersection(l1s, l2)(in1 = false, in2 = in2)
-
-        case ((a: MoreThan) :: l1s, _) =>
-          if (!in1 && in2) acc += a
-          intersection(l1s, l2)(in1 = true, in2 = in2)
-
-        case (Nil, Nil) =>
-          val result = acc.result
-          if (result.isEmpty) ConstraintSetNone(domain) else ConstraintSetList(domain, result)
-      }
-    }
 
     (this, s) match {
       case (_: ConstraintSetAll, _) | (_, _: ConstraintSetNone)   => s
@@ -172,26 +194,26 @@ abstract sealed class ConstraintSet(val domain: Interval) {
           case LessThan(a) => MoreThan(a)
           case MoreThan(a) => LessThan(a)
         }
-        
+
         // Special cases
         // subsequences (MoreThan(a), LessThan(a)) needs to be removed
-        l = l.zip(l.tail :+ MoreThan(D.posInf)).flatMap { 
-          case (MoreThan(x),LessThan(y)) if x == y => List() 
-          case (a,_) => List(a) 
-          }
+        l = l.zip(l.tail :+ MoreThan(D.posInf)).flatMap {
+          case (MoreThan(x), LessThan(y)) if x == y => List()
+          case (a, _)                               => List(a)
+        }
 
         // starts with LessThan(domain.d) needs to be removed
         l match {
-          case LessThan(x)::xs if x == domain.d => l = xs
-          case _ =>
+          case LessThan(x) :: xs if x == domain.d => l = xs
+          case _                                  =>
         }
-        
+
         // ends with MoreThan(domain.u) needs to be removed
         l.last match {
           case MoreThan(x) if x == domain.u => l = l.dropRight(1)
-          case _ =>
+          case _                            =>
         }
-        
+
         if (l.isEmpty) ConstraintSetAll(domain) else ConstraintSetList(domain, l)
     }
   }
@@ -205,7 +227,7 @@ abstract sealed class ConstraintSet(val domain: Interval) {
     case _: ConstraintSetAll  => List(domain)
     case _: ConstraintSetNone => List()
     case ConstraintSetList(_, l1) =>
-      // TODO optimisation
+      // TODO optimisation - dont use :+ operator
       val endpts = if (firstLessThan(l1)) {
         (domain.d :: l1.map(_.x)) :+ domain.u
       } else {
@@ -252,13 +274,21 @@ object ConstraintSet {
   // Check if constraint lies within the domain. If not sanitizes it.
   private def sanitizeConstraint(domain: Interval, constraint: Constraint): Constraint = constraint match {
     case LessThan(x) =>
-      if (x.compareTo(domain.d) <= 0) None
-      else if (domain.u.compareTo(x) < 0) All
-      else constraint
+      if (x.compareTo(domain.d) <= 0) {
+        None
+      } else if (domain.u.compareTo(x) < 0) {
+        All
+      } else {
+        constraint
+      }
     case MoreThan(x) =>
-      if (x.compareTo(domain.d) < 0) All
-      else if (domain.u.compareTo(x) <= 0) None
-      else constraint
+      if (x.compareTo(domain.d) < 0) {
+        All
+      } else if (domain.u.compareTo(x) <= 0) {
+        None
+      } else {
+        constraint
+      }
     case All | None => constraint
   }
 
