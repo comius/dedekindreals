@@ -18,6 +18,8 @@ import com.github.comius.reals.syntax.Exists
 import com.github.comius.reals.syntax.Forall
 import com.github.comius.reals.syntax.Formula
 import com.github.comius.reals.syntax.Real
+import com.github.comius.reals.newton.AutomaticDifferentiation
+
 /**
  * Unit tests for Approximations - simple.
  *
@@ -35,7 +37,7 @@ class ApproximationsTest {
    * @param expected expected result
    */
   private def test(e: Real, expected: Interval): Unit = {
-    val a = BisectionApproximations.approximate(e)(Context(new RoundingContext(0, 2)))
+    val a = AutomaticDifferentiation.approximate(e)(Context(new RoundingContext(0, 2)))
     // println(s"$a ,$expected")
     Assert.assertTrue(
       s"Lower ${a.lower} is below expected value $expected for real $e",
@@ -63,7 +65,7 @@ class ApproximationsTest {
    * @param result expected result
    */
   private def test(f: Formula, result: Boolean): Unit = {
-    val a = BisectionApproximations.approximate(f)(Context(new RoundingContext(0, 2)))
+    val a = AproximateSimple.approximate(f)(Context(new RoundingContext(0, 2)))
     Assert.assertEquals(s"Formula $f", Approximation(result, result), a)
   }
 
@@ -73,7 +75,7 @@ class ApproximationsTest {
    * @param f the formula
    */
   private def testna(f: Formula): Unit = {
-    val a = BisectionApproximations.approximate(f)(Context(new RoundingContext(0, 2)))
+    val a = AproximateSimple.approximate(f)(Context(new RoundingContext(0, 2)))
     Assert.assertEquals(s"Formula $f", Approximation(false, true), a)
   }
 

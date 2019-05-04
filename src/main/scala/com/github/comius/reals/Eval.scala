@@ -25,9 +25,10 @@ import com.github.comius.reals.syntax.Mul
 import com.github.comius.reals.syntax.Or
 import com.github.comius.reals.syntax.Real
 import com.github.comius.reals.syntax.Sub
+import com.github.comius.reals.newton.AutomaticDifferentiation
 
 object Eval {
-  import BisectionApproximations._
+  import AproximateSimple._
   import com.github.comius.floats.Floats.{ impl => D }
 
   def refine(formula: Formula)(implicit ctx: Context[VarDomain]): Formula = {
@@ -130,7 +131,7 @@ object Eval {
       val context = Context[VarDomain](new RoundingContext(0, dprec))
       val prec = D.valueOfEpsilon(precision)
 
-      val l = approximate(rexpr)(context).lower
+      val l = AutomaticDifferentiation.approximate(rexpr)(context).lower
 
       val width = l.u.subtract(l.d, context.roundingContext.up)
       val ctime = System.currentTimeMillis()

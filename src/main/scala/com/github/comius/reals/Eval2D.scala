@@ -30,9 +30,10 @@ import com.github.comius.reals.syntax.Real
 import com.github.comius.reals.syntax.Sub
 import com.github.comius.reals.plane.Approximate2D
 import com.github.comius.reals.plane.ConstraintSet2D
+import com.github.comius.reals.newton.AutomaticDifferentiation
 
 object Eval2D {
-  import BisectionApproximations._
+  import AproximateSimple._
   import com.github.comius.floats.Floats.{ impl => D }
 
   def toIntervals(a: Approximation[ConstraintSet]): List[Interval] = {
@@ -161,8 +162,8 @@ object Eval2D {
 
   def approximate0(formula: Formula)(implicit ctx: Context[VarDomain]): Approximation[Boolean] = formula match {
     case Less(x, y) =>
-      val a @ Approximation(li1, ui1) = approximate(x)
-      val b @ Approximation(li2, ui2) = approximate(y)
+      val a @ Approximation(li1, ui1) = AutomaticDifferentiation.approximate(x)
+      val b @ Approximation(li2, ui2) = AutomaticDifferentiation.approximate(y)
       Approximation(li1.u.compareTo(li2.d) < 0, ui1.u.compareTo(ui2.d) < 0)
 
     case Exists(x, a, b, phi) =>
@@ -244,7 +245,7 @@ object Eval2D {
       val context = Context[VarDomain](new RoundingContext(0, dprec))
       val prec = D.valueOfEpsilon(precision)
 
-      val l = approximate(rexpr)(context).lower
+      val l = AutomaticDifferentiation.approximate(rexpr)(context).lower
 
       val width = l.u.subtract(l.d, context.roundingContext.up)
       val currentTime = System.currentTimeMillis()
