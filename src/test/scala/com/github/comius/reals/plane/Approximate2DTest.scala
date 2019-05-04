@@ -13,6 +13,7 @@ import com.github.comius.RoundingContext
 import com.github.comius.reals.VarDomain
 import com.github.comius.reals.Interval
 import com.github.comius.reals.Context
+import com.github.comius.reals.plane.ConstraintSet2D.ConvexHull
 
 class Approximate2dTest {
   import com.github.comius.reals.syntax.Real._
@@ -39,16 +40,16 @@ class Approximate2dTest {
 
   @Test
   def testIn(): Unit = {
-    println("In: " + ConvexHull(Interval(0, 2), Interval(0, 2)).isIn(Point(1, 1)))
-    println("In: " + ConvexHull(Interval(0, 2), Interval(0, 2)).isIn(Point(1, 2)))
-    println("In: " + ConvexHull(Interval(0, 2), Interval(0, 2)).isIn(Point(1, 3)))
-    println("In: " + ConvexHull(Interval(0, 2), Interval(0, 2)).isIn(Point(2, 2)))
-    println("In: " + ConvexHull(Interval(0, 2), Interval(0, 2)).isIn(Point(3, 2)))
+    println("In: " + ConstraintSet2D(Interval(0, 2), Interval(0, 2)).isIn(Point(1, 1)))
+    println("In: " + ConstraintSet2D(Interval(0, 2), Interval(0, 2)).isIn(Point(1, 2)))
+    println("In: " + ConstraintSet2D(Interval(0, 2), Interval(0, 2)).isIn(Point(1, 3)))
+    println("In: " + ConstraintSet2D(Interval(0, 2), Interval(0, 2)).isIn(Point(2, 2)))
+    println("In: " + ConstraintSet2D(Interval(0, 2), Interval(0, 2)).isIn(Point(3, 2)))
   }
 
   @Test
   def testInitial(): Unit = {
-    println("In: " + ConvexHull(Interval(0, 2), Interval(0, 2)).isIn(Point(1, 1)))
+    println("In: " + ConstraintSet2D(Interval(0, 2), Interval(0, 2)).isIn(Point(1, 1)))
   }
 
 }

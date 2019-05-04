@@ -76,8 +76,8 @@ object Approximate2D extends Approximations {
       for (ldx <- List(udfxi.d, udfxi.u); ldy <- List(udfyi.d, udfyi.u))
         yield Line(ufmxmy.d, mx, my, ldx, ldy).invert()
 
-    Approximation(ConstraintSet2D(xi,yi,List(ConvexHull(xi, yi).split(llines)._1)), 
-        ConstraintSet2D(xi,yi, List(ConvexHull(xi, yi).split(ulines)._1)))
+    Approximation(ConstraintSet2D(xi,yi).split(llines), 
+        ConstraintSet2D(xi,yi).split(ulines))
     // fmxmy + (x - mx) dfxi + (y - my) dfyi
   }
 

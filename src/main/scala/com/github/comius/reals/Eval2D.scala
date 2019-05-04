@@ -29,7 +29,6 @@ import com.github.comius.reals.syntax.Or
 import com.github.comius.reals.syntax.Real
 import com.github.comius.reals.syntax.Sub
 import com.github.comius.reals.plane.Approximate2D
-import com.github.comius.reals.plane.ConvexHull
 import com.github.comius.reals.plane.ConstraintSet2D
 
 object Eval2D {
