@@ -18,58 +18,63 @@ import com.github.comius.reals.newton.ConstraintSet.MoreThan
 import com.github.comius.reals.newton.ConstraintSet.LessThan
 import com.github.comius.reals.plane.ConstraintSet2D.ConvexHull
 
-case class ConstraintSet2D private (d1: Interval, d2: Interval, css: List[ConvexHull]) {
-  
-  def split(constraints: List[Line]) = {
-    ConstraintSet2D(d1,d2, css.map(_.split(constraints)._1))   
+/**
+ * An open subset of intervals xi and yi (in the plane) described by a list of convex hulls.
+ *
+ * @param xi interval in first axis
+ * @param yi interval in second axis
+ * @param hull list of convex hulls
+ */
+case class ConstraintSet2D private (xi: Interval, yi: Interval, hulls: List[ConvexHull]) {
+
+  def split(constraints: List[Line]): ConstraintSet2D = {
+    ConstraintSet2D(xi, yi, hulls.map(_.split(constraints)._1))
   }
-  
+
   def projectExists(r: RoundingContext): ConstraintSet = {
-    css.map(_.projectExists(r)).reduceOption(_.union(_)).getOrElse(ConstraintSetNone(d1))
+    hulls.map(_.projectExists(xi, r)).reduceOption(_.union(_)).getOrElse(ConstraintSetNone(xi))
   }
 
   def projectForall(r: RoundingContext): ConstraintSet = {
-    var initial = ConstraintSet2D(d1, d2)
-    css.foreach { cs => initial = initial.minus(cs) }
+    var initial = ConstraintSet2D(xi, yi)
+    hulls.foreach { cs => initial = initial.minus(cs) }
     initial.projectExists(r).complement
   }
 
   // subtracts a single constraint set from this one
   def minus(cs: ConvexHull): ConstraintSet2D = {
-    ConstraintSet2D(d1, d2, css.flatMap(_.minus(cs).map(ConvexHull(d1, d2, _))))
+    ConstraintSet2D(xi, yi, hulls.flatMap(_.minus(cs).map(ConvexHull(_))))
   }
 
   def union(c2: ConstraintSet2D): ConstraintSet2D = {
     // TODO don't duplicate polys
-    ConstraintSet2D(d1, d2, css ++ c2.css)
+    ConstraintSet2D(xi, yi, hulls ++ c2.hulls)
   }
 
   def intersection(cs2: ConstraintSet2D): ConstraintSet2D = {
     // compute intersections
-    ConstraintSet2D(d1, d2, (for {
-      c1 <- this.css;
-      c2 <- cs2.css
-    } yield c1.intersection(c2)).toList.filter(_.hull.nonEmpty))
+    ConstraintSet2D(xi, yi, (for {
+      c1 <- this.hulls;
+      c2 <- cs2.hulls
+    } yield c1.intersection(c2)).toList.filter(_.constraints.nonEmpty))
   }
 
   def isIn(p: Point): Boolean = {
-    css.exists(_.isIn(p))
+    hulls.exists(_.isIn(p))
   }
 }
 
 object ConstraintSet2D {
 
-  def apply(xi: Interval, yi: Interval): ConstraintSet2D = {   
-    ConstraintSet2D(xi, yi, List(ConvexHull(xi, yi,
-      List(
-        Line(D.ZERO, D.ZERO, yi.d, D.ZERO, D.ONE),
-        Line(D.ZERO, xi.u, D.ZERO, D.ONE.negate, D.ZERO),
-        Line(D.ZERO, D.ZERO, yi.u, D.ZERO, D.ONE.negate),
-        Line(D.ZERO, xi.d, D.ZERO, D.ONE, D.ZERO)))))
+  def apply(xi: Interval, yi: Interval): ConstraintSet2D = {
+    ConstraintSet2D(xi, yi, List(ConvexHull(List(
+      Line(D.ZERO, D.ZERO, yi.d, D.ZERO, D.ONE),
+      Line(D.ZERO, xi.u, D.ZERO, D.ONE.negate, D.ZERO),
+      Line(D.ZERO, D.ZERO, yi.u, D.ZERO, D.ONE.negate),
+      Line(D.ZERO, xi.d, D.ZERO, D.ONE, D.ZERO)))))
   }
-  
-  case class ConvexHull private (xi: Interval, yi: Interval, hull: List[Line]) {
-    import ConvexHull._
+
+  case class ConvexHull private (constraints: List[Line]) {
 
     def split(llines: List[Line]): (ConvexHull, List[List[Line]]) = {
       def filterDuplicate[A](l: List[A]): List[A] = {
@@ -106,7 +111,7 @@ object ConstraintSet2D {
       }
 
       // compute hull
-      var lhull = hull
+      var lhull = constraints
       val restlist = List.newBuilder[List[Line]]
       for (l <- llines) {
 
@@ -114,25 +119,25 @@ object ConstraintSet2D {
         lhull = lhull1
         if (rest.length > 2) restlist += rest
       }
-      (ConvexHull(xi, yi, lhull), restlist.result)
+      (ConvexHull(lhull), restlist.result)
     }
 
     def isIn(p: Point): Boolean = {
-      if (hull.isEmpty) false else hull.forall(_.inside(p) > 0)
+      if (constraints.isEmpty) false else constraints.forall(_.inside(p) > 0)
     }
 
     override def toString(): String = {
-      hull.mkString("RegionPlot[{", " && ", s"},{x,${xi.d},${xi.u}},{y,${yi.d},${yi.u}}]")
+      constraints.mkString("RegionPlot[{", " && ", s"},{x,-5,5},{y,-5,5}]")
     }
 
-    def projectExists(r: RoundingContext): ConstraintSet = {
+    def projectExists(xi: Interval, r: RoundingContext): ConstraintSet = {
       //TODO optimise - if could directly assign to min and max, no need to have lists here
-      if (hull.isEmpty) {
+      if (constraints.isEmpty) {
         ConstraintSetNone(xi)
       } else {
         val ups = List.newBuilder[D.T]
         val downs = List.newBuilder[D.T]
-        for ((l1, l2) <- zipConsPairs(hull)) {
+        for ((l1, l2) <- zipConsPairs(constraints)) {
           if (l1.dfyi.signum != l2.dfyi.signum) {
             downs += l1.intersection(l2, r.down, r.down).x
             ups += l1.intersection(l2, r.up, r.up).x
@@ -146,14 +151,13 @@ object ConstraintSet2D {
 
     // subtracts a single constraint set from this one
     def minus(cs: ConvexHull): List[List[Line]] = {
-      split(cs.hull)._2
+      split(cs.constraints)._2
     }
 
     def intersection(cs: ConvexHull): ConvexHull = {
-      split(cs.hull)._1
+      split(cs.constraints)._1
     }
   }
-
 
   private def zipConsPairs[A](l: List[A]): List[(A, A)] = l match {
     case x :: xs => l.zip(xs :+ x)
@@ -165,4 +169,3 @@ object ConstraintSet2D {
     case _              => Nil
   }
 }
-
