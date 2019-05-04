@@ -97,6 +97,10 @@ case class ConstraintSet2D private (xi: Interval, yi: Interval, hull: List[Line]
   def minus(cs: ConstraintSet2D): List[List[Line]] = {
     split(cs.hull)._2
   }
+  
+  def intersection(cs: ConstraintSet2D): ConstraintSet2D = {
+    split(cs.hull)._1
+  }
 }
 
 object ConstraintSet2D {
@@ -141,11 +145,11 @@ case class ConstraintSetSet(d1: Interval, d2: Interval, css: List[ConstraintSet2
     ConstraintSetSet(d1, d2, css ++ c2.css)
   }
 
-  def intersection(c2: ConstraintSetSet): ConstraintSetSet = {
+  def intersection(cs2: ConstraintSetSet): ConstraintSetSet = {
     // compute intersections
-    var initial = this
-    c2.css.foreach { cs => initial = initial.minus(cs) }
-    initial
+    ConstraintSetSet(d1,d2, (for {
+        c1 <- this.css;
+        c2 <- cs2.css} yield c1.intersection(c2)).toList.filter(_.hull.nonEmpty))
   }
 
   def isIn(p: Point): Boolean = {

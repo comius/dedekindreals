@@ -114,11 +114,15 @@ object Eval2D {
     case Less(x, y) =>
       Approximate2D.estimate(Less(x, y), x0, y0)
 
-    /*case And(x, y) =>
+    case And(x, y) =>
       val Approximation(l1, u1) = approximate2(x, x0, y0)
       val Approximation(l2, u2) = approximate2(y, x0, y0)
       Approximation(l1.intersection(l2), u1.union(u2))
-      */
+    
+    case Or(x, y) =>
+      val Approximation(l1, u1) = approximate2(x, x0, y0)
+      val Approximation(l2, u2) = approximate2(y, x0, y0)
+      Approximation(l1.union(l2), u1.intersection(u2))
     // TODO deeper nesting
   }
 
