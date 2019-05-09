@@ -123,7 +123,7 @@ trait Floats {
     /**
      * Is {@code this} regular, that is not positive or negative infinity.
      *
-     * @return true when regular numver
+     * @return true when regular number
      */
     def isRegularNumber(): Boolean
 

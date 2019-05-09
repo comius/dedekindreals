@@ -82,7 +82,7 @@ Main consumer of Floats is Intervals module.
 BigDecimal satisfies properties of dense linear order without endpoints. By adding infinite values we break this
 contract. 
 
-Infinities are useful on the next level when doing interval arithmetics. Without them Intevals module would need to
+Infinities are useful on the next level when doing interval arithmetics. Without them Intervals module would need to
 take over handling special cases: \top, \bottom interval, which are now expressed as [-inf, inf] and [inf, -inf] and
 half open intervals [a,inf], [-inf, b] (and additional two cases), making altogether 6+1 cases. A basic arithmetic ops
 would therefore need cases-analysis for a large number of combinations.

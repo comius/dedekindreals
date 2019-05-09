@@ -29,10 +29,10 @@ object BigDecimalFloats extends Floats {
     override def add(b: BigDecimalFloat, mc: MathContext): BigDecimalFloat = {
       (this, b) match {
         case (Number(x), Number(y)) => Number(x.add(y, mc))
-        case (PosInf(), NegInf()) | (NegInf(), PosInf()) =>
+        case (PosInf, NegInf) | (NegInf, PosInf) =>
           throw new ArithmeticException("Adding positive and negative infinity.")
-        case (PosInf(), _) | (_, PosInf()) => PosInf()
-        case (NegInf(), _) | (_, NegInf()) => NegInf()
+        case (PosInf, _) | (_, PosInf) => PosInf
+        case (NegInf, _) | (_, NegInf) => NegInf
       }
     }
 
@@ -54,10 +54,10 @@ object BigDecimalFloats extends Floats {
       (this, b) match {
         case (Number(x), ZERO)                => throw new ArithmeticException("Division by zero.")
         case (Number(x), Number(y))           => Number(x.divide(y, mc))
-        case (PosInf() | NegInf(), Number(a)) => BigDecimalFloats.signToInfty(signum() * a.signum())
-        case (Number(_), NegInf() | PosInf()) => BigDecimalFloats.ZERO
-        case (PosInf() | NegInf(),
-          PosInf() | NegInf()) => throw new ArithmeticException("Division of infinities.")
+        case (PosInf | NegInf, Number(a)) => BigDecimalFloats.signToInfty(signum() * a.signum())
+        case (Number(_), NegInf | PosInf) => BigDecimalFloats.ZERO
+        case (PosInf | NegInf,
+          PosInf | NegInf) => throw new ArithmeticException("Division of infinities.")
       }
     }
 
@@ -65,9 +65,9 @@ object BigDecimalFloats extends Floats {
       (this, b) match {
         case (Number(x), Number(y))                      => x.compareTo(y)
         // comparing infinities might be a problem in some cases, but we use them in min/max functions
-        case (PosInf(), PosInf()) | (NegInf(), NegInf()) => 0
-        case (PosInf(), _) | (_, NegInf())               => 1
-        case (NegInf(), _) | (_, PosInf())               => -1
+        case (PosInf, PosInf) | (NegInf, NegInf) => 0
+        case (PosInf, _) | (_, NegInf)               => 1
+        case (NegInf, _) | (_, PosInf)               => -1
       }
     }
 
@@ -90,20 +90,20 @@ object BigDecimalFloats extends Floats {
             case ms if ms > 1 => Number(x.divide(two, mc1Down))
             case _            => Number(y.divide(two, mc1Down))
           }
-        case (Number(x), PosInf()) =>
+        case (Number(x), PosInf) =>
           x.signum() match {
             case 1 => Number(x.round(new MathContext(1, RoundingMode.FLOOR)).scaleByPowerOfTen(1))
             case 0 => ONE
             case _ => ZERO
           }
-        case (NegInf(), Number(x)) =>
+        case (NegInf, Number(x)) =>
           x.signum() match {
             case -1 => Number(x.round(new MathContext(1, RoundingMode.CEILING)).scaleByPowerOfTen(1))
             case 0  => ONE.negate
             case _  => ZERO
           }
 
-        case (NegInf(), PosInf()) => BigDecimalFloats.ZERO
+        case (NegInf, PosInf) => BigDecimalFloats.ZERO
         case _                    => throw new ArithmeticException(s"Splitting interval: ${this}, ${b}")
       }
     }
@@ -118,8 +118,8 @@ object BigDecimalFloats extends Floats {
     }
   }
 
-  override val posInf: BigDecimalFloat = PosInf()
-  override val negInf: BigDecimalFloat = NegInf()
+  override val posInf: BigDecimalFloat = PosInf
+  override val negInf: BigDecimalFloat = NegInf
   override val ZERO: BigDecimalFloat = Number(BigDecimal.ZERO)
   override val ONE: BigDecimalFloat = Number(BigDecimal.ONE)
 
@@ -137,26 +137,30 @@ object BigDecimalFloats extends Floats {
 
   /**
    * Case class expressing positive infinity.
+   * 
+   * Note: declared as an object to reduce memory garbage.
    */
-  private[this] case class PosInf() extends BigDecimalFloat {
+  private[this] final case object PosInf extends BigDecimalFloat {
     override def isPosInf(): Boolean = true
     override def isNegInf(): Boolean = false
     override def isRegularNumber(): Boolean = false
     override def signum(): Int = 1
-    override def negate(): BigDecimalFloat = NegInf()
+    override def negate(): BigDecimalFloat = NegInf
     override def toString(): String = "Inf"
     override def toPlainString(): String = "Inf"
   }
 
   /**
    * Case class expressing negative infinity.
+   * 
+   * Note: declared as an object to reduce memory garbage.
    */
-  private[this] case class NegInf() extends BigDecimalFloat {
+  private[this] final case object NegInf extends BigDecimalFloat {
     override def isPosInf(): Boolean = false
     override def isNegInf(): Boolean = true
     override def isRegularNumber(): Boolean = false
     override def signum(): Int = -1
-    override def negate(): BigDecimalFloat = PosInf()
+    override def negate(): BigDecimalFloat = PosInf
     override def toString(): String = "-Inf"
     override def toPlainString(): String = "-Inf"
   }
@@ -164,7 +168,7 @@ object BigDecimalFloats extends Floats {
   /**
    * Case class expressing regular number, i.e. container for BigDecimal.
    */
-  private[this] case class Number(x: BigDecimal) extends BigDecimalFloat {
+  private[this] final case class Number(x: BigDecimal) extends BigDecimalFloat {
     override def isPosInf(): Boolean = false
     override def isNegInf(): Boolean = false
     override def isRegularNumber(): Boolean = true
