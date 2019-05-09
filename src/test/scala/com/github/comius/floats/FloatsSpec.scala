@@ -160,17 +160,8 @@ class FloatsSpec extends Properties("Floats") {
         val (a2, b2) = if (a.compareTo(b) <= 0) (a, b) else (b, a)
         val c = a2.split(b2)
 
-        /* val precision = new BigDecimal(c.toString()).precision()
-
-        val cUp = c.add(D.ZERO, new MathContext(precision - 1, RoundingMode.CEILING))
-        val cDown = c.add(D.ZERO, new MathContext(precision - 1, RoundingMode.FLOOR))
-        */
-
         // Verifies a < split(a,b) < b
         a2.compareTo(c) < 0 && c.compareTo(b2) < 0
-
-        // TODO Verifies that in reduced precision a < split(a,b) < b doesn't hold.
-        // && a2.compareTo(cDown) >= 0 && cUp.compareTo(b2) >= 0 :| c.toString()
       }
   }
 
@@ -181,6 +172,21 @@ class FloatsSpec extends Properties("Floats") {
 
       // Verifies split(-inf,a)<a  and a < split(a,+inf).
       x.compareTo(a) < 0 && a.compareTo(y) < 0
+  }
+
+  /*
+   * Testing trisection.
+   */
+  val precision = 10
+  property("trisection") = forAll(genRegularFloat, genRegularFloat) {
+    (a: D.T, b: D.T) =>
+      // Only test on a < b.
+      (!a.equals(b)) ==> {
+        val (a2, b2) = if (a.compareTo(b) <= 0) (a, b) else (b, a)
+        val (c1, c2) = a2.trisect(b2, precision)
+
+        (a2.compareTo(c1) < 0 && c1.compareTo(c2) < 0 && c2.compareTo(b2) < 0) :| s"Failed result ($c1,$c2)"
+      }
   }
 }
 
@@ -226,5 +232,5 @@ object FloatsSpec {
     for {
       f <- gen01Float
     } yield f.multiply(i.d, MathContext.DECIMAL128).add(
-        D.ONE.subtract(f, MathContext.DECIMAL128).multiply(i.u, MathContext.DECIMAL128), MathContext.DECIMAL128)
+      D.ONE.subtract(f, MathContext.DECIMAL128).multiply(i.u, MathContext.DECIMAL128), MathContext.DECIMAL128)
 }

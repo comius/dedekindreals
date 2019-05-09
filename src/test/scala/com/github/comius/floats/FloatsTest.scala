@@ -62,8 +62,8 @@ class FloatsTest {
    *            the string describing the operation
    */
   def testLimits(op: (D.T, D.T) => D.T, intOp: (Int, Int) => Int, opStr: String): Unit = {
-    for {i <- 0 until testValuesInt1.length} {
-      for {j <- 0 until testValuesInt1.length} {
+    for { i <- 0 until testValuesInt1.length } {
+      for { j <- 0 until testValuesInt1.length } {
         // Computes value using integers and embeds it into Floats
         val cprime: Option[D.T] =
           try {
@@ -71,7 +71,7 @@ class FloatsTest {
             val bi = testValuesInt2(j)
             val ci: Int = normalize(intOp(ai, bi))
             val maxResult = 2
-            
+
             if (ci >= inf) {
               Some(D.posInf)
             } else if (ci <= -inf) {
@@ -114,7 +114,7 @@ class FloatsTest {
   @Test
   def testLimits(): Unit = {
     val precision = 10
-    
+
     // Test addition
     testLimits((a, b) => a.add(b, new MathContext(precision, RoundingMode.CEILING)), (a, b) => a + b, " + ");
 
@@ -125,8 +125,10 @@ class FloatsTest {
 
     // Multiplication
     // Special case multiplication inf and 0
-    val multiply = (a: Int, b: Int) => if ((isInf(a) && b == 0) || (isInf(b) && a == 0)) 
-      throw new ArithmeticException() else a * b
+    val multiply = (a: Int, b: Int) =>
+      if ((isInf(a) && b == 0) || (isInf(b) && a == 0)) {
+        throw new ArithmeticException()
+      } else { a * b }
     testLimits((a, b) => a.multiply(b, new MathContext(precision, RoundingMode.CEILING)), multiply, " * ");
 
     // Division

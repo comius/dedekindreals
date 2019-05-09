@@ -94,7 +94,7 @@ Infinities are also (ab)used for extrapolation.
 
 ## Exceptions instead of NaNs
 
-Instead of having a NaN value, an exception shall be thrown for the library. This decision is done, because it doesn't
+Instead of having a NaN value, an exception shall be thrown. This decision is done, because it doesn't
 have any meaning to have intervals with NaN endpoints. In such cases we want this to be \top or \bottom interval.
 
 # Floats
@@ -113,15 +113,17 @@ Interpolations and extrapolations are covered in a following section.
 
 *Verification:* It is linear, because compareTo method always returns without exceptions. Verify by code inspection. 
 
+*Coverage*: compareTo
 
 ### Requirement: transitivity
 
-**CompareTo method shall be transitive, i.e. if a < b and b < c then a < c.**
+**compareTo method shall be transitive, i.e. if a < b and b < c then a < c.**
 
 *Rationale:* Transitivity is assumed by upstream software units and is needed for correctness. 
 
 *Verification:* Generate random a,b,c and verify the property holds.
 
+*Coverage*: compareTo
 
 ### Requirement: equals
 
@@ -143,13 +145,16 @@ Interpolations and extrapolations are covered in a following section.
 
 *Verification:* Verify consistency on random numbers as well as on special values.
 
+*Coverage*: min, max
+
 ### Requirement: signum
-**CompareTo(0) operation shall be consistent with signum.**
+**compareTo(0) operation shall be consistent with signum.**
 
 *Rationale:* Correctness.
 
 *Verification:* Verify on random numbers as well as on special values.
 
+*Coverage*: signum
 
 ## Arithmetics
 
@@ -163,10 +168,10 @@ also defines simplicity order [DEDRAS, 6.3].
 
  - **the result has given precision**
  - **the result is lower (respectively greater) that the precise result** and
- - **the result is greatest (respectively) least such representable number in given precision.**
+ - **the result is greatest (respectively least) such representable number in given precision.**
 
-*Rationale:* Given precision, because we need to control memory footprint. Lower/upper bound in needs for correct
-computation. Greatest/least is not strictly necessary and we could drop it in favor of faster computation.
+*Rationale:* Given precision, because we need to control memory footprint. Lower/upper bound in needed for correct
+computation. Greatest/least is not strictly necessary and we could drop it in favour of faster computation.
 
 *Verification:* No matter the underlying implementation we can test the bounds by increasing given precision and
 adding/subtracting an ulp. For BigDecimal implementation we assume that addition, subtraction, multiplication with
@@ -181,11 +186,11 @@ precision big enough eventually returns proper result. Division may be tested us
 
 **The result of addition, subtraction, multiplication, and division when one or both of the arguments is infinite**
 **shall return correct limit when it exists or throw an ArithmeticException otherwise.**
-**Similarly division by zero  throws exception.** 
+**Similarly division by zero shall throw an ArithmeticException.** 
  
 *Rationale:* Returning correct limit simplifies interval arithmetic and still guarantees correct results.
 When a limit does not exists an exception is thrown that needs to be handled by the module using Floats. We don't want
-incorrect result to be hidden in a low-level module.   
+incorrect result to be hidden in a low-level module.
 
 *Verification:* Test float operation in parallel with operations on integers (which we may trust).
 For regular values use small integers, i.e. -2...2 and for infinities big integers -100, 100. Test pairs of all values.
@@ -221,12 +226,11 @@ is covered when one of the operands is infinity.
   - **are of the same magnitude the returned value shall be near average.**
   - **are of different magnitude, return a number that is half the bigger magnitude.**
 
-*Rationale:* Interpolative property of Definition 6.1. We further optimize the return value on space, that is returning
+*Rationale:* Interpolative property of Definition 6.1. We further optimise the return value on space, that is returning
 the number with given property and smallest precision. When numbers are of the same magnitude, it is in interest of
 upstream modules to split it evenly (without any additional knowledge). 
 
-*Verification:* generate random numbers a < b and verify that a < split(a,b) < b. Reduce the precision of the returned
-value and verify it no longer satisfies that property.
+*Verification:* Generate random numbers a < b and verify that a < split(a,b) < b.
 
 **Coverage**: split/interpolation
 
@@ -242,7 +246,7 @@ value and verify it no longer satisfies that property.
 
 *Rationale:* Extrapolative property of Definition 6.1. Furthermore we double the magnitude ...  
 
-*Verification:*
+*Verification:* Generate random number a, and verify that a < split(a, inf) and split(-inf, a) < a.
 
 **Coverage**: split/extrapolation
 
@@ -250,9 +254,9 @@ value and verify it no longer satisfies that property.
 
 **Trisect function of a,b,p shall return x,y, such that a<x<y<b and that x,y are epsilon in given precision apart.** 
 
-*Rationale:* Number x<y are used upstream by Lemma 6.16. We optimize on the evenness of splitting the a and b.  
+*Rationale:* Number x<y are used upstream by Lemma 6.16. We optimise on the evenness of splitting the a and b.  
 
-*Verification:* 
+*Verification:* Verify using random values and test that property holds.
 
 **Coverage**: trisect
 
@@ -261,7 +265,7 @@ value and verify it no longer satisfies that property.
 
 **Coverage:** valueOf(String, precision), toString()
 
-We can construct Floats from ints or strings, using static method Floats.valueOf.
+We can construct Floats from integers or strings, using static method Floats.valueOf.
 
 
 ## Embedding of integers
@@ -281,11 +285,11 @@ Floats are constructed from product of two natural numbers. BigDecimal implement
 intVal an integer called scale. Together the represent a number of form intVal * 10^-scale (example 6.4/2).
 
 Scale parameter is checked for overflows and underflows and throws ArithmeticException. Code of BigDecimal is further
-optimized for intVals that fit into long.
+optimised for intVals that fit into long.
 
 There is no infinities or NaNs in BigDecimal or BigInteger.
 
-BigInteger store sign separately to magnitude, which is an array of ints. It is a pure Java implementation.
+BigInteger store sign separately to magnitude, which is an array of integers. It is a pure Java implementation.
 
 # Examples
 
