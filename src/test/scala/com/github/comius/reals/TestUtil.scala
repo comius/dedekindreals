@@ -27,7 +27,7 @@ object TestUtil {
       for (gv1 <- g1 if r.status == Prop.True) {
         r = r && f(gv1)(prms0)
         if (r.status != Prop.True) {
-          r.addArg(Prop.Arg("ARG0", gv1, 0, gv1, pp1(gv1), pp1(gv1)))
+          r = r.addArg(Prop.Arg("ARG0", gv1, 0, gv1, pp1(gv1), pp1(gv1)))
         }
       }
       if (r.status == Prop.True) Result(Prop.Proof) else r
@@ -45,7 +45,7 @@ object TestUtil {
       for (gv1 <- g1; gv2 <- g2 if r.status == Prop.True) {
         r = r && f(gv1, gv2)(prms0)
         if (r.status != Prop.True) {
-          r.addArg(Prop.Arg("ARG1", gv2, 0, gv2, pp2(gv2), pp2(gv2)))
+          r = r.addArg(Prop.Arg("ARG1", gv2, 0, gv2, pp2(gv2), pp2(gv2)))
             .addArg(Prop.Arg("ARG0", gv1, 0, gv1, pp1(gv1), pp1(gv1)))
         }
       }
