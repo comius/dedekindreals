@@ -24,7 +24,7 @@ import com.github.comius.floats.Floats.{ impl => D }
  * @param d lower endpoint
  * @param u upper endpoint
  */
-case class Interval(d: D.T, u: D.T) {
+final case class Interval(d: D.T, u: D.T) {
 
   /**
    * Flips the interval. Warning: this is not computable on R!
@@ -172,17 +172,14 @@ case class Interval(d: D.T, u: D.T) {
    * @param r rounding context
    * @return interval
    */
-  def inverse(r: RoundingContext): Interval = (d.signum(), u.signum()) match {
-    case (-1, -1) if d == D.negInf && u == D.negInf => Interval(D.ZERO, D.posInf)
-    case (-1, -1) if d == D.negInf => Interval(D.ONE.divide(u, r.down), D.posInf)
-    case (1, 1) if u == D.posInf && d == D.posInf => Interval(D.negInf, D.ZERO)
-    case (1, 1) if u == D.posInf => Interval(D.negInf, D.ONE.divide(d, r.up))
-    case (1, 1) if d == D.posInf => Interval(D.ONE.divide(u, r.down), D.ZERO)
-    case (1, 1) | (-1, -1) => Interval(D.ONE.divide(u, r.down), D.ONE.divide(d, r.up))
-    case (0, -1) => Interval(D.ONE.divide(u, r.down), D.negInf)
-    case (1, 0) => Interval(D.posInf, D.ONE.divide(d, r.up))
-    case (1, -1) => Interval(D.posInf, D.negInf)
-    case _ => Interval(D.negInf, D.posInf)
+  def inverse(r: RoundingContext): Interval = (d, u, d.signum(), u.signum()) match {
+    case (D.negInf, D.negInf, -1, -1)  => Interval(D.ZERO, D.posInf)
+    case (_, D.posInf, 1, 1)           => Interval(D.negInf, D.ONE.divide(d, r.up))
+    case (_, _, 1, 1) | (_, _, -1, -1) => Interval(D.ONE.divide(u, r.down), D.ONE.divide(d, r.up))
+    case (_, _, 0, -1)                 => Interval(D.ONE.divide(u, r.down), D.negInf)
+    case (_, _, 1, 0)                  => Interval(D.posInf, D.ONE.divide(d, r.up))
+    case (_, _, 1, -1)                 => Interval(D.posInf, D.negInf)
+    case _                             => Interval(D.negInf, D.posInf)
   }
 
   /**
