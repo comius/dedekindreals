@@ -15,6 +15,7 @@ import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.Prop
 import org.scalacheck.Prop.BooleanOperators
+import org.scalacheck.Prop.exists
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
 
@@ -32,35 +33,33 @@ import com.github.comius.reals.TestUtil.forall
 class IntervalSpec extends Properties("Interval") {
   import IntervalSpec._
 
-  val r = new RoundingContext(0, 10)
+  val precision = 10
+  val r = new RoundingContext(0, precision)
 
-  // Verifies multiplication is comutative.
-  property("multiplyComutative") = forAll {
+  // Verifies multiplication is commutative.
+  property("multiplyCommutative") = forAll {
     (a: Interval, b: Interval) =>
       (a.multiply(b, r) == b.multiply(a, r)) :| s"${a.multiply(b, r)} != ${b.multiply(a, r)}"
   }
 
-  // Verifies Kaucher multiplication is commutative. (TODO problems)
-  /* property("multiplyKaucherComutative") = forAll {
-    (a: Interval, b: Interval) =>
-      (a.multiplyKaucher(b, r) == b.multiplyKaucher(a, r)) :|
-        s"${a.multiplyKaucher(b, r)} != ${b.multiplyKaucher(a, r)}"
-  }*/
-
   // Verifies dualities does't hold. / They actually don't on infinities.
-  /* property("multiplyDualityDoesnHold") = forAll {
-    (a: Interval, b: Interval) =>
-      (a.flip.multiply(b.flip, r.swap()).flip == a.multiply(b, r))
-  }*/
+  property("multiplyDualityDoesntHold") = exists { (a: Interval) =>
+    exists { (b: Interval) =>
+      (a.flip.multiply(b.flip, r.swap()).flip != a.multiply(b, r))
+    }
+  }
 
-  // Verifies Kaucher multiplication is equal to Lakayev (TODO problems with infinities).
-  /* property("multiplyKaucherEqualsLakayev") = forAll {
+  // Note: following property fails: Kaucher multiplication tables are not is equal to Lakayev
+  /*
+   property("multiplyKaucherEqualsLakayev") = forAll {
+
     (a: Interval, b: Interval) =>
       val lakayev = a.multiplyLakayev(b, r)
       val kaucher = a.multiplyKaucher(b, r)
       (lakayev == kaucher) :|
         s"Lakayev ${lakayev} != Kaucher ${kaucher}"
-  }*/
+  }
+  */
 
   /**
    * Checks that interval {@code i2} approximates interval {@code i1}.
@@ -76,8 +75,9 @@ class IntervalSpec extends Properties("Interval") {
       (i2.u.compareTo(i1.u) > 0 || (i1.u == i2.u && !i1.u.isRegularNumber()))
   }
 
-  private val eps = D.valueOfEpsilon(500) // small eps
-  private val eps2 = D.valueOfEpsilon(10) // big eps
+  val bigPrecision = 500
+  private val eps = D.valueOfEpsilon(bigPrecision) // small eps
+  private val eps2 = D.valueOfEpsilon(precision) // big eps
   private val mc = new MathContext(0, RoundingMode.UNNECESSARY)
 
   /**
@@ -100,19 +100,22 @@ class IntervalSpec extends Properties("Interval") {
 
       // When 0 is in the interval we need to approximate it with infinities:
       val yp = if (op == divide) {
-        if (y.d.compareTo(D.ZERO) < 0 && D.ZERO.compareTo(y.u) < 0) Interval(D.negInf, D.posInf)
-        else if (y.d.compareTo(D.ZERO) >= 0 && D.ZERO.compareTo(y.u) >= 0) Interval(D.posInf, D.negInf)
-        else Interval(y.d.subtract(eps, mc), y.u.add(eps, mc))
+        if (y.d.compareTo(D.ZERO) < 0 && D.ZERO.compareTo(y.u) < 0) {
+          Interval(D.negInf, D.posInf)
+        } else if (y.d.compareTo(D.ZERO) >= 0 && D.ZERO.compareTo(y.u) >= 0) {
+          Interval(D.posInf, D.negInf)
+        } else {
+          Interval(y.d.subtract(eps, mc), y.u.add(eps, mc))
+        }
       } else {
         Interval(y.d.subtract(eps, mc), y.u.add(eps, mc))
       }
 
       val xpyp = op(xp, yp)
       val eps3 =
-        if (op == divide) D.valueOfEpsilon(-1000) // We need huge EPS because for division
-        else eps2
+        if (op == divide) D.valueOfEpsilon(-hugePrecision) else eps2 // We need huge EPS because for division
       val w = Interval(xy.d.subtract(eps3, mc), xy.u.add(eps3, mc)) // xy >> w
-      approx(xpyp, w) :| s" not ${xpyp} >> ${w}"
+      approx(xpyp, w) :| s" not $xp*$yp=$xpyp >> $w, $x*$y=$xy >> $w"
     }
 
   /**
@@ -122,7 +125,7 @@ class IntervalSpec extends Properties("Interval") {
    *
    * @param op The operation to test.
    * @param x First operand
-   * @param y Second operant
+   * @param y Second operand
    *
    * @return property, that tests this
    */
@@ -153,11 +156,13 @@ class IntervalSpec extends Properties("Interval") {
    * Tests extension property for all binary arithmetic operations.
    */
   private val rinf = new RoundingContext(0, 0)
+  private val hugePrecision = 1000
+  private val rh = new RoundingContext(0, hugePrecision)
 
   private val add: (Interval, Interval) => Interval = _.add(_, rinf)
   private val subtract: (Interval, Interval) => Interval = _.subtract(_, rinf)
   private val multiply: (Interval, Interval) => Interval = _.multiply(_, rinf)
-  private val divide: (Interval, Interval) => Interval = _.divide(_, new RoundingContext(0, 1000))
+  private val divide: (Interval, Interval) => Interval = _.divide(_, rh)
 
   for ((opDesc, op) <- Map("Add" -> add, "Subtract" -> subtract, "Multiply" -> multiply, "Divide" -> divide)) {
 
@@ -180,18 +185,21 @@ class IntervalSpec extends Properties("Interval") {
   /*
    * Tests extension property on inverse.
    */
-
   def checkExtensionRight(op: Interval => Interval)(x: Interval): Prop =
     {
       val xy = op(x)
 
       val xp =
-        if (x.d.compareTo(D.ZERO) < 0 && D.ZERO.compareTo(x.u) < 0) Interval(D.negInf, D.posInf)
-        else if (x.d.compareTo(D.ZERO) >= 0 && D.ZERO.compareTo(x.u) >= 0) Interval(D.posInf, D.negInf)
-        else Interval(x.d.subtract(eps, mc), x.u.add(eps, mc))
+        if (x.d.compareTo(D.ZERO) < 0 && D.ZERO.compareTo(x.u) < 0) {
+          Interval(D.negInf, D.posInf)
+        } else if (x.d.compareTo(D.ZERO) >= 0 && D.ZERO.compareTo(x.u) >= 0) {
+          Interval(D.posInf, D.negInf)
+        } else {
+          Interval(x.d.subtract(eps, mc), x.u.add(eps, mc))
+        }
 
       val xpyp = op(xp)
-      val eps3 = D.valueOfEpsilon(-1000)
+      val eps3 = D.valueOfEpsilon(-hugePrecision)
       val w = Interval(xy.d.subtract(eps3, mc), xy.u.add(eps3, mc)) // xy >> w
       approx(xpyp, w) :| s" not ${xpyp} >> ${w} ${xpyp.d.compareTo(w.d)} ${w.u.compareTo(xpyp.u)}"
     }
@@ -218,19 +226,19 @@ class IntervalSpec extends Properties("Interval") {
     }
 
   property(s"inverseExtensionToRight") =
-    forAll(checkExtensionRight((_: Interval).inverse(new RoundingContext(0, 1000)))(_))
+    forAll(checkExtensionRight((_: Interval).inverse(rh))(_))
 
   // Tests extension in (<=) direction with arbitrary random intervals.
   property(s"inverseExtensionToLeft") =
-    forAll(checkExtensionLeft((_: Interval).inverse(new RoundingContext(0, 1000)))(_))
+    forAll(checkExtensionLeft((_: Interval).inverse(rh))(_))
 
   property(s"inverseExtensionToLeftOnSpecial") =
     Prop.all((for { i <- specialIntervals }
-      yield checkExtensionLeft((_: Interval).inverse(new RoundingContext(0, 1000)))(i)): _*)
+      yield checkExtensionLeft((_: Interval).inverse(rh))(i)): _*)
 
   property(s"inverseExtensionToRightOnSpecial") =
     Prop.all((for { i <- specialIntervals }
-      yield checkExtensionRight((_: Interval).inverse(new RoundingContext(0, 1000)))(i)): _*)
+      yield checkExtensionRight((_: Interval).inverse(rh))(i)): _*)
 
 }
 

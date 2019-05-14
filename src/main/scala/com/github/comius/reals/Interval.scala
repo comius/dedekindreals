@@ -129,8 +129,7 @@ final case class Interval(d: D.T, u: D.T) {
 
       case (1, -1, 1, -1)   => Interval(mulD(d, e).max(mulD(u, t)), mulU(d, t).min(mulU(u, e))) // aa
 
-      case (-1, 1, 1, -1)   => Interval(D.ZERO, D.ZERO) // 0a
-      case (1, -1, -1, 1)   => Interval(D.ZERO, D.ZERO) // a0
+      case _                => Interval(D.ZERO, D.ZERO) // 0a, a0
     }
   }
 
