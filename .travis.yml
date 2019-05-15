@@ -4,4 +4,4 @@ addons:
   sonarcloud:
     organization: "comius-github"
 script:
-  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent scoverage:report sonar:sonar
+  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install scoverage:report sonar:sonar
