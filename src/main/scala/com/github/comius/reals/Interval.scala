@@ -148,17 +148,21 @@ final case class Interval(d: D.T, u: D.T) {
     def mulD(a: D.T, b: D.T): D.T = negInfOnException(a.multiply(b, r.down))
     def mulU(a: D.T, b: D.T): D.T = posInfOnException(a.multiply(b, r.up))
 
-    val a1 = if (d.signum >= 0 && e.signum >= 0) mulD(d, e) else D.ZERO
-    val a2 = if (u.signum <= 0 && t.signum <= 0) mulD(u, t) else D.ZERO
-    val a3 = if (u.signum >= 0 && e.signum <= 0) mulD(u, e) else D.ZERO
-    val a4 = if (d.signum <= 0 && t.signum >= 0) mulD(d, t) else D.ZERO
+    if ((d == D.posInf && u == D.negInf) || (e == D.posInf && t == D.negInf)) {
+      Interval(D.posInf, D.negInf)
+    } else {
+      val a1 = if (d.signum >= 0 && e.signum >= 0) mulD(d, e) else D.ZERO
+      val a2 = if (u.signum <= 0 && t.signum <= 0) mulD(u, t) else D.ZERO
+      val a3 = if (u.signum >= 0 && e.signum <= 0) mulD(u, e) else D.ZERO
+      val a4 = if (d.signum <= 0 && t.signum >= 0) mulD(d, t) else D.ZERO
 
-    val b1 = if (u.signum >= 0 && t.signum >= 0) mulU(u, t) else D.ZERO
-    val b2 = if (d.signum <= 0 && e.signum <= 0) mulU(d, e) else D.ZERO
-    val b3 = if (d.signum >= 0 && t.signum <= 0) mulU(d, t) else D.ZERO
-    val b4 = if (u.signum <= 0 && e.signum >= 0) mulU(u, e) else D.ZERO
+      val b1 = if (u.signum >= 0 && t.signum >= 0) mulU(u, t) else D.ZERO
+      val b2 = if (d.signum <= 0 && e.signum <= 0) mulU(d, e) else D.ZERO
+      val b3 = if (d.signum >= 0 && t.signum <= 0) mulU(d, t) else D.ZERO
+      val b4 = if (u.signum <= 0 && e.signum >= 0) mulU(u, e) else D.ZERO
 
-    Interval(max(a1, a2).add(min(a3, a4), r.down), max(b1, b2).add(min(b3, b4), r.up))
+      Interval(max(a1, a2).add(min(a3, a4), r.down), max(b1, b2).add(min(b3, b4), r.up))
+    }
   }
 
   /**
