@@ -105,31 +105,31 @@ final case class Interval(d: D.T, u: D.T) {
    */
   def multiplyKaucher(i2: Interval, r: RoundingContext): Interval = {
     val Interval(e, t) = i2
-
     def mulU(a: D.T, b: D.T) = posInfOnException(a.multiply(b, r.up))
+
     def mulD(a: D.T, b: D.T) = negInfOnException(a.multiply(b, r.down))
 
     (d.signum, u.signum, e.signum, t.signum) match {
-      case (1, 1, 1, 1)     => Interval(mulD(d, e), mulU(u, t)) // ++
-      case (1, 1, -1, -1)   => Interval(mulD(u, e), mulD(d, t)) // +-
-      case (-1, -1, 1, 1)   => Interval(mulD(d, t), mulU(u, e)) // -+
-      case (-1, -1, -1, -1) => Interval(mulD(u, t), mulU(d, e)) // --
+      case (1 | 0, 1 | 0, 1 | 0, 1 | 0)     => Interval(mulD(d, e), mulU(u, t)) // ++
+      case (1 | 0, 1 | 0, -1 | 0, -1 | 0)   => Interval(mulD(u, e), mulU(d, t)) // +-
+      case (-1 | 0, -1 | 0, 1 | 0, 1 | 0)   => Interval(mulD(d, t), mulU(u, e)) // -+
+      case (-1 | 0, -1 | 0, -1 | 0, -1 | 0) => Interval(mulD(u, t), mulU(d, e)) // --
 
-      case (-1, 1, 1, 1)    => Interval(mulD(d, t), mulU(u, t)) // 0+
-      case (-1, 1, -1, -1)  => Interval(mulD(u, e), mulU(d, e)) // 0-
+      case (-1, 1, 1 | 0, 1 | 0)            => Interval(mulD(d, t), mulU(u, t)) // 0+
+      case (-1, 1, -1 | 0, -1 | 0)          => Interval(mulD(u, e), mulU(d, e)) // 0-
 
-      case (1, 1, -1, 1)    => Interval(mulD(u, e), mulU(u, t)) // +0
-      case (-1, -1, -1, 1)  => Interval(mulD(d, t), mulU(d, e)) // -0
-      case (-1, 1, -1, 1)   => Interval(mulD(d, t).min(mulD(u, e)), mulU(d, e).max(mulU(u, t))) // 00
+      case (1 | 0, 1 | 0, -1, 1)            => Interval(mulD(u, e), mulU(u, t)) // +0
+      case (-1 | 0, -1 | 0, -1, 1)          => Interval(mulD(d, t), mulU(d, e)) // -0
+      case (-1, 1, -1, 1)                   => Interval(mulD(d, t).min(mulD(u, e)), mulU(d, e).max(mulU(u, t))) // 00
 
-      case (-1, -1, 1, -1)  => Interval(mulD(u, t), mulU(u, e)) // -a
-      case (1, 1, 1, -1)    => Interval(mulD(d, e), mulU(d, t)) // +a
-      case (1, -1, 1, 1)    => Interval(mulD(d, e), mulU(u, e)) // a+
-      case (1, -1, -1, -1)  => Interval(mulD(u, t), mulU(d, t)) // a-
+      case (-1 | 0, -1 | 0, 1, -1)          => Interval(mulD(u, t), mulU(u, e)) // -a
+      case (1 | 0, 1 | 0, 1, -1)            => Interval(mulD(d, e), mulU(d, t)) // +a
+      case (1, -1, 1 | 0, 1 | 0)            => Interval(mulD(d, e), mulU(u, e)) // a+
+      case (1, -1, -1 | 0, -1 | 0)          => Interval(mulD(u, t), mulU(d, t)) // a-
 
-      case (1, -1, 1, -1)   => Interval(mulD(d, e).max(mulD(u, t)), mulU(d, t).min(mulU(u, e))) // aa
+      case (1, -1, 1, -1)                   => Interval(mulD(d, e).max(mulD(u, t)), mulU(d, t).min(mulU(u, e))) // aa
 
-      case _                => Interval(D.ZERO, D.ZERO) // 0a, a0
+      case _                                => Interval(D.ZERO, D.ZERO) // 0a, a0
     }
   }
 
