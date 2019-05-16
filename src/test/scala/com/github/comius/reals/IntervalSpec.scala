@@ -48,6 +48,16 @@ class IntervalSpec extends Properties("Interval") {
       (a.flip.multiply(b.flip, r.swap()).flip != a.multiply(b, r))
     }
   }
+  
+  property("multiplyGivesSameDirection") = forAll { (a: Interval, b:Interval) =>
+    val ad = a.d.compareTo(a.u)
+    val bd = b.d.compareTo(b.u)
+    math.abs(ad - bd) <= 1 ==> {
+      val ab = a.multiply(b,r)
+      val abd = ab.d.compareTo(ab.u)
+      (math.abs(ad - abd) <= 1 && math.abs(bd - abd) <= 1) :| s"$ab $ad $bd $abd" 
+    }
+  }
 
   // Note: following property fails: Kaucher multiplication tables are not is equal to Lakayev
   /*
