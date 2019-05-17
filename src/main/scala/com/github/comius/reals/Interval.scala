@@ -75,7 +75,7 @@ final case class Interval(d: D.T, u: D.T) {
   /**
    * Default multiplication is using by Lakayev.
    */
-  val multiply = multiplyLakayev(_, _)
+  val multiply = multiplyKaucher(_, _)
 
   /**
    * Multiplies two intervals using Moore's formulas.
@@ -96,6 +96,15 @@ final case class Interval(d: D.T, u: D.T) {
     if (d.compareTo(u) < 0) Interval(lower, upper) else Interval(upper, lower)
   }
 
+  // Multiplies a, b, rounding with mc and returning inf when non-regular numbers are involved
+  private[this] def mul(a: D.T, b: D.T, inf: D.T, mc: MathContext): D.T = {
+    if (a.isRegularNumber && b.isRegularNumber) {
+      a.multiply(b, mc)
+    } else {
+      inf
+    }
+  }
+
   /**
    * Multiplies two intervals using Kaucher's formulas.
    *
@@ -105,32 +114,28 @@ final case class Interval(d: D.T, u: D.T) {
    */
   def multiplyKaucher(i2: Interval, r: RoundingContext): Interval = {
     val Interval(e, t) = i2
-    def mulU(a: D.T, b: D.T) = posInfOnException(a.multiply(b, r.up))
-
-    def mulD(a: D.T, b: D.T) = negInfOnException(a.multiply(b, r.down))
-
-    (d.signum, u.signum, e.signum, t.signum) match {
-      case (1 | 0, 1 | 0, 1 | 0, 1 | 0)     => Interval(mulD(d, e), mulU(u, t)) // ++
-      case (1 | 0, 1 | 0, -1 | 0, -1 | 0)   => Interval(mulD(u, e), mulU(d, t)) // +-
-      case (-1 | 0, -1 | 0, 1 | 0, 1 | 0)   => Interval(mulD(d, t), mulU(u, e)) // -+
-      case (-1 | 0, -1 | 0, -1 | 0, -1 | 0) => Interval(mulD(u, t), mulU(d, e)) // --
-
-      case (-1, 1, 1 | 0, 1 | 0)            => Interval(mulD(d, t), mulU(u, t)) // 0+
-      case (-1, 1, -1 | 0, -1 | 0)          => Interval(mulD(u, e), mulU(d, e)) // 0-
-
-      case (1 | 0, 1 | 0, -1, 1)            => Interval(mulD(u, e), mulU(u, t)) // +0
-      case (-1 | 0, -1 | 0, -1, 1)          => Interval(mulD(d, t), mulU(d, e)) // -0
-      case (-1, 1, -1, 1)                   => Interval(mulD(d, t).min(mulD(u, e)), mulU(d, e).max(mulU(u, t))) // 00
-
-      case (-1 | 0, -1 | 0, 1, -1)          => Interval(mulD(u, t), mulU(u, e)) // -a
-      case (1 | 0, 1 | 0, 1, -1)            => Interval(mulD(d, e), mulU(d, t)) // +a
-      case (1, -1, 1 | 0, 1 | 0)            => Interval(mulD(d, e), mulU(u, e)) // a+
-      case (1, -1, -1 | 0, -1 | 0)          => Interval(mulD(u, t), mulU(d, t)) // a-
-
-      case (1, -1, 1, -1)                   => Interval(mulD(d, e).max(mulD(u, t)), mulU(d, t).min(mulU(u, e))) // aa
-
-      case _                                => Interval(D.ZERO, D.ZERO) // 0a, a0
+    val signs = (d.signum, u.signum, e.signum, t.signum)
+    def lower = signs match {
+      case (-1 | 0, 1 | 0, -1 | 0, 1 | 0) => mul(d, t, D.negInf, r.down).min(mul(u, e, D.negInf, r.down))
+      case (-1 | 0, _, _, 1 | 0)          => mul(d, t, D.negInf, r.down)
+      case (_, 1 | 0, -1 | 0, _)          => mul(u, e, D.negInf, r.down)
+      case (1, -1, 1, -1)                 => mul(d, e, D.posInf, r.down).max(mul(u, t, D.posInf, r.down))
+      case (1, _, 1, _)                   => mul(d, e, D.posInf, r.down)
+      case (_, -1, _, -1)                 => mul(u, t, D.posInf, r.down)
+      case _                              => D.ZERO
     }
+
+    def upper = signs match {
+      case (-1 | 0, 1 | 0, -1 | 0, 1 | 0) => mul(d, e, D.posInf, r.up).max(mul(u, t, D.posInf, r.up))
+      case (-1 | 0, _, -1 | 0, _)         => mul(d, e, D.posInf, r.up)
+      case (_, 1 | 0, _, 1 | 0)           => mul(u, t, D.posInf, r.up)
+      case (1, -1, 1, -1)                 => mul(d, t, D.negInf, r.up).min(mul(u, e, D.negInf, r.up))
+      case (1, _, _, -1)                  => mul(d, t, D.negInf, r.up)
+      case (_, -1, 1, _)                  => mul(u, e, D.negInf, r.up)
+      case _                              => D.ZERO
+    }
+
+    Interval(lower, upper)
   }
 
   /**
@@ -144,16 +149,7 @@ final case class Interval(d: D.T, u: D.T) {
     val Interval(e, t) = i2
     val (dsign, usign, esign, tsign) = (d.signum, u.signum, e.signum, t.signum)
 
-    // Multiplies a, b, rounding with mc and returning inf when non-regular numbers are involved
-    def mul(a: D.T, b: D.T, inf: D.T, mc: MathContext): D.T = {
-      if (a.isRegularNumber && b.isRegularNumber) {
-        a.multiply(b, mc)
-      } else {
-        inf
-      }
-    }
-
-    def lower() = {
+    def lower = {
       val a1 = if (dsign > 0 && esign > 0) mul(d, e, D.posInf, r.down) else D.ZERO
       val a2 = if (usign < 0 && tsign < 0) mul(u, t, D.posInf, r.down) else D.ZERO
       val a3 = if (usign >= 0 && esign <= 0) mul(u, e, D.negInf, r.down) else D.ZERO
@@ -161,7 +157,7 @@ final case class Interval(d: D.T, u: D.T) {
       a1.max(a2).add(a3.min(a4), r.down)
     }
 
-    def upper() = {
+    def upper = {
       val b1 = if (usign >= 0 && tsign >= 0) mul(u, t, D.posInf, r.up) else D.ZERO
       val b2 = if (dsign <= 0 && esign <= 0) mul(d, e, D.posInf, r.up) else D.ZERO
       val b3 = if (dsign > 0 && tsign < 0) mul(d, t, D.negInf, r.up) else D.ZERO
