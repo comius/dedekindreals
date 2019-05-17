@@ -150,19 +150,19 @@ final case class Interval(d: D.T, u: D.T) {
     val (dsign, usign, esign, tsign) = (d.signum, u.signum, e.signum, t.signum)
 
     def lower = {
-      val a1 = if (dsign > 0 && esign > 0) mul(d, e, D.posInf, r.down) else D.ZERO
-      val a2 = if (usign < 0 && tsign < 0) mul(u, t, D.posInf, r.down) else D.ZERO
-      val a3 = if (usign >= 0 && esign <= 0) mul(u, e, D.negInf, r.down) else D.ZERO
-      val a4 = if (dsign <= 0 && tsign >= 0) mul(d, t, D.negInf, r.down) else D.ZERO
-      a1.max(a2).add(a3.min(a4), r.down)
+      val de = if (dsign > 0 && esign > 0) mul(d, e, D.posInf, r.down) else D.ZERO
+      val ut = if (usign < 0 && tsign < 0) mul(u, t, D.posInf, r.down) else D.ZERO
+      val ue = if (usign >= 0 && esign <= 0) mul(u, e, D.negInf, r.down) else D.ZERO
+      val dt = if (dsign <= 0 && tsign >= 0) mul(d, t, D.negInf, r.down) else D.ZERO
+      de.max(ut).add(ue.min(dt), r.down)
     }
 
     def upper = {
-      val b1 = if (usign >= 0 && tsign >= 0) mul(u, t, D.posInf, r.up) else D.ZERO
-      val b2 = if (dsign <= 0 && esign <= 0) mul(d, e, D.posInf, r.up) else D.ZERO
-      val b3 = if (dsign > 0 && tsign < 0) mul(d, t, D.negInf, r.up) else D.ZERO
-      val b4 = if (usign < 0 && esign > 0) mul(u, e, D.negInf, r.up) else D.ZERO
-      b1.max(b2).add(b3.min(b4), r.up)
+      val ut = if (usign >= 0 && tsign >= 0) mul(u, t, D.posInf, r.up) else D.ZERO
+      val de = if (dsign <= 0 && esign <= 0) mul(d, e, D.posInf, r.up) else D.ZERO
+      val dt = if (dsign > 0 && tsign < 0) mul(d, t, D.negInf, r.up) else D.ZERO
+      val ue = if (usign < 0 && esign > 0) mul(u, e, D.negInf, r.up) else D.ZERO
+      ut.max(de).add(dt.min(ue), r.up)
     }
 
     Interval(lower, upper)
