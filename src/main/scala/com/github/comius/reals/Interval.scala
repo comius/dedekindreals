@@ -142,37 +142,34 @@ final case class Interval(d: D.T, u: D.T) {
    */
   def multiplyLakayev(i2: Interval, r: RoundingContext): Interval = {
     val Interval(e, t) = i2
+    val (dsign, usign, esign, tsign) = (d.signum, u.signum, e.signum, t.signum)
 
-    def max(a: D.T, b: D.T): D.T = a.max(b)
-    def min(a: D.T, b: D.T): D.T = a.min(b)
-    def mulD(a: D.T, b: D.T, inf: D.T): D.T = {
-      if (a.isRegularNumber() && b.isRegularNumber()) {
-        a.multiply(b, r.down)
+    // Multiplies a, b, rounding with mc and returning inf when non-regular numbers are involved
+    def mul(a: D.T, b: D.T, inf: D.T, mc: MathContext): D.T = {
+      if (a.isRegularNumber && b.isRegularNumber) {
+        a.multiply(b, mc)
       } else {
         inf
       }
     }
-    def mulU(a: D.T, b: D.T, inf: D.T): D.T = {
-      if (a.isRegularNumber() && b.isRegularNumber()) {
-        a.multiply(b, r.down)
-      } else {
-        inf
-      }
 
+    def lower() = {
+      val a1 = if (dsign > 0 && esign > 0) mul(d, e, D.posInf, r.down) else D.ZERO
+      val a2 = if (usign < 0 && tsign < 0) mul(u, t, D.posInf, r.down) else D.ZERO
+      val a3 = if (usign >= 0 && esign <= 0) mul(u, e, D.negInf, r.down) else D.ZERO
+      val a4 = if (dsign <= 0 && tsign >= 0) mul(d, t, D.negInf, r.down) else D.ZERO
+      a1.max(a2).add(a3.min(a4), r.down)
     }
 
-    val a1 = if (d.signum > 0 && e.signum > 0) mulD(d, e, D.posInf) else D.ZERO //we can mult
-    val a2 = if (u.signum < 0 && t.signum < 0) mulD(u, t, D.posInf) else D.ZERO // we can mult
-    val a3 = if (u.signum >= 0 && e.signum <= 0) mulD(u, e, D.negInf) else D.ZERO
-    val a4 = if (d.signum <= 0 && t.signum >= 0) mulD(d, t, D.negInf) else D.ZERO
+    def upper() = {
+      val b1 = if (usign >= 0 && tsign >= 0) mul(u, t, D.posInf, r.up) else D.ZERO
+      val b2 = if (dsign <= 0 && esign <= 0) mul(d, e, D.posInf, r.up) else D.ZERO
+      val b3 = if (dsign > 0 && tsign < 0) mul(d, t, D.negInf, r.up) else D.ZERO
+      val b4 = if (usign < 0 && esign > 0) mul(u, e, D.negInf, r.up) else D.ZERO
+      b1.max(b2).add(b3.min(b4), r.up)
+    }
 
-    val b1 = if (u.signum >= 0 && t.signum >= 0) mulU(u, t, D.posInf) else D.ZERO
-    val b2 = if (d.signum <= 0 && e.signum <= 0) mulU(d, e, D.posInf) else D.ZERO
-    val b3 = if (d.signum > 0 && t.signum < 0) mulU(d, t, D.negInf) else D.ZERO
-    val b4 = if (u.signum < 0 && e.signum > 0) mulU(u, e, D.negInf) else D.ZERO
-
-    Interval(max(a1, a2).add(min(a3, a4), r.down), max(b1, b2).add(min(b3, b4), r.up))
-
+    Interval(lower, upper)
   }
 
   /**
