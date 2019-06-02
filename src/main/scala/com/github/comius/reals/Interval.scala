@@ -46,6 +46,7 @@ final case class Interval(d: D.T, u: D.T) {
    * @return interval
    */
   def add(i2: Interval, r: RoundingContext): Interval = {
+
     val Interval(e, t) = i2
 
     Interval(negInfOnException(d.add(e, r.down)), posInfOnException(u.add(t, r.up)))
@@ -68,6 +69,7 @@ final case class Interval(d: D.T, u: D.T) {
    * @return interval
    */
   def subtract(i2: Interval, r: RoundingContext): Interval = {
+
     val Interval(e, t) = i2
     Interval(negInfOnException(d.subtract(t, r.down)), posInfOnException(u.subtract(e, r.up)))
   }
@@ -85,8 +87,11 @@ final case class Interval(d: D.T, u: D.T) {
    * @return interval
    */
   def multiplyMoore(i2: Interval, r: RoundingContext): Interval = {
+
     val Interval(e, t) = i2
+
     def min(x: D.T*) = x.reduce(_.min(_))
+
     def max(x: D.T*) = x.reduce(_.max(_))
 
     val lower = min(d.multiply(e, r.down), d.multiply(t, r.down), u.multiply(e, r.down), u.multiply(t, r.down))
@@ -113,6 +118,7 @@ final case class Interval(d: D.T, u: D.T) {
    * @return interval
    */
   def multiplyKaucher(i2: Interval, r: RoundingContext): Interval = {
+
     val Interval(e, t) = i2
     val signs = (d.signum, u.signum, e.signum, t.signum)
     def lower = signs match {
@@ -122,6 +128,7 @@ final case class Interval(d: D.T, u: D.T) {
       case (1, -1, 1, -1)                 => mul(d, e, D.posInf, r.down).max(mul(u, t, D.posInf, r.down))
       case (1, _, 1, _)                   => mul(d, e, D.posInf, r.down)
       case (_, -1, _, -1)                 => mul(u, t, D.posInf, r.down)
+      // Remaining two cases: (-1|0,1|0,1,-1) | (1,-1,-1|0,1|0)
       case _                              => D.ZERO
     }
 
@@ -132,6 +139,7 @@ final case class Interval(d: D.T, u: D.T) {
       case (1, -1, 1, -1)                 => mul(d, t, D.negInf, r.up).min(mul(u, e, D.negInf, r.up))
       case (1, _, _, -1)                  => mul(d, t, D.negInf, r.up)
       case (_, -1, 1, _)                  => mul(u, e, D.negInf, r.up)
+      // Remaining two cases: (-1|0,1|0,1,-1) | (1,-1,-1|0,1|0)
       case _                              => D.ZERO
     }
 
@@ -146,6 +154,7 @@ final case class Interval(d: D.T, u: D.T) {
    * @return interval
    */
   def multiplyLakayev(i2: Interval, r: RoundingContext): Interval = {
+
     val Interval(e, t) = i2
     val (dsign, usign, esign, tsign) = (d.signum, u.signum, e.signum, t.signum)
 
