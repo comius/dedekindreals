@@ -22,13 +22,39 @@ import com.github.comius.reals.syntax.Cut
 
 import com.github.comius.reals.syntax.Const
 import java.math.MathContext
+import com.github.comius.reals.syntax.Var
 
 object Examples {
   import Real._
   import com.github.comius.floats.Floats.{ impl => D }
 
+  // Definition of inverse using only multiplication.
+  def inverse(x: Real): Real = {
+    CutR('y, Exists('xu, D.negInf, D.posInf, x < 'xu && (('y * 'xu < 1 && 0 < x) || (1 < 'y * 'xu && 'y < 0))),
+      Exists('xd, D.negInf, D.posInf, 'xd < x && ((1 < 'y * 'xd && 0 < Var('y)) || ('y * 'xd < 1 && x < 0))))  
+  }
+  
+  def inverseR(x: Real): Real = {
+    // Because we know how to multiply, we don't need exists  
+    CutR('y, ('y * x < 1 && 0 < x) || (1 < 'y * x && x < 0),
+      (1 < 'y * x && 0 < x) || ('y * x < 1 && x < 0))
+  }
+  
   def main(args: Array[String]): Unit = {
-    //Eval2D.eval(Forall('x, 0, 1, Exists('y, 0, 1, 'x < 'y && 'y < 1)), 10)
+    
+    Eval.eval(inverseR(3), 3)
+    Eval.eval(inverseR(-3), 3)
+    Eval.eval(inverse(3), 3)
+    Eval.eval(inverse(-3), 3)
+
+    Eval2D.eval(inverseR(3), 3)
+    Eval2D.eval(inverseR(-3), 3)
+
+    //Eval2D.eval(inverse(-3), 3) // TODO bug
+    // Eval2D.eval(inverse(3), 3) // TODO bug
+    
+    
+    Eval2D.eval(Forall('x, 0, 1, Exists('y, 0, 1, 'x < 'y || 'y < 1)), 10)
 
     Eval2D.eval(Cut('y, -1, 2, Exists('x, 0, 1, 'y < 'x * (Const(1) - 'x)), Forall('x, 0, 1, 'x * (Const(1) - 'x) < 'y)), 10)
 
