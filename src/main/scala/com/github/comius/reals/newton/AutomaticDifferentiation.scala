@@ -28,6 +28,7 @@ import com.github.comius.reals.ForallDomain
 import com.github.comius.reals.CutDomain
 import com.github.comius.reals.syntax.Formula
 import com.github.comius.reals.syntax.Less
+import com.github.comius.reals.WholeDomain
 
 object AutomaticDifferentiation {
   import com.github.comius.floats.Floats.{ impl => D }
@@ -128,6 +129,7 @@ Loop: 14: Dyadic precision: 200, current value: 3.14[09,21], expr 2325415, time 
         val m = a.split(b); Interval(m, m)
       case ForallDomain(a, b) => Interval(a, b)
       case CutDomain(a, b)    => Interval(a, b)
+      case WholeDomain(a, b)    => Interval(a, b)
     }, Interval.ZERO))
   }
 
@@ -138,6 +140,7 @@ Loop: 14: Dyadic precision: 200, current value: 3.14[09,21], expr 2325415, time 
       case ForallDomain(a, b) =>
         val m = a.split(b); Interval(m, m)
       case CutDomain(a, b) => Interval(b, a)
+      case WholeDomain(a, b) => Interval(b, a)
     }, Interval.ZERO))
   }
 
@@ -215,6 +218,7 @@ Loop: 14: Dyadic precision: 200, current value: 3.14[09,21], expr 2325415, time 
    */
   def approximate(domain: VarDomain): Approximation[Interval] = domain match {
     case CutDomain(a, b) => Approximation(Interval(a, b), Interval(b, a))
+    case WholeDomain(a, b) => Approximation(Interval(a, b), Interval(b, a))
     case ExistsDomain(a, b) =>
       val m = a.split(b)
       Approximation(Interval(m, m), Interval(b, a))

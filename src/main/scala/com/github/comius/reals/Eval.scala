@@ -42,18 +42,18 @@ object Eval {
 
           case Exists(x, a, b, phi) =>
             val m = a.split(b)
-            val phi2 = refine(phi)(ctx + (x -> ExistsDomain(a, b)))
+            val phi2 = refine(phi)(ctx + (x -> WholeDomain(a, b)))
             if (phi2.isInstanceOf[ConstFormula])
               phi2
             else
-              Or(Exists(x, a, m, phi), Exists(x, m, b, phi))
+              Or(Exists(x, a, m, phi2), Exists(x, m, b, phi2))
           case Forall(x, a, b, phi) =>
             val m = a.split(b)
-            val phi2 = refine(phi)(ctx + (x -> ForallDomain(a, b)))
+            val phi2 = refine(phi)(ctx + (x -> WholeDomain(a, b)))
             if (phi2.isInstanceOf[ConstFormula])
               phi2
             else
-              And(Forall(x, a, m, phi), Forall(x, m, b, phi))
+              And(Forall(x, a, m, phi2), Forall(x, m, b, phi2))
 
           case And(x, y) =>
             refine(x) match {

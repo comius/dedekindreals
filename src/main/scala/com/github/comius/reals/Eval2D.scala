@@ -59,7 +59,7 @@ object Eval2D {
           case Less(x, y) => Less(refine(x), refine(y))
 
           case Exists(x, a, b, phi) =>
-            val phi2 = refine(phi)(ctx + (x -> ExistsDomain(a, b)))
+            val phi2 = refine(phi)(ctx + (x -> WholeDomain(a, b)))
             if (phi2.isInstanceOf[ConstFormula])
               phi2
             else {
@@ -72,7 +72,7 @@ object Eval2D {
                 .reduceOption[Formula](Or(_, _)).getOrElse(ConstFormula(!a1.lower.isInstanceOf[ConstraintSetNone]))
             }
           case Forall(x, a, b, phi) =>
-            val phi2 = refine(phi)(ctx + (x -> ForallDomain(a, b)))
+            val phi2 = refine(phi)(ctx + (x -> WholeDomain(a, b)))
             if (phi2.isInstanceOf[ConstFormula])
               phi2
             else {

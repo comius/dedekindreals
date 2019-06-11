@@ -20,6 +20,7 @@ sealed trait VarDomain {
   val upper: D.T
 }
 
+case class WholeDomain(lower: D.T, upper: D.T) extends VarDomain
 case class ExistsDomain(lower: D.T, upper: D.T) extends VarDomain
 case class CutDomain(lower: D.T, upper: D.T) extends VarDomain
 case class ForallDomain(lower: D.T, upper: D.T) extends VarDomain
