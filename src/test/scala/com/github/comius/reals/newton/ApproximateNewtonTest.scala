@@ -15,6 +15,7 @@ import com.github.comius.reals.Context
 import com.github.comius.reals.Interval
 import com.github.comius.reals.syntax.Const
 import com.github.comius.reals.syntax.Integrate
+import com.github.comius.reals.newton.AutomaticDifferentiation.Down
 
 class NewtonApproximationsTest {
   import ApproximateNewton._
@@ -38,8 +39,8 @@ class NewtonApproximationsTest {
 
   @Test
   def testIntegrate(): Unit = {
-    println("->" + AutomaticDifferentiation.evalr(Integrate('x, 0, 1, 'x * 'x))(Context(new RoundingContext(10, 10)))) // ([0,1],0) // ([0.000,0.5],0)
-
+    println("->" + AutomaticDifferentiation.evalr(Integrate('x, 0, 1, 'x * 'x))(
+        Context(new RoundingContext(10, 10)), Set(), Down)) // ([0,1],0) // ([0.000,0.5],0)
   }
 
 }

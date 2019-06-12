@@ -29,6 +29,8 @@ import com.github.comius.reals.syntax.Formula
 import com.github.comius.reals.syntax.Less
 import com.github.comius.reals.syntax.Or
 import com.github.comius.reals.syntax.Sub
+import com.github.comius.reals.newton.AutomaticDifferentiation.Down
+import com.github.comius.reals.newton.AutomaticDifferentiation.Up
 
 object ApproximateNewton extends Approximations {
   import com.github.comius.floats.Floats.{ impl => D }
@@ -48,9 +50,9 @@ object ApproximateNewton extends Approximations {
       val xm = i.d.split(i.u)
       val xi = Interval(xm, xm)
       // value at the middle point, we don't need interval
-      val a @ (Interval(lf, _), _) = AutomaticDifferentiation.evalr(Sub(y, x))(AutomaticDifferentiation.extendContextLower(ctx) + (x0, (xi, Interval.ZERO)))
+      val a @ (Interval(lf, _), _) = AutomaticDifferentiation.evalr(Sub(y, x))(ctx + (x0, CutDomain(xm,xm)), Set(), Down)
       // derivative over the whole interval
-      val b @ (_, Interval(ld, ud)) = AutomaticDifferentiation.evalr(Sub(y, x))(AutomaticDifferentiation.extendContextLower(ctx) + (x0, (i, Interval.ONE)))
+      val b @ (_, Interval(ld, ud)) = AutomaticDifferentiation.evalr(Sub(y, x))(ctx + (x0, CutDomain(i.d, i.u)), Set(x0), Down)
 
       val divU: (D.T, D.T) => D.T = _.divide(_, ctx.roundingContext.up)
       val divD: (D.T, D.T) => D.T = _.divide(_, ctx.roundingContext.down)
@@ -76,9 +78,9 @@ object ApproximateNewton extends Approximations {
       val lwr = ConstraintSet(Interval(i.d, i.u), xm, lowerRay(lf, ud), lowerRay(lf, ld))
 
       // value at the middle point, we don't need interval
-      val (Interval(uf, _), _) = AutomaticDifferentiation.evalr(Sub(y, x))(AutomaticDifferentiation.extendContextUpper(ctx) + (x0, (xi, Interval.ZERO)))
+      val (Interval(uf, _), _) = AutomaticDifferentiation.evalr(Sub(y, x))(ctx + (x0, CutDomain(xm, xm)), Set(), Up)
       // derivative over the whole interval
-      val (_, Interval(uld, uud)) = AutomaticDifferentiation.evalr(Sub(y, x))(AutomaticDifferentiation.extendContextUpper(ctx) + (x0, (i, Interval.ONE)))
+      val (_, Interval(uld, uud)) = AutomaticDifferentiation.evalr(Sub(y, x))(ctx + (x0, CutDomain(i.d, i.u)), Set(x0), Up)
 
       val upr = ConstraintSet(Interval(i.d, i.u), xm, upperRay(uf, uld), upperRay(uf, uud))
       Approximation(lwr, upr)

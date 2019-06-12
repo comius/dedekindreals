@@ -21,6 +21,8 @@ import com.github.comius.reals.Interval
 import com.github.comius.reals.TestUtil.forall
 import com.github.comius.reals.syntax.Const
 import com.github.comius.reals.syntax.Real
+import com.github.comius.reals.newton.AutomaticDifferentiation.Down
+import com.github.comius.reals.CutDomain
 
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class ApproximateNewtonSpec extends Properties("ApproximateNewton") {
@@ -30,7 +32,7 @@ class ApproximateNewtonSpec extends Properties("ApproximateNewton") {
 
   private def in(x: D.T, f: Real): Boolean = {
     AutomaticDifferentiation.evalr(f)(
-      Context(r, Map(('x, (Interval(x, x), Interval.ZERO)))))._1.d.signum() > 0
+      Context(r, Map(('x, CutDomain(x, x)))), Set('x), Down)._1.d.signum() > 0
   }
 
   val funcsLinear = List[Real](Const(0), Const(1), Const(-1), 'x, Const(0) - 'x, 'x + 1, 'x - 1,
