@@ -112,27 +112,6 @@ object AutomaticDifferentiation {
     }
   }
 
-  def extendContextLower(ctx: Context[VarDomain]): Context[(Interval, Interval)] = {
-    ctx.mapValues(v => (v match {
-      case ExistsDomain(a, b) =>
-        val m = a.split(b); Interval(m, m)
-      case ForallDomain(a, b) => Interval(a, b)
-      case CutDomain(a, b)    => Interval(a, b)
-      case WholeDomain(a, b)  => Interval(a, b)
-    }, Interval.ZERO))
-  }
-
-  def extendContextUpper(ctx: Context[VarDomain]): Context[(Interval, Interval)] = {
-    ctx.mapValues(v => (v match {
-      case ExistsDomain(a, b) =>
-        Interval(b, a)
-      case ForallDomain(a, b) =>
-        val m = a.split(b); Interval(m, m)
-      case CutDomain(a, b)   => Interval(b, a)
-      case WholeDomain(a, b) => Interval(b, a)
-    }, Interval.ZERO))
-  }
-
   /**
    * Lifts a binary operation on intervals to 'approximating two expressions and returning an approximation'.
    *
