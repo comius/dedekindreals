@@ -39,62 +39,37 @@ object AutomaticDifferentiation {
   case object Up extends IntervalRoundMode
 
   def liftr(op: (A, A, RoundingContext) => A)(x: Real, y: Real)(implicit ctx: Context[VarDomain], variables: Set[Symbol],
-                        roundMode: IntervalRoundMode): A = {
+                                                                roundMode: IntervalRoundMode): A = {
     val l1 = evalr(x)
     val l2 = evalr(y)
     op(l1, l2, ctx.roundingContext)
   }
 
   def cutdiff(f: Formula, z: Symbol, zv: Interval)(implicit ctx: Context[VarDomain], variables: Set[Symbol],
-                        roundMode: IntervalRoundMode): Interval = f match {
+                                                   roundMode: IntervalRoundMode): Interval = f match {
     case Less(a, b) => {
-     
+
       val l = Sub(a, b)
       val dfdz = evalr(l)(ctx + (z, CutDomain(zv.d, zv.u)), variables - z, roundMode)._2
       val dfdx = evalr(l)(ctx + (z, CutDomain(zv.d, zv.u)), variables, roundMode)._2
       val r = dfdz.divide(dfdx, ctx.roundingContext).negate
-      //println(s"cutdiff> $f $zv $r $dfdz $dfdx ${ctx.vars}")
+      // println(s"cutdiff> $f $zv $r $dfdz $dfdx ${ctx.vars}")
+      // TODO workaround
       if (r == Interval(D.negInf, D.posInf)) Interval.ZERO else r
     }
 
   }
 
-  /*
-   * Evaluating: Mul(Integrate('x,0,1,Cut('y,[0,1],Less(Add(Mul('x,'x),Mul('y,'y)),1),Less(1,Add(Mul('x,'x),Mul('y,'y))))),4)
-Loop: 0: Dyadic precision: 200, current value: [0.000,4.0], expr 108, time 344
-Loop: 1: Dyadic precision: 200, current value: [1.2,4.3], expr 222, time 94
-Loop: 2: Dyadic precision: 200, current value: [2.1,4.3], expr 452, time 78
-Loop: 3: Dyadic precision: 200, current value: [2.4,3.7], expr 931, time 62
-Loop: 4: Dyadic precision: 200, current value: [2.8,3.6], expr 1899, time 94
-Loop: 5: Dyadic precision: 200, current value: [2.9,3.4], expr 3868, time 110
-Loop: 6: Dyadic precision: 200, current value: 3.[05,27], expr 7883, time 143
-Loop: 7: Dyadic precision: 200, current value: 3.[08,20], expr 16089, time 265
-Loop: 8: Dyadic precision: 200, current value: 3.1[12,75], expr 32712, time 438
-Loop: 9: Dyadic precision: 200, current value: 3.1[29,62], expr 66606, time 797
-Loop: 10: Dyadic precision: 200, current value: 3.1[34,51], expr 135845, time 2404
-Loop: 11: Dyadic precision: 200, current value: 3.1[37,47], expr 276276, time 2433
-Loop: 12: Dyadic precision: 200, current value: 3.14[00,43], expr 561371, time 3617
-Loop: 13: Dyadic precision: 200, current value: 3.14[05,26], expr 1143155, time 7491
-Loop: 14: Dyadic precision: 200, current value: 3.14[09,21], expr 2325415, time 14516
-   */
-
   def evalr(expr: Real)(implicit ctx: Context[VarDomain], variables: Set[Symbol],
                         roundMode: IntervalRoundMode): (Interval, Interval) = {
 
     expr match {
-      case Cut(z, a, b, l, u) => {
-        /*     val t1 = ApproximateNewton.estimate(l)(ctx, x, Interval(a, b))
-      val t2 = ApproximateNewton.estimate(u)(ctx, x, Interval(a, b))
-      val a3 = t1.lower.supremum() //.max(t2.upper.infimum())
-      val b3 = t2.lower.infimum() //.min(t1.upper.supremum())
-      // TODO find bugs
-      //println(s"debug> ${Interval(a3,b3)} ${t1.lower} ${t2.lower}")
-      val an = a2.max(a3)
-      val bn = b2.min(b3)
-*/
-        (Interval(a, b), cutdiff(l, z, Interval(a, b)))
-
-      }
+      case Cut(z, a, b, l, u) =>
+        val t1 = ApproximateNewton.estimate(l)(ctx, z, Interval(a, b))
+        val t2 = ApproximateNewton.estimate(u)(ctx, z, Interval(a, b))
+        val a3 = t1.lower.supremum()
+        val b3 = t2.lower.infimum()        
+        (Interval(a3, b3), cutdiff(l, z, Interval(a, b)))
       case CutR(z, l, _, _, _) => (Interval(D.negInf, D.posInf), cutdiff(l, z, Interval(D.negInf, D.posInf)))
       case Const(a)            => (Interval(a, a), Interval.ZERO)
       case Add(x, y) =>
@@ -113,7 +88,7 @@ Loop: 14: Dyadic precision: 200, current value: 3.14[09,21], expr 2325415, time 
 
         val rc = ctx.roundingContext
 
-        val l1 = evalr(e)(ctx + (x, CutDomain(xm,xm)), variables, roundMode)
+        val l1 = evalr(e)(ctx + (x, CutDomain(xm, xm)), variables, roundMode)
         val dl1 = evalr(e)(ctx + (x, CutDomain(a, b)), variables + x, roundMode)
         val ddl1 = dl1._2.subtract(dl1._2, rc)
         val ba = Interval(b, b).subtract(Interval(a, a), rc)
@@ -188,7 +163,7 @@ Loop: 14: Dyadic precision: 200, current value: 3.14[09,21], expr 2325415, time 
     case Cut(_, a, b, _, _)  => Approximation(Interval(a, b), Interval(b, a))
     case CutR(_, _, _, _, _) => Approximation(Interval(D.negInf, D.posInf), Interval(D.posInf, D.negInf))
     case Integrate(x, a, b, e) =>
-      val xm = a.split(b)      
+      val xm = a.split(b)
       val i8 = Interval(D.valueOf(8), D.valueOf(8))
 
       val lower = {
@@ -202,10 +177,10 @@ Loop: 14: Dyadic precision: 200, current value: 3.14[09,21], expr 2325415, time 
         ba.multiply(l1._1, rc).add(ba28.multiply(ddl1, rc), rc)
       }
       val upper = {
-        val rc = ctx.roundingContext.swap        
+        val rc = ctx.roundingContext.swap
         val l1 = evalr(e)(ctx + (x, CutDomain(xm, xm)), Set(), Up)
         val dl1 = evalr(e)(ctx + (x, CutDomain(a, b)), Set(x), Up)
-        
+
         val ddl1 = dl1._2.subtract(dl1._2, rc)
         val ba = Interval(b, b).subtract(Interval(a, a), rc)
         val ba28 = ba.multiply(ba, rc).divide(i8, rc)
