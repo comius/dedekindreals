@@ -23,6 +23,7 @@ import com.github.comius.reals.syntax.Const
 import com.github.comius.reals.syntax.Real
 import com.github.comius.reals.newton.AutomaticDifferentiation.Down
 import com.github.comius.reals.CutDomain
+import com.github.comius.reals.TestUtil
 
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class ApproximateNewtonSpec extends Properties("ApproximateNewton") {
@@ -32,18 +33,18 @@ class ApproximateNewtonSpec extends Properties("ApproximateNewton") {
 
   private def in(x: D.T, f: Real): Boolean = {
     AutomaticDifferentiation.evalr(f)(
-      Context(r, Map(('x, CutDomain(x, x)))), Set('x), Down)._1.d.signum() > 0
+      Context(r, Map(("x", CutDomain(x, x)))), Set("x"), Down)._1.d.signum() > 0
   }
 
-  val funcsLinear = List[Real](Const(0), Const(1), Const(-1), 'x, Const(0) - 'x, 'x + 1, 'x - 1,
-    Const(0) - 'x + 1, Const(0) - 'x - 1)
+  val funcsLinear = List[Real](Const(0), Const(1), Const(-1), "x", Const(0) - "x", "x" + 1, "x" - 1,
+    Const(0) - "x" + 1, Const(0) - "x" - 1)
 
   val i = Interval(-1, 1)
 
-  property("linearFunctions") = forall(funcsLinear) { f =>
+  property("linearFunctions") = TestUtil.forall(funcsLinear) { f =>
 
     val Approximation(lower, upper) =
-      ApproximateNewton.estimate(0 < f)(Context(r), 'x, i)
+      ApproximateNewton.estimate(0 < f)(Context(r), "x", i)
     // println(s"$f $lower $upper")
     forAll(FloatsSpec.genFloatInterval(i)) { x =>
       (ConstraintSetSpec.in(x, lower) == in(x, f) &&

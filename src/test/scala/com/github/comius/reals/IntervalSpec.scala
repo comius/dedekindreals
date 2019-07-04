@@ -72,16 +72,32 @@ class IntervalSpec extends Properties("Interval") {
   /**
    * Checks that interval {@code i2} approximates interval {@code i1}.
    *
-   * Special case are infinite endpoints which approximate them-selves.
+   * Special case is bottom that approximates itself.
    *
    * @param i1 interval
    * @param i2 interval
    * @return {@code i1} >> {@code i2}
    */
   private def approx(i1: Interval, i2: Interval) = {
-    (i1.d.compareTo(i2.d) > 0 || (i1.d == i2.d && !i1.d.isRegularNumber())) &&
-      (i2.u.compareTo(i1.u) > 0 || (i1.u == i2.u && !i1.u.isRegularNumber()))
+    (i1.d.compareTo(i2.d) > 0 || (i1.d == i2.d && i1.d.isNegInf())) &&
+      (i2.u.compareTo(i1.u) > 0 || (i1.u == i2.u && i1.u.isPosInf()))
   }
+
+  // Compute intervals only a bit above xp, yp
+  def makeApprox(i: Interval, eps: D.T, mc: MathContext) =
+    Interval(
+      if (!i.d.isPosInf) i.d.subtract(eps, mc) else FloatsSpec.genRegularFloat.sample.get,
+      if (!i.u.isNegInf) i.u.add(eps, mc) else FloatsSpec.genRegularFloat.sample.get)
+
+  def makeApprox2(i: Interval, eps: D.T, mc: MathContext) =
+    Interval(
+      if (!i.d.isNegInf) i.d.add(eps, mc) else FloatsSpec.genRegularFloat.sample.get,
+      if (!i.u.isPosInf) i.u.subtract(eps, mc) else FloatsSpec.genRegularFloat.sample.get)
+
+  def makeApprox3(i: Interval, eps: D.T, mc: MathContext, i2: Interval) =
+    Interval(
+      if (!i.d.isPosInf) i.d.subtract(eps, mc) else i2.d.subtract(eps, mc),
+      if (!i.u.isNegInf) i.u.add(eps, mc) else i2.u.add(eps, mc))
 
   val bigPrecision = 500
   private val eps = D.valueOfEpsilon(bigPrecision) // small eps
@@ -104,7 +120,7 @@ class IntervalSpec extends Properties("Interval") {
     {
       val xy = op(x, y)
 
-      val xp = Interval(x.d.subtract(eps, mc), x.u.add(eps, mc))
+      val xp = makeApprox(x, eps, mc)
 
       // When 0 is in the interval we need to approximate it with infinities:
       val yp = if (op == divide) {
@@ -113,16 +129,16 @@ class IntervalSpec extends Properties("Interval") {
         } else if (y.d.compareTo(D.ZERO) >= 0 && D.ZERO.compareTo(y.u) >= 0) {
           Interval(D.posInf, D.negInf)
         } else {
-          Interval(y.d.subtract(eps, mc), y.u.add(eps, mc))
+          makeApprox(y, eps, mc)
         }
       } else {
-        Interval(y.d.subtract(eps, mc), y.u.add(eps, mc))
+        makeApprox(y, eps, mc)
       }
 
       val xpyp = op(xp, yp)
       val eps3 =
         if (op == divide) D.valueOfEpsilon(-hugePrecision) else eps2 // We need huge EPS because for division
-      val w = Interval(xy.d.subtract(eps3, mc), xy.u.add(eps3, mc)) // xy >> w
+      val w = makeApprox3(xy, eps3, mc, xpyp) // xy >> w
       approx(xpyp, w) :| s" not $xp*$yp=$xpyp >> $w, $x*$y=$xy >> $w"
     }
 
@@ -141,15 +157,12 @@ class IntervalSpec extends Properties("Interval") {
     {
       val xpyp = op(xp, yp)
       // Go a bit below xp op yp, this handles a special case when result is precise, i.e [0,0]
-      val w = Interval(xpyp.d.subtract(eps2, mc), xpyp.u.add(eps2, mc))
+      val w = makeApprox(xpyp, eps2, mc)
+
       assert(approx(xpyp, w))
 
-      // Compute intervals only a bit above xp,yp
-      def liftD(x: D.T) = if (!x.isNegInf) x else FloatsSpec.genRegularFloat.sample.get
-      def liftU(x: D.T) = if (!x.isPosInf) x else FloatsSpec.genRegularFloat.sample.get
-
-      val x = Interval(liftD(xp.d.add(eps, mc)), liftU(xp.u.subtract(eps, mc)))
-      val y = Interval(liftD(yp.d.add(eps, mc)), liftU(yp.u.subtract(eps, mc)))
+      val x = makeApprox2(xp, eps, mc)
+      val y = makeApprox2(yp, eps, mc)
 
       // Verify intervals approximated by xp and yp that are 'only a bit above'
       (approx(op(x, y), w) :| s" not ${op(x, y)} >> ${w}" &&
@@ -203,12 +216,12 @@ class IntervalSpec extends Properties("Interval") {
         } else if (x.d.compareTo(D.ZERO) >= 0 && D.ZERO.compareTo(x.u) >= 0) {
           Interval(D.posInf, D.negInf)
         } else {
-          Interval(x.d.subtract(eps, mc), x.u.add(eps, mc))
+          makeApprox(x, eps, mc)
         }
 
       val xpyp = op(xp)
       val eps3 = D.valueOfEpsilon(-hugePrecision)
-      val w = Interval(xy.d.subtract(eps3, mc), xy.u.add(eps3, mc)) // xy >> w
+      val w = makeApprox(xy, eps3, mc) // xy >> w
       approx(xpyp, w) :| s" not ${xpyp} >> ${w} ${xpyp.d.compareTo(w.d)} ${w.u.compareTo(xpyp.u)}"
     }
 
@@ -216,14 +229,10 @@ class IntervalSpec extends Properties("Interval") {
     {
       val xpyp = op(xp)
       // Go a bit below op xp, this handles a special case when result is precise, i.e [0,0]
-      val w = Interval(xpyp.d.subtract(eps2, mc), xpyp.u.add(eps2, mc))
+      val w = makeApprox(xpyp, eps2, mc)
       assert(approx(xpyp, w))
 
-      // Compute intervals only a bit above xp,yp
-      def liftD(x: D.T) = if (!x.isNegInf) x else FloatsSpec.genRegularFloat.sample.get
-      def liftU(x: D.T) = if (!x.isPosInf) x else FloatsSpec.genRegularFloat.sample.get
-
-      val x = Interval(liftD(xp.d.add(eps, mc)), liftU(xp.u.subtract(eps, mc)))
+      val x = makeApprox2(xp, eps, mc)
 
       // Verify intervals approximated by xp that are 'only a bit above'
       (approx(op(x), w) :| s" not ${op(x)} >> ${w}" &&

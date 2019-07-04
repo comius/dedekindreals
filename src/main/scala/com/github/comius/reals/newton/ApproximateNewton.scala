@@ -36,14 +36,14 @@ object ApproximateNewton extends Approximations {
   import com.github.comius.floats.Floats.{ impl => D }
 
   private def lift(op: (ConstraintSet, ConstraintSet) => ConstraintSet)(
-    x: Formula, y: Formula)(implicit ctx: Context[VarDomain], x0: Symbol, i: Interval): Approximation[ConstraintSet] =
+    x: Formula, y: Formula)(implicit ctx: Context[VarDomain], x0: String, i: Interval): Approximation[ConstraintSet] =
     {
       val Approximation(l1, u1) = estimate(x)
       val Approximation(l2, u2) = estimate(y)
       Approximation(op(l1, l2), op(u1, u2))
     }
 
-  def estimate(formula: Formula)(implicit ctx: Context[VarDomain], x0: Symbol,
+  def estimate(formula: Formula)(implicit ctx: Context[VarDomain], x0: String,
                                  i: Interval): Approximation[ConstraintSet] = formula match {
     case Less(x, y) =>
 

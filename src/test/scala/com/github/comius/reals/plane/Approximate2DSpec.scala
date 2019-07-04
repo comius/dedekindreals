@@ -22,11 +22,11 @@ import com.github.comius.reals.syntax.Const
 import com.github.comius.reals.syntax.Real.bigDecimal2Const
 import com.github.comius.reals.syntax.Real.int2BigDecimal
 import com.github.comius.reals.syntax.Real.int2Const
-import com.github.comius.reals.syntax.Real.symbol2Var
 import com.github.comius.reals.Interval
 import com.github.comius.reals.Context
 import com.github.comius.reals.VarDomain
 import com.github.comius.reals.Approximation
+import com.github.comius.reals.syntax.Var
 
 @RunWith(classOf[org.scalacheck.contrib.ScalaCheckJUnitPropertiesRunner])
 class Approximate2DSpec extends Properties("Approximate2d") {
@@ -37,7 +37,7 @@ class Approximate2DSpec extends Properties("Approximate2d") {
 
   property("lowerApproximate") = forAll(gen01Float, gen01Float, gen01Float) {
     (a: D.T, b: D.T, c: D.T) =>
-      val Approximation(l, u) = Approximate2D.estimate(0 < 'x * a + 'y * b - c, 'x -> i01, 'y -> i01)(ctx0)
+      val Approximation(l, u) = Approximate2D.estimate(0 < Var("x") * a + Var("y") * b - c, "x" -> i01, "y" -> i01)(ctx0)
       forAll(gen01Float, gen01Float) {
         (x: D.T, y: D.T) =>
 
@@ -46,8 +46,8 @@ class Approximate2DSpec extends Properties("Approximate2d") {
       }
   }
 
-  val Approximation(l, u) = // Approximate2D.refine('y+Const(5)*'x*'y < 'x * (Const(1) - 'x), cs0, 'x, 'y)(ctx0)
-    Approximate2D.estimate('y < 'x * (Const(1) - 'x), 'x -> i01, 'y -> i01)(ctx0)
+  val Approximation(l, u) = // Approximate2D.refine("y"+Const(5)*"x"*"y" < "x" * (Const(1) - "x"), cs0, "x", "y")(ctx0)
+    Approximate2D.estimate(Var("y") < Var("x") * (Const(1) - "x"), "x" -> i01, "y" -> i01)(ctx0)
   println(l)
   println(u)
 

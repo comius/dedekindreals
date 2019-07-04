@@ -109,8 +109,8 @@ object Eval2D {
     }
   }
 
-  def approximate2(f: Formula, x0: (Symbol, Interval),
-                   y0: (Symbol, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet2D] = f match {
+  def approximate2(f: Formula, x0: (String, Interval),
+                   y0: (String, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet2D] = f match {
     case Less(x, y) =>
       Approximate2D.estimate(Less(x, y), x0, y0)
 
@@ -128,7 +128,7 @@ object Eval2D {
 
   def approximate1(
     f:  Formula,
-    x0: (Symbol, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet] = f match {
+    x0: (String, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet] = f match {
     case Exists(x, a, b, phi) =>
       val Approximation(l, u) = approximate2(phi, x0, x -> Interval(a, b))
       // println("exists l: "+ l)

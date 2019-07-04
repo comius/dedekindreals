@@ -10,10 +10,10 @@ package com.github.comius.reals
 
 import com.github.comius.RoundingContext
 
-case class Context[T](roundingContext: RoundingContext, vars: Map[Symbol, T] = Map[Symbol, T]()) {
-  def +(p: (Symbol, T)): Context[T] = copy(vars = vars + p) // scalastyle:ignore method.name
+case class Context[T](roundingContext: RoundingContext, vars: Map[String, T] = Map[String, T]()) {
+  def +(p: (String, T)): Context[T] = copy(vars = vars + p) // scalastyle:ignore method.name
 
-  def +(s: Symbol, v: T): Context[T] = copy(vars = vars + ((s, v))) // scalastyle:ignore method.name
+  def +(s: String, v: T): Context[T] = copy(vars = vars + ((s, v))) // scalastyle:ignore method.name
 
   def mapValues[B](f: T => B): Context[B] =
     Context(roundingContext, vars.mapValues(f))

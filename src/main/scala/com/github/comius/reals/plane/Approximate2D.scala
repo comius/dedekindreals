@@ -22,8 +22,8 @@ import com.github.comius.reals.syntax.Sub
 
 object Approximate2D extends Approximations {
   // given f and search space, returns new lower and upper approximation and new search space (one iteration)
-  def estimate(lss: Less, x0: (Symbol, Interval),
-               y0: (Symbol, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet2D] = {
+  def estimate(lss: Less, x0: (String, Interval),
+               y0: (String, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet2D] = {
 
     val (xs, xi) = x0
     val (ys, yi) = y0

@@ -55,7 +55,7 @@ case class Const(a: D.T) extends Real {
  *
  * @param name name of the variable.
  */
-case class Var(name: Symbol) extends Real {
+case class Var(name: String) extends Real {
   override def toString: String = name.toString
 }
 
@@ -72,18 +72,18 @@ case class Mul(x: Real, y: Real) extends Real
 case class Div(x: Real, y: Real) extends Real
 
 /** Cut. */
-case class Cut(x: Symbol, a: D.T, b: D.T, lower: Formula, upper: Formula) extends Real {
+case class Cut(x: String, a: D.T, b: D.T, lower: Formula, upper: Formula) extends Real {
   override def toString: String = {
     s"Cut(${x},${Interval(a, b)},${lower},${upper})"
   }
 }
 
 /** Cut over R. */
-case class CutR(x: Symbol, lower: Formula, upper: Formula,
+case class CutR(x: String, lower: Formula, upper: Formula,
                 a: D.T = D.valueOf(-1), b: D.T = D.valueOf(1)) extends Real
 
 /** Integration. */
-case class Integrate(x: Symbol, a: D.T, b: D.T, expr: Real) extends Real
+case class Integrate(x: String, a: D.T, b: D.T, expr: Real) extends Real
 
 /* Constructors for Formula: constants, logical operations, forall, exists. */
 
@@ -91,8 +91,8 @@ case class ConstFormula(b: Boolean) extends Formula
 case class Less(x: Real, y: Real) extends Formula
 case class And(x: Formula, y: Formula) extends Formula
 case class Or(x: Formula, y: Formula) extends Formula
-case class Forall(x: Symbol, a: D.T, b: D.T, phi: Formula) extends Formula
-case class Exists(x: Symbol, a: D.T, b: D.T, phi: Formula) extends Formula
+case class Forall(x: String, a: D.T, b: D.T, phi: Formula) extends Formula
+case class Exists(x: String, a: D.T, b: D.T, phi: Formula) extends Formula
 
 /**
  * Helper class that provides implicit conversions for integers to constants.
@@ -112,11 +112,27 @@ object Real {
     Const(D.valueOf(x))
   }
 
-  implicit def str2Const(x: String): Const = {
-    Const(D.valueOf(x, MathContext.UNLIMITED))
-  }
-
-  implicit def symbol2Var(name: Symbol): Var = {
+  implicit def str2Var(name: String): Var = {
     Var(name)
+  }
+  
+  def exists(x: String, a: D.T, b: D.T, phi: Real => Formula) = {
+    Exists(x,a,b,phi(Var(x)))
+  }
+  
+  def forall(x: String, a: D.T, b: D.T, phi: Real => Formula) = {
+    Forall(x,a,b,phi(Var(x)))
+  }
+  
+  def cut(x: String, a: D.T, b: D.T, lower: Real => Formula, upper: Real => Formula) = {
+    Cut(x, a, b, lower(Var(x)), upper(Var(x)))
+  }
+  
+  def cut(x: String, lower: Real => Formula, upper: Real => Formula) = {
+    CutR(x, lower(Var(x)), upper(Var(x)))
+  }
+  
+  def integrate(x: String, a: D.T, b: D.T, expr: Real => Real) = {
+    Integrate(x, a, b, expr(Var(x)))
   }
 }

@@ -38,14 +38,14 @@ object AutomaticDifferentiation {
   case object Down extends IntervalRoundMode
   case object Up extends IntervalRoundMode
 
-  def liftr(op: (A, A, RoundingContext) => A)(x: Real, y: Real)(implicit ctx: Context[VarDomain], variables: Set[Symbol],
+  def liftr(op: (A, A, RoundingContext) => A)(x: Real, y: Real)(implicit ctx: Context[VarDomain], variables: Set[String],
                                                                 roundMode: IntervalRoundMode): A = {
     val l1 = evalr(x)
     val l2 = evalr(y)
     op(l1, l2, ctx.roundingContext)
   }
 
-  def cutdiff(f: Formula, z: Symbol, zv: Interval)(implicit ctx: Context[VarDomain], variables: Set[Symbol],
+  def cutdiff(f: Formula, z: String, zv: Interval)(implicit ctx: Context[VarDomain], variables: Set[String],
                                                    roundMode: IntervalRoundMode): Interval = f match {
     case Less(a, b) => {
 
@@ -60,7 +60,7 @@ object AutomaticDifferentiation {
 
   }
 
-  def evalr(expr: Real)(implicit ctx: Context[VarDomain], variables: Set[Symbol],
+  def evalr(expr: Real)(implicit ctx: Context[VarDomain], variables: Set[String],
                         roundMode: IntervalRoundMode): (Interval, Interval) = {
 
     expr match {

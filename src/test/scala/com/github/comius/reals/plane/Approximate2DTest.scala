@@ -14,6 +14,7 @@ import com.github.comius.reals.VarDomain
 import com.github.comius.reals.Interval
 import com.github.comius.reals.Context
 import com.github.comius.reals.plane.ConstraintSet2D.ConvexHull
+import com.github.comius.reals.syntax.Var
 
 class Approximate2dTest {
   import com.github.comius.reals.syntax.Real._
@@ -34,7 +35,7 @@ class Approximate2dTest {
     // def refine(lss: Less, search: ConstraintSet2D, xs: Symbol, ys: Symbol)(implicit ctx: Context[VarDomain]): (Approximation[ConstraintSet2D], ConstraintSet2D) = {
 
     implicit val ctx = Context[VarDomain](new RoundingContext(0, 10))
-    println(Approximate2D.estimate('y < 1, 'x -> Interval(0, 2), 'y -> Interval(0, 2)))
+    println(Approximate2D.estimate(Var("y") < 1, "x" -> Interval(0, 2), "y" -> Interval(0, 2)))
 
   }
 
