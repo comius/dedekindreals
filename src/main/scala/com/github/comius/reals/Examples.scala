@@ -41,6 +41,12 @@ object Examples {
   }
   
   def main(args: Array[String]): Unit = {
+    val a = Const(77617.0) 
+    val b = Const(33096.0)
+    Eval.eval(Const(333.75) * b*b*b*b*b*b + a*a * (11*a*a * b*b - b*b*b* b*b*b - 121 * b*b*b*b - 2) + Const(5.5) * b*b*b*b*b*b*b*b + a/(2*b), 10)
+    
+    Eval.eval(cut("x", 1, 2, x => x < 1 + 1/x, x => 1 + 1/x < x), 10)
+    Eval.eval(cut("x", 0, 2, x => cut("y", 0, 2, y => y < x, y => x < y) < 1, x => 1 < x), 10)
     
     Eval.eval(inverseR(3), 3)
     Eval.eval(inverseR(-3), 3)

@@ -235,6 +235,15 @@ trait Floats {
   def valueOf(i: Long): T
 
   /**
+   * Constructs T from a Double.
+   *
+   * @param d
+   *            double number
+   * @return T
+   */
+  def valueOf(d: Double): T
+  
+  /**
    * Constructs T from a String, with rounding according to the context settings.
    *
    * @param s

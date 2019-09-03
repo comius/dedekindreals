@@ -165,6 +165,11 @@ object BigDecimalFloats extends Floats {
     Number(BigDecimal.valueOf(i))
   }
 
+  override def valueOf(d: Double): BigDecimalFloat = {
+    // TODO sanitize
+    Number(BigDecimal.valueOf(d))
+  }
+  
   override def valueOf(s: String, mc: MathContext): BigDecimalFloat = {
     Number(new BigDecimal(s, mc))
   }

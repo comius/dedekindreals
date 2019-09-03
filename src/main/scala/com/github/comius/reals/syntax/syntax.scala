@@ -104,6 +104,10 @@ object Real {
     D.valueOf(x)
   }
 
+  implicit def double2BigDecimal(x: Double): D.T = {
+    D.valueOf(x)
+  }
+
   implicit def bigDecimal2Const(x: D.T): Const = {
     Const(x)
   }
