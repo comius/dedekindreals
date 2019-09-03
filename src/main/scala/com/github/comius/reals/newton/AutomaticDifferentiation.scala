@@ -96,6 +96,7 @@ object AutomaticDifferentiation {
 
         (ba.multiply(l1._1, rc).add(ba28.multiply(ddl1, rc), rc), l1._2.multiply(ba, rc))
       case Var(name) =>
+        if (ctx.vars.get(name) == None) throw new Exception(s"Variable ${name} not found.")
         val Some(value) = ctx.vars.get(name)
         ((roundMode, value) match {
           case (Down, ExistsDomain(a, b)) =>

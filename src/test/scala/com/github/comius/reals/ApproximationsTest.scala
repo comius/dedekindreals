@@ -115,7 +115,7 @@ class ApproximationsTest {
     test(Exists("x", D.negInf, 420, Const(420) + Const(5) < "x"), false)
 
     testna(Exists("x", 1, 3, Const(2) < "x"))
-    testna(Exists("x", 0, 1, "0.5" < "x" * (Const(1) - "x")))
+    testna(Exists("x", 0, 1, Const(0.5) < "x" * (Const(1) - "x")))
   }
 
   /**
