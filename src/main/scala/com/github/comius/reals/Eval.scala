@@ -31,6 +31,57 @@ object Eval {
   import AproximateSimple._
   import com.github.comius.floats.Floats.{ impl => D }
 
+  trait Refine[-A, +B] {
+    def refine(e: A)(implicit ctx: Context[VarDomain]): B
+  }
+  
+  implicit object RefineCut extends Refine[Cut, Cut] {  
+    def refine(cut: Cut)(implicit ctx: Context[VarDomain]): Cut = {
+        val Cut(x, a, b, l, u) = cut
+        
+        val (m1, m2) = a.trisect(b, ctx.roundingContext.up.getPrecision)
+        val a2 = if (approximate(l)(ctx + (x -> CutDomain(m1, m1))).lower) m1 else a
+        val b2 = if (approximate(u)(ctx + (x -> CutDomain(m2, m2))).lower) m2 else b
+        //Cut(x, a2,b2, refine(l)(ctx + (x -> CutDomain(a2, b2))), refine(u)(ctx + (x -> CutDomain(a2, b2))))
+  
+        val t1 = ApproximateNewton.estimate(l)(ctx, x, Interval(a, b))
+        val t2 = ApproximateNewton.estimate(u)(ctx, x, Interval(a, b))
+        val a3 = t1.lower.supremum() //.max(t2.upper.infimum())
+        val b3 = t2.lower.infimum() //.min(t1.upper.supremum())
+        // TODO find bugs
+        //println(s"debug> ${Interval(a3,b3)} ${t1.lower} ${t2.lower}")
+        val an = a2.max(a3)
+        val bn = b2.min(b3)
+  
+        Cut(x, an, bn, Eval.refine(l)(ctx + (x -> CutDomain(an, bn))), Eval.refine(u)(ctx + (x -> CutDomain(an, bn))))
+    }
+  }
+  
+  implicit object RefineExists extends Refine[Exists, Formula] {  
+    def refine(exists: Exists)(implicit ctx: Context[VarDomain]): Formula = {
+      val Exists(x, a, b, phi) = exists
+      val m = a.split(b)
+      val phi2 = Eval.refine(phi)(ctx + (x -> WholeDomain(a, b)))
+      if (phi2.isInstanceOf[ConstFormula])
+        phi2
+      else
+        Or(Exists(x, a, m, phi2), Exists(x, m, b, phi2))
+    }
+  }
+
+  implicit object RefineForall extends Refine[Forall, Formula] {  
+    def refine(forall: Forall)(implicit ctx: Context[VarDomain]): Formula = {
+      val Forall(x, a, b, phi) = forall
+      val m = a.split(b)
+      val phi2 = Eval.refine(phi)(ctx + (x -> WholeDomain(a, b)))
+      if (phi2.isInstanceOf[ConstFormula])
+        phi2
+      else
+        And(Forall(x, a, m, phi2), Forall(x, m, b, phi2))
+     }
+  }
+
+  
   def refine(formula: Formula)(implicit ctx: Context[VarDomain]): Formula = {
     approximate(formula)(ctx) match {
       case Approximation(true, _)  => ConstFormula(true)
@@ -40,21 +91,12 @@ object Eval {
 
           case Less(x, y) => Less(refine(x), refine(y))
 
-          case Exists(x, a, b, phi) =>
-            val m = a.split(b)
-            val phi2 = refine(phi)(ctx + (x -> WholeDomain(a, b)))
-            if (phi2.isInstanceOf[ConstFormula])
-              phi2
-            else
-              Or(Exists(x, a, m, phi2), Exists(x, m, b, phi2))
-          case Forall(x, a, b, phi) =>
-            val m = a.split(b)
-            val phi2 = refine(phi)(ctx + (x -> WholeDomain(a, b)))
-            if (phi2.isInstanceOf[ConstFormula])
-              phi2
-            else
-              And(Forall(x, a, m, phi2), Forall(x, m, b, phi2))
-
+          case exists: Exists =>
+            val r = implicitly[Refine[Exists,Formula]]
+            r.refine(exists)            
+          case forall: Forall =>
+            val r = implicitly[Refine[Forall,Formula]]
+            r.refine(forall)
           case And(x, y) =>
             refine(x) match {
               case ConstFormula(true)  => refine(y)
@@ -92,22 +134,9 @@ object Eval {
         val i = CutDomain(if (aFound) a else D.negInf, if (bFound) b else D.posInf)
         CutR(x, refine(l)(ctx + (x -> i)), refine(u)(ctx + (x -> i)), a2, b2)
       }
-    case Cut(x, a, b, l, u) =>
-      val (m1, m2) = a.trisect(b, ctx.roundingContext.up.getPrecision)
-      val a2 = if (approximate(l)(ctx + (x -> CutDomain(m1, m1))).lower) m1 else a
-      val b2 = if (approximate(u)(ctx + (x -> CutDomain(m2, m2))).lower) m2 else b
-      //Cut(x, a2,b2, refine(l)(ctx + (x -> CutDomain(a2, b2))), refine(u)(ctx + (x -> CutDomain(a2, b2))))
-
-      val t1 = ApproximateNewton.estimate(l)(ctx, x, Interval(a, b))
-      val t2 = ApproximateNewton.estimate(u)(ctx, x, Interval(a, b))
-      val a3 = t1.lower.supremum() //.max(t2.upper.infimum())
-      val b3 = t2.lower.infimum() //.min(t1.upper.supremum())
-      // TODO find bugs
-      //println(s"debug> ${Interval(a3,b3)} ${t1.lower} ${t2.lower}")
-      val an = a2.max(a3)
-      val bn = b2.min(b3)
-
-      Cut(x, an, bn, refine(l)(ctx + (x -> CutDomain(an, bn))), refine(u)(ctx + (x -> CutDomain(an, bn))))
+    case cut: Cut => 
+      val r = implicitly[Refine[Cut, Real]]
+      r.refine(cut)
     case Integrate(x, a, b, e) =>
       val m = a.split(b)
       val le = refine(e)(ctx + (x -> CutDomain(a, m)))
