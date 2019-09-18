@@ -14,7 +14,7 @@
 [![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=comius_dedekindreals&metric=sqale_index)](https://sonarcloud.io/dashboard?id=comius_dedekindreals)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=comius_dedekindreals&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=comius_dedekindreals)
 
-A Java library for computing with Dedekind Reals.
+A Java library for computing with Dedekind Reals, based on [Marshall](https://github.com/andrejbauer/marshall).
 
 The project is build using maven, and developed in Scala IDE (Eclipse).
 
