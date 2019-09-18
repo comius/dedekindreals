@@ -46,6 +46,13 @@ We would like to compute with real number:
  - basic arithmetic: addition, subtraction, multiplication, division
  - square roots
 
+### Extensibility
+
+The syntax should be extensible with functions computed on interval arithmetics, i.e. exp, sin
+and obtained from external libraries.
+
+The syntax should be extensible with boolean types.
+
 
 ### Computing with algebraic numbers
 
@@ -63,11 +70,11 @@ We would like to compute with real number:
 
 ### Control of precision propagation
 
-## Correctness
+## Computational adequacy
 
 We would like the solutions to:
-- be always within the resulting interval
-- converge
+- be correct: within the resulting interval
+- be complete: converge
 
 ## Benchmarking
 
