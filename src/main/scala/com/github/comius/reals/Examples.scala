@@ -39,46 +39,48 @@ object Examples {
   }
   
   def main(args: Array[String]): Unit = {
+    val eval: Evaluator = PlaneEvaluator
+    
     val a = Const(77617.0) 
     val b = Const(33096.0)
-    Eval.eval(Const(333.75) * b*b*b*b*b*b + a*a * (11*a*a * b*b - b*b*b* b*b*b - 121 * b*b*b*b - 2) + Const(5.5) * b*b*b*b*b*b*b*b + a/(2*b), 10)
+    eval.eval(Const(333.75) * b*b*b*b*b*b + a*a * (11*a*a * b*b - b*b*b* b*b*b - 121 * b*b*b*b - 2) + Const(5.5) * b*b*b*b*b*b*b*b + a/(2*b), 10)
     
-    Eval.eval(cut("x", 1, 2, x => x < 1 + 1/x, x => 1 + 1/x < x), 10)
-    Eval.eval(cut("x", 0, 2, x => cut("y", 0, 2, y => y < x, y => x < y) < 1, x => 1 < x), 10)
+    eval.eval(cut("x", 1, 2, x => x < 1 + 1/x, x => 1 + 1/x < x), 10)
+    eval.eval(cut("x", 0, 2, x => cut("y", 0, 2, y => y < x, y => x < y) < 1, x => 1 < x), 10)
     
-    Eval.eval(inverseR(3), 3)
-    Eval.eval(inverseR(-3), 3)
-    Eval.eval(inverse(3), 3)
-    Eval.eval(inverse(-3), 3)
+    eval.eval(inverseR(3), 3)
+    eval.eval(inverseR(-3), 3)
+    eval.eval(inverse(3), 3)
+    eval.eval(inverse(-3), 3)
 
-    Eval.eval(inverseR(3), 3)
-    Eval.eval(inverseR(-3), 3)
+    eval.eval(inverseR(3), 3)
+    eval.eval(inverseR(-3), 3)
 
-    //Eval.eval(inverse(-3), 3) // TODO bug
-    // Eval.eval(inverse(3), 3) // TODO bug
+    //eval.eval(inverse(-3), 3) // TODO bug
+    // eval.eval(inverse(3), 3) // TODO bug
     
     
-    Eval.eval(forall("x", 0, 1, x => exists("y", 0, 1, y => x < y || y < 1)), 10)
+    eval.eval(forall("x", 0, 1, x => exists("y", 0, 1, y => x < y || y < 1)), 10)
 
-    Eval.eval(cut("y", -1, 2, y => exists("x", 0, 1, x => y < x * (1 - x)), 
+    eval.eval(cut("y", -1, 2, y => exists("x", 0, 1, x => y < x * (1 - x)), 
                                 y => forall("x", 0, 1, x => x * (1 - x) < y)), 10)
 
     // e
-    Eval.eval(cut("y", 2, 3, y => integrate("x", 0, 1, x => 1 / (x + 1 / (y - 1))) < 1,
+    eval.eval(cut("y", 2, 3, y => integrate("x", 0, 1, x => 1 / (x + 1 / (y - 1))) < 1,
       y => 1 < integrate("x", 0, 1, x => 1 / (x + 1 / (y - 1)))), 5)
 
     // == log(2) = 0.693
-    Eval.eval(Integrate("x", 1, 2, Const(1) / "x"), 5)
+    eval.eval(Integrate("x", 1, 2, Const(1) / "x"), 5)
 
     // PI
-    Eval.eval(integrate("x", 0, 1, x => cut("y", 0, 1, y => x * x + y * y < 1, y => 1 < x * x + y * y)) * 4, 3)
+    eval.eval(integrate("x", 0, 1, x => cut("y", 0, 1, y => x * x + y * y < 1, y => 1 < x * x + y * y)) * 4, 3)
 
-    Eval.eval(exists("x", 0, 1, x => x * x < 0), 10)
-    Eval.eval(exists("x", 0, 1, x => 0 < x * x), 10)
-    Eval.eval(exists("x", D.negInf, D.posInf, x => 0 < x * x), 10)
-    Eval.eval(exists("x", D.negInf, D.posInf, x => 0 < x * x * x), 10)
-    Eval.eval(exists("x", D.negInf, D.posInf, x => x * x * x < 0), 10)
-    Eval.eval(cut("x", 1, 2, x => x * x < 2, x => 2 < x * x), 10)
-  //  Eval.eval(cut("x", x => x < 0 || x * x < 200, x => 200 < x * x && 0 < x), 10)
+    eval.eval(exists("x", 0, 1, x => x * x < 0), 10)
+    eval.eval(exists("x", 0, 1, x => 0 < x * x), 10)
+    eval.eval(exists("x", D.negInf, D.posInf, x => 0 < x * x), 10)
+    eval.eval(exists("x", D.negInf, D.posInf, x => 0 < x * x * x), 10)
+    eval.eval(exists("x", D.negInf, D.posInf, x => x * x * x < 0), 10)
+    eval.eval(cut("x", 1, 2, x => x * x < 2, x => 2 < x * x), 10)
+  //  eval.eval(cut("x", x => x < 0 || x * x < 200, x => 200 < x * x && 0 < x), 10)
   }
 }

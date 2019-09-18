@@ -14,8 +14,12 @@ import com.github.comius.reals.syntax.Add
 import com.github.comius.reals.syntax.Sub
 import com.github.comius.reals.syntax.Mul
 import com.github.comius.reals.syntax.Div
+import com.github.comius.RoundingContext
+import com.github.comius.reals.newton.AutomaticDifferentiation
 
 trait Evaluator {
+  import com.github.comius.floats.Floats.{ impl => D }
+    
   def approximate(formula: Formula)(implicit ctx: Context[VarDomain]): Approximation[Boolean]
     
   def refineCut(cut: Cut)(implicit ctx: Context[VarDomain]): Cut
@@ -73,5 +77,60 @@ trait Evaluator {
     case Mul(x, y) => Mul(refine(x), refine(y))
     case Div(x, y) => Div(refine(x), refine(y))
     case x => x
+  }
+  
+  
+  def eval(expr: Real, precision: Int): Unit = {
+    var rexpr = expr
+    val dprec = 200 // precision *2
+    val evalStart = System.currentTimeMillis()
+    var iterationStart = evalStart
+
+    println("\nEvaluating: " + expr)
+
+    for (i <- 0 to 200) {
+      val context = Context[VarDomain](new RoundingContext(0, dprec))
+      val prec = D.valueOfEpsilon(precision)
+
+      val l = AutomaticDifferentiation.approximate(rexpr)(context).lower
+
+      val width = l.u.subtract(l.d, context.roundingContext.up)
+      val currentTime = System.currentTimeMillis()
+      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString.length}, time ${currentTime - iterationStart}")
+
+      iterationStart = currentTime
+      if (width.compareTo(prec) < 0) {
+        println(s"Total time: ${currentTime - evalStart} ms")
+        println(l)
+        return ;
+      }      
+      rexpr = refine(rexpr)(Context[VarDomain](new RoundingContext(0, dprec)))
+    }
+  }
+
+  def eval(expr: Formula, maxSteps: Int): Unit = {
+    var rexpr = expr
+    val dprec = 200 // precision *2
+    val evalStart = System.currentTimeMillis() 
+    var iterationStart = evalStart
+
+    println("\nEvaluating: " + expr)
+
+    for (i <- 0 to 200) {
+      val context = Context[VarDomain](new RoundingContext(0, dprec))
+
+      val l = approximate(rexpr)(context)
+
+      val currentTime = System.currentTimeMillis()
+      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString}, time ${currentTime - iterationStart}")
+      iterationStart = currentTime
+      if (l.lower == l.upper) {
+        println(s"Total time: ${currentTime - evalStart} ms") 
+        println(l)
+        return ;
+      }
+      rexpr = refine(rexpr)(Context[VarDomain](new RoundingContext(0, dprec)))
+
+    }
   }
 }
