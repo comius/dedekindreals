@@ -39,7 +39,7 @@ sealed trait Formula {
   def ||(other: Formula): Formula = Or(this, other) // scalastyle:ignore method.name
 }
 
-/* Constructors for Real: constants, variables arithmetic operations, Cut, CutR, integration */
+/* Constructors for Real: constants, variables arithmetic operations, Cut, integration */
 
 /**
  * A constant.
@@ -77,10 +77,6 @@ case class Cut(x: String, a: D.T, b: D.T, lower: Formula, upper: Formula) extend
     s"Cut(${x},${Interval(a, b)},${lower},${upper})"
   }
 }
-
-/** Cut over R. */
-case class CutR(x: String, lower: Formula, upper: Formula,
-                a: D.T = D.valueOf(-1), b: D.T = D.valueOf(1)) extends Real
 
 /** Integration. */
 case class Integrate(x: String, a: D.T, b: D.T, expr: Real) extends Real
@@ -133,7 +129,7 @@ object Real {
   }
   
   def cut(x: String, lower: Real => Formula, upper: Real => Formula) = {
-    CutR(x, lower(Var(x)), upper(Var(x)))
+    Cut(x, D.negInf, D.posInf, lower(Var(x)), upper(Var(x)))
   }
   
   def integrate(x: String, a: D.T, b: D.T, expr: Real => Real) = {

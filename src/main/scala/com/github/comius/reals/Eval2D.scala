@@ -17,7 +17,6 @@ import com.github.comius.reals.syntax.Add
 import com.github.comius.reals.syntax.And
 import com.github.comius.reals.syntax.ConstFormula
 import com.github.comius.reals.syntax.Cut
-import com.github.comius.reals.syntax.CutR
 import com.github.comius.reals.syntax.Div
 import com.github.comius.reals.syntax.Exists
 import com.github.comius.reals.syntax.Forall
@@ -188,17 +187,6 @@ object Eval2D {
   }
 
   def refine(expr: Real)(implicit ctx: Context[VarDomain]): Real = expr match {
-    case CutR(x, l, u, a, b) =>
-      val aFound = approximate0(l)(ctx + (x -> CutDomain(a, a))).lower
-      val bFound = approximate0(u)(ctx + (x -> CutDomain(b, b))).lower
-      if (aFound && bFound) {
-        Cut(x, a, b, refine(l)(ctx + (x -> CutDomain(a, b))), refine(u)(ctx + (x -> CutDomain(a, b))))
-      } else {
-        val a2 = if (aFound) a else a.multiply(D.valueOf(2), ctx.roundingContext.down)
-        val b2 = if (bFound) b else b.multiply(D.valueOf(2), ctx.roundingContext.up)
-        val i = CutDomain(if (aFound) a else D.negInf, if (bFound) b else D.posInf)
-        CutR(x, refine(l)(ctx + (x -> i)), refine(u)(ctx + (x -> i)), a2, b2)
-      }
     case Cut(x, a, b, l, u) =>
 
       val (m1, m2) = a.trisect(b, ctx.roundingContext.up.getPrecision)

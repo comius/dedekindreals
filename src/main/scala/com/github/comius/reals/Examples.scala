@@ -16,8 +16,6 @@ import com.github.comius.reals.syntax.Forall
 
 import com.github.comius.reals.syntax.Exists
 
-import com.github.comius.reals.syntax.CutR
-
 import com.github.comius.reals.syntax.Cut
 
 import com.github.comius.reals.syntax.Const

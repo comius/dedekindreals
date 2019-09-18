@@ -14,7 +14,6 @@ import com.github.comius.reals.Interval
 import com.github.comius.reals.syntax.Add
 import com.github.comius.reals.syntax.Const
 import com.github.comius.reals.syntax.Cut
-import com.github.comius.reals.syntax.CutR
 import com.github.comius.reals.syntax.Div
 import com.github.comius.reals.syntax.Integrate
 import com.github.comius.reals.syntax.Mul
@@ -70,7 +69,6 @@ object AutomaticDifferentiation {
         val a3 = t1.lower.supremum()
         val b3 = t2.lower.infimum()        
         (Interval(a3, b3), cutdiff(l, z, Interval(a, b)))
-      case CutR(z, l, _, _, _) => (Interval(D.negInf, D.posInf), cutdiff(l, z, Interval(D.negInf, D.posInf)))
       case Const(a)            => (Interval(a, a), Interval.ZERO)
       case Add(x, y) =>
         liftr((a, b, r) => (a._1.add(b._1, r), a._2.add(b._2, r)))(x, y)
@@ -141,7 +139,6 @@ object AutomaticDifferentiation {
    */
   def approximate(expr: Real)(implicit ctx: Context[VarDomain]): Approximation[Interval] = expr match {
     case Cut(_, a, b, _, _)  => Approximation(Interval(a, b), Interval(b, a))
-    case CutR(_, _, _, _, _) => Approximation(Interval(D.negInf, D.posInf), Interval(D.posInf, D.negInf))
     case Integrate(x, a, b, e) =>
       val xm = a.split(b)
       val i8 = Interval(D.valueOf(8), D.valueOf(8))
