@@ -8,11 +8,55 @@ import com.github.comius.reals.syntax.ConstFormula
 import com.github.comius.reals.syntax.Or
 import com.github.comius.reals.syntax.Forall
 import com.github.comius.reals.syntax.And
+import com.github.comius.reals.syntax.Less
+import com.github.comius.reals.newton.ConstraintSet
+import com.github.comius.reals.newton.ConstraintSet.ConstraintSetNone
+import com.github.comius.reals.newton.ConstraintSet.ConstraintSetAll
 
 object NewtonEvaluator extends Evaluator {  
   
   def approximate(formula: Formula)(implicit ctx: Context[VarDomain]): Approximation[Boolean] = {
     AproximateSimple.approximate(formula)
+  }
+  
+  def approximate1(
+    f:  Formula,
+    x0: (String, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet] = f match {
+    case Exists(x, a, b, phi) =>      
+      approximate1(phi, x0)(ctx + (x -> WholeDomain(a, b)))
+      
+    case Forall(x, a, b, phi) =>
+      approximate1(phi, x0)(ctx + (x -> WholeDomain(a, b)))
+
+    case And(x, y) =>
+      val Approximation(l1, u1) = approximate1(x, x0)
+      val Approximation(l2, u2) = approximate1(y, x0)
+      Approximation(l1.intersection(l2), u1.union(u2))
+
+    case Or(x, y) =>
+      val Approximation(l1, u1) = approximate1(x, x0)
+      val Approximation(l2, u2) = approximate1(y, x0)
+      Approximation(l1.union(l2), u1.intersection(u2))
+
+    case Less(x, y) => // fall back to Newton
+      ApproximateNewton.estimate(Less(x, y))(ctx, x0._1, x0._2)
+
+    case c: ConstFormula =>
+      val i = x0._2
+      Approximation(ConstraintSet(i, c.b), ConstraintSet(i, !c.b))
+  }
+  
+  def toIntervals(a: Approximation[ConstraintSet]): List[Interval] = {
+    val is = a.lower.union(a.upper).complement().toIntervals()
+
+    // Add midpoint, to guarantee progress
+    val m = a.lower.domain.d.split(a.lower.domain.u)
+
+    is.flatMap { i =>
+      if (i.d.compareTo(m) <= 0 && i.u.compareTo(m) >= 0)
+        List(Interval(i.d, m), Interval(m, i.u))
+      else List(i)
+    }
   }
   
   def refineCut(cut: Cut)(implicit ctx: Context[VarDomain]): Cut = {
@@ -37,21 +81,32 @@ object NewtonEvaluator extends Evaluator {
 
   def refineExists(exists: Exists)(implicit ctx: Context[VarDomain]): Formula = {
     val Exists(x, a, b, phi) = exists
-    val m = a.split(b)
     val phi2 = refine(phi)(ctx + (x -> WholeDomain(a, b)))
     if (phi2.isInstanceOf[ConstFormula])
       phi2
-    else
-      Or(Exists(x, a, m, phi2), Exists(x, m, b, phi2))
+    else {
+      // Compute new intervals from approximation in 1D
+      val a1 = approximate1(phi, x -> Interval(a, b))
+
+      val ints = toIntervals(a1)
+      // println("Exists " + phi + "> " + ints)
+      ints.map { i => Exists(x, i.d, i.u, phi2) }
+        .reduceOption[Formula](Or(_, _)).getOrElse(ConstFormula(!a1.lower.isInstanceOf[ConstraintSetNone]))
+    }
   }
 
   def refineForall(forall: Forall)(implicit ctx: Context[VarDomain]): Formula = {
     val Forall(x, a, b, phi) = forall
-    val m = a.split(b)
     val phi2 = refine(phi)(ctx + (x -> WholeDomain(a, b)))
     if (phi2.isInstanceOf[ConstFormula])
       phi2
-    else
-      And(Forall(x, a, m, phi2), Forall(x, m, b, phi2))
+    else {
+      // Compute new intervals from approximation in 1D
+      val a1 = approximate1(phi, x -> Interval(a, b))
+      val ints = toIntervals(a1)
+      // println("forall " + phi + "> " + ints)
+      ints.map { i => Forall(x, i.d, i.u, phi2) }
+        .reduceOption[Formula](And(_, _)).getOrElse(ConstFormula(a1.lower.isInstanceOf[ConstraintSetAll]))
+    }
   }
 }

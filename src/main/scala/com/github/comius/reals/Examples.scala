@@ -51,34 +51,34 @@ object Examples {
     Eval.eval(inverse(3), 3)
     Eval.eval(inverse(-3), 3)
 
-    Eval2D.eval(inverseR(3), 3)
-    Eval2D.eval(inverseR(-3), 3)
+    Eval.eval(inverseR(3), 3)
+    Eval.eval(inverseR(-3), 3)
 
-    //Eval2D.eval(inverse(-3), 3) // TODO bug
-    // Eval2D.eval(inverse(3), 3) // TODO bug
+    //Eval.eval(inverse(-3), 3) // TODO bug
+    // Eval.eval(inverse(3), 3) // TODO bug
     
     
-    Eval2D.eval(forall("x", 0, 1, x => exists("y", 0, 1, y => x < y || y < 1)), 10)
+    Eval.eval(forall("x", 0, 1, x => exists("y", 0, 1, y => x < y || y < 1)), 10)
 
-    Eval2D.eval(cut("y", -1, 2, y => exists("x", 0, 1, x => y < x * (1 - x)), 
+    Eval.eval(cut("y", -1, 2, y => exists("x", 0, 1, x => y < x * (1 - x)), 
                                 y => forall("x", 0, 1, x => x * (1 - x) < y)), 10)
 
     // e
-    Eval2D.eval(cut("y", 2, 3, y => integrate("x", 0, 1, x => 1 / (x + 1 / (y - 1))) < 1,
+    Eval.eval(cut("y", 2, 3, y => integrate("x", 0, 1, x => 1 / (x + 1 / (y - 1))) < 1,
       y => 1 < integrate("x", 0, 1, x => 1 / (x + 1 / (y - 1)))), 5)
 
     // == log(2) = 0.693
-    Eval2D.eval(Integrate("x", 1, 2, Const(1) / "x"), 5)
+    Eval.eval(Integrate("x", 1, 2, Const(1) / "x"), 5)
 
     // PI
-    Eval2D.eval(integrate("x", 0, 1, x => cut("y", 0, 1, y => x * x + y * y < 1, y => 1 < x * x + y * y)) * 4, 3)
+    Eval.eval(integrate("x", 0, 1, x => cut("y", 0, 1, y => x * x + y * y < 1, y => 1 < x * x + y * y)) * 4, 3)
 
-    Eval2D.eval(exists("x", 0, 1, x => x * x < 0), 10)
-    Eval2D.eval(exists("x", 0, 1, x => 0 < x * x), 10)
-    Eval2D.eval(exists("x", D.negInf, D.posInf, x => 0 < x * x), 10)
-    Eval2D.eval(exists("x", D.negInf, D.posInf, x => 0 < x * x * x), 10)
-    Eval2D.eval(exists("x", D.negInf, D.posInf, x => x * x * x < 0), 10)
-    Eval2D.eval(cut("x", 1, 2, x => x * x < 2, x => 2 < x * x), 10)
-    Eval2D.eval(cut("x", x => x < 0 || x * x < 200, x => 200 < x * x && 0 < x), 10)
+    Eval.eval(exists("x", 0, 1, x => x * x < 0), 10)
+    Eval.eval(exists("x", 0, 1, x => 0 < x * x), 10)
+    Eval.eval(exists("x", D.negInf, D.posInf, x => 0 < x * x), 10)
+    Eval.eval(exists("x", D.negInf, D.posInf, x => 0 < x * x * x), 10)
+    Eval.eval(exists("x", D.negInf, D.posInf, x => x * x * x < 0), 10)
+    Eval.eval(cut("x", 1, 2, x => x * x < 2, x => 2 < x * x), 10)
+  //  Eval.eval(cut("x", x => x < 0 || x * x < 200, x => 200 < x * x && 0 < x), 10)
   }
 }

@@ -30,12 +30,13 @@ object Eval {
 
   import com.github.comius.floats.Floats.{ impl => D }
 
-  val evaluator: Evaluator = NewtonEvaluator
-  
+  val evaluator: Evaluator = PlaneEvaluator
+
   def eval(expr: Real, precision: Int): Unit = {
     var rexpr = expr
     val dprec = 200 // precision *2
-    var stime = System.currentTimeMillis()
+    val evalStart = System.currentTimeMillis()
+    var iterationStart = evalStart
 
     println("\nEvaluating: " + expr)
 
@@ -46,23 +47,24 @@ object Eval {
       val l = AutomaticDifferentiation.approximate(rexpr)(context).lower
 
       val width = l.u.subtract(l.d, context.roundingContext.up)
-      val ctime = System.currentTimeMillis()
-      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString.length}, time ${ctime - stime}")
+      val currentTime = System.currentTimeMillis()
+      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString.length}, time ${currentTime - iterationStart}")
 
-      stime = ctime
+      iterationStart = currentTime
       if (width.compareTo(prec) < 0) {
+        println(s"Total time: ${currentTime - evalStart} ms")
         println(l)
         return ;
-      }
+      }      
       rexpr = evaluator.refine(rexpr)(Context[VarDomain](new RoundingContext(0, dprec)))
-
     }
   }
 
   def eval(expr: Formula, maxSteps: Int): Unit = {
     var rexpr = expr
     val dprec = 200 // precision *2
-    var stime = System.currentTimeMillis()
+    val evalStart = System.currentTimeMillis() 
+    var iterationStart = evalStart
 
     println("\nEvaluating: " + expr)
 
@@ -71,10 +73,11 @@ object Eval {
 
       val l = evaluator.approximate(rexpr)(context)
 
-      val ctime = System.currentTimeMillis()
-      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString.length}, time ${ctime - stime}")
-      stime = ctime
+      val currentTime = System.currentTimeMillis()
+      println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString}, time ${currentTime - iterationStart}")
+      iterationStart = currentTime
       if (l.lower == l.upper) {
+        println(s"Total time: ${currentTime - evalStart} ms") 
         println(l)
         return ;
       }
@@ -82,5 +85,5 @@ object Eval {
 
     }
   }
-
+  
 }
