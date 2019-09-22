@@ -107,7 +107,10 @@ object BigDecimalFloats extends Floats {
         } else if (y.signum == 0) {
           Number(x.divide(two, mc1Up))
         } else {
-          ZERO
+          // ZERO is ok for quantifiers, but not ok for cuts
+          val maxp = Math.max(x.precision(), y.precision())
+          val mc = new MathContext(maxp + 1, RoundingMode.HALF_EVEN)
+          Number(x.add(y, mc).divide(two, mc))
         }
       }
     }
@@ -151,6 +154,14 @@ object BigDecimalFloats extends Floats {
             val newPrecision = math.max(math.max(x.scale(), y.scale), precision + 1)
             trisect(b, newPrecision) // a bit lazy way to do it
           }
+        case (Number(x), PosInf) =>
+          val Number(xe) = extrapolate(x)
+          (Number(xe), extrapolate(xe))
+        case (NegInf, Number(y)) =>
+          val Number(xe) = extrapolate(y.negate)
+          (extrapolate(xe).negate, Number(xe.negate))
+        case (NegInf, PosInf) =>
+          (ONE.negate, ONE)
         case _ => throw new ArithmeticException()
       }
     }
