@@ -53,13 +53,6 @@ object Examples {
     eval.eval(inverse(3), 3)
     eval.eval(inverse(-3), 3)
 
-    eval.eval(inverseR(3), 3)
-    eval.eval(inverseR(-3), 3)
-
-    //eval.eval(inverse(-3), 3) // TODO bug
-    // eval.eval(inverse(3), 3) // TODO bug
-    
-    
     eval.eval(forall("x", 0, 1, x => exists("y", 0, 1, y => x < y || y < 1)), 10)
 
     eval.eval(cut("y", -1, 2, y => exists("x", 0, 1, x => y < x * (1 - x)), 
