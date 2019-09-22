@@ -10,19 +10,38 @@ import com.github.comius.reals.syntax.Forall
 import com.github.comius.reals.syntax.And
 
 object SimpleEvaluator extends Evaluator {  
+  import com.github.comius.floats.Floats.{ impl => D }
+  
+  class MemoCut(x: String, a: D.T, b: D.T, lower: Formula, upper: Formula, val la: Formula, val ub: Formula) 
+    extends Cut(x,a,b,lower,upper)
+  
   
   def approximate(formula: Formula)(implicit ctx: Context[VarDomain]): Approximation[Boolean] = {
     AproximateSimple.approximate(formula)
   }
   
-  def refineCut(cut: Cut)(implicit ctx: Context[VarDomain]): Cut = {
+  def refineCut(cut: Cut)(implicit ctx: Context[VarDomain]): Cut = {    
     val Cut(x, a, b, l, u) = cut
-
+    val (la,ub) = cut match { 
+      case c: MemoCut => (c.la, c.ub)
+      case _ => (l, u)
+    }
+    
     val (m1, m2) = a.trisect(b, ctx.roundingContext.up.getPrecision)
-    val a2 = if (approximate(l)(ctx + (x -> CutDomain(m1, m1))).lower) m1 else a
-    val b2 = if (approximate(u)(ctx + (x -> CutDomain(m2, m2))).lower) m2 else b
+    
+    val la2 = refine(la)(ctx + (x -> CutDomain(m1, m1)))
+    val ub2 = refine(ub)(ctx + (x -> CutDomain(m2, m2)))
+    
+    val al = approximate(la2)(ctx + (x -> CutDomain(m1, m1))).lower
+    val au = approximate(ub2)(ctx + (x -> CutDomain(m2, m2))).lower
 
-    Cut(x, a2, b2, refine(l)(ctx + (x -> CutDomain(a2, b2))), refine(u)(ctx + (x -> CutDomain(a2, b2))))
+    if (!al && !au) {
+      // No hit, we need to refine lower and upper further
+      new MemoCut(x, a, b, l, u, la2, ub2)
+    } else {
+      // Hit, we restart refinement of lower and upper
+      Cut(x, if (al) m1 else a,  if (au) m2 else b, l, u)
+    }
   }
 
   def refineExists(exists: Exists)(implicit ctx: Context[VarDomain]): Formula = {
