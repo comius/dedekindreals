@@ -29,18 +29,19 @@ object SimpleEvaluator extends Evaluator {
     
     val (m1, m2) = a.trisect(b, ctx.roundingContext.up.getPrecision)
     
-    val la2 = refine(la)(ctx + (x -> CutDomain(m1, m1)))
-    val ub2 = refine(ub)(ctx + (x -> CutDomain(m2, m2)))
-    
-    val al = approximate(la2)(ctx + (x -> CutDomain(m1, m1))).lower
-    val au = approximate(ub2)(ctx + (x -> CutDomain(m2, m2))).lower
+    val al = approximate(la)(ctx + (x -> CutDomain(m1, m1))).lower
+    val au = approximate(ub)(ctx + (x -> CutDomain(m2, m2))).lower
 
     if (!al && !au) {
       // No hit, we need to refine lower and upper further
+      val la2 = refine(la)(ctx + (x -> CutDomain(m1, m1)))
+      val ub2 = refine(ub)(ctx + (x -> CutDomain(m2, m2)))
       new MemoCut(x, a, b, l, u, la2, ub2)
     } else {
       // Hit, we restart refinement of lower and upper
-      Cut(x, if (al) m1 else a,  if (au) m2 else b, l, u)
+      val a2 = if (al) m1 else a
+      val b2 = if (au) m2 else b
+      Cut(x, a2, b2, l, u)
     }
   }
 
