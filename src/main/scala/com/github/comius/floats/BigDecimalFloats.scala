@@ -140,10 +140,14 @@ object BigDecimalFloats extends Floats {
       case _                => throw new ArithmeticException(s"Splitting interval: ${this}, ${b}")
     }
 
-    @tailrec
+  //  @tailrec
     override def trisect(b: BigDecimalFloat, precision: Int): (BigDecimalFloat, BigDecimalFloat) = {
       (this, b) match {
-        case (Number(x), Number(y)) =>
+          case (Number(x), Number(y)) =>
+            val Number(m) = interpolate(x,y)
+            (interpolate(x,m), interpolate(m,y))
+            // TODO
+    /*    case (Number(x), Number(y)) =>
           val c1 = split(b)
           // Note: we're one-sided / always up. Perhaps improve by eveness test to determine side.
           val c2 = c1.add(valueOfEpsilon(precision), new MathContext(precision, RoundingMode.CEILING))
@@ -153,7 +157,7 @@ object BigDecimalFloats extends Floats {
             // we need to increase precision (or throw exception)
             val newPrecision = math.max(math.max(x.scale(), y.scale), precision + 1)
             trisect(b, newPrecision) // a bit lazy way to do it
-          }
+          }*/
         case (Number(x), PosInf) =>
           val Number(xe) = extrapolate(x)
           (Number(xe), extrapolate(xe))
