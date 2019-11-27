@@ -9,7 +9,7 @@ changes:
 
 # Introduction
 
-DedekindReals is a library implementing efficient computation with Dedekind reals.
+DedekindReals is a library implementing efficient computation with Dedekind reals based on Abstract Stone Duality.
 
 # Development process
 
@@ -51,8 +51,8 @@ Outputs:
 The architecture breaks down the library into smaller software units. It shall describe the interfaces among the units.
 The architecture shall argue that all requirements can be satisfied. 
 
-The DedekindReals library does not have external interface, but it does have a library interface that is used by other
-software systems. This interface is described in a separate document.
+The DedekindReals library has an interface that is used by other software systems.
+This interface is described in a separate document.
 
 ## Unit Designs
 Input: [Architecture](04-01-Architecture.md)  
@@ -84,7 +84,7 @@ Software units are verified by executing unit tests and by code review.
 
 The code reviewer in the process verifies that the software unit and tests are:
 
-- follow the design document
+- following the design document
 - sufficiently documented
 - following coding guidelines
 - tests sufficiently verify the requirements (e.g. edge cases are covered)
