@@ -13,12 +13,12 @@ changes:
 
 **User shall be able to describe a real number using two formulas describing lower and upper part of the cut.**
 
-Rationale: Provide a general way to enter a real numbe,r while keeping enough information to compute it.
+Rationale: Provide a general way to enter a real number while keeping enough information to compute it.
 Don't provide or fix the method of computation.
 
 Verification:
 
-Source: [Usecases: Computation and Expressiveness](02-Usecases.mdComputation-and-expressiveness)
+Source: [Usecases: Computation and Expressiveness](02-Usecases.md#Computation-and-expressiveness)
 
 
 ## Formulas
@@ -47,7 +47,7 @@ Rationale:
 
 Verification:
 
-Source:  [Usecases: Computation and Expressiveness](02-Usecases.mdComputation-and-expressiveness)
+Source:  [Usecases: Computation and Expressiveness](02-Usecases.md#Computation-and-expressiveness)
 
 ## Printing intervals
 
@@ -57,4 +57,4 @@ Rationale:
 
 Verification:
 
-Source:  [Usecases: Computation and Expressiveness](02-Usecases.mdComputation-and-expressiveness)
+Source:  [Usecases: Computation and Expressiveness](02-Usecases.md#Computation-and-expressiveness)

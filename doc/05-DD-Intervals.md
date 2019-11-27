@@ -19,7 +19,7 @@ changes:
 
 # Relevant ASD
 
-The content of this chapter are excerpts copied from [DEDRAS]:
+The content of this chapter are excerpts from [DEDRAS]:
 
 *Definition 2.3* It is very useful to generalise the notion of Dedekind cut by dropping the locatedness condition.
 Instead of almost touching, and so representing a single real number a ∈ R, such
@@ -170,4 +170,3 @@ for all binary operations.
 
 # Possible extensions
 
-  -  

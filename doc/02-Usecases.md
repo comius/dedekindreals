@@ -27,8 +27,8 @@ We would like to describe the real number without providing a method to compute 
 approximations.
 
 1. A mathematician describes/enters the real number as:
-   - lower cut = $x<0 \lor x² < 2$, upper cut = $0 < x \land 2 < x²$
-   - integrate the area where $x²+y² < 1$
+   - lower cut = $x < 0 ∨ x² < 2$, upper cut = $x > 0 ∧   x² > 2$
+   - integrate the area where $x² + y² < 1$
    - minimum of a function $f(x) = x(1-x)$ on the interval $[0,1]$
 
 2. A name for the described number is provided

@@ -26,8 +26,7 @@ BigDecimalFloats is a concrete implementation based on Java BigDecimal type.
 
 # Relevant ASD
 
-The content of this chapter are excerpts copied from [DEDRAS]:
-
+The content of this chapter are excerpts from [DEDRAS]:
 
 *Axiom 4.1* ASD has base type N, and products...
 
@@ -65,7 +64,6 @@ rationals, and let (δ,υ) be rounded, located and bounded, with δq<sub>0</sub>
 Then this (pseudo-)cut belongs to at least one of the overlapping open intervals (q<sub>0</sub> ,q<sub>2</sub>),
  (q<sub>1</sub>, q<sub>3</sub>), ..., (q<sub>n−2</sub>, q<sub>n</sub>).
 
-
 *Axiom 11.1* Q is a discrete, densely linearly ordered (Definition 6.1) commutative ring.
 
 *Axiom 11.2* Q obeys the **Archimedean principle**, for p,q : Q, q > 0 ⇒ ∃n:Z. q(n − 1) < p < q(n + 1).
@@ -84,8 +82,8 @@ contract.
 
 Infinities are useful on the next level when doing interval arithmetics. Without them Intervals module would need to
 take over handling special cases: \top, \bottom interval, which are now expressed as [-inf, inf] and [inf, -inf] and
-half open intervals [a,inf], [-inf, b] (and additional two cases), making altogether 6+1 cases. A basic arithmetic ops
-would therefore need cases-analysis for a large number of combinations.
+half open intervals [a,inf], [-inf, b] (and additional two cases), making altogether 6+1 cases. A basic arithmetic
+operations would therefore need cases-analysis for a large number of combinations.
 
 Another arguments is that some libraries (like MPFR) already have infinities included. In such case wrapping the library
 into our implementation would be easier.
@@ -107,9 +105,9 @@ Interpolations and extrapolations are covered in a following section.
 
 ### Requirement: linearity
 
-**Float values shall be linear.**
+**Float values shall be linearly ordered.**
 
-*Rationale:* Linearity is assumed by upstream software units and is needed for correctness. 
+*Rationale:* Linear order is assumed by upstream software units and is needed for correctness. 
 
 *Verification:* It is linear, because compareTo method always returns without exceptions. Verify by code inspection. 
 
@@ -129,7 +127,7 @@ Interpolations and extrapolations are covered in a following section.
 
 **The equals method shall return true iff compareTo method returns 0.**
 
-*Rationale:* Prevent accidental mistakes (Java BigDecimal equals compares also precision).
+*Rationale:* Prevent accidental mistakes (Java's BigDecimal.equals compares also precision).
 
 *Verification:* By code inspection.
 
@@ -203,7 +201,7 @@ handled separately are multiplication of zero and infinity and division of two i
 
 ### Requirement: negation
 
-**Result of negation shall be additive inverse. In case of infinities is shall change the sign of infinity.**
+**Result of negation shall be additive inverse. In case of the infinities negation shall change the sign of infinity.**
 
 *Rationale:* Correctness.
 
@@ -244,7 +242,8 @@ upstream modules to split it evenly (without any additional knowledge).
   
 **Returned number x shall have double magnitude than the input number.**
 
-*Rationale:* Extrapolative property of Definition 6.1. Furthermore we double the magnitude ...  
+*Rationale:* Extrapolative property of Definition 6.1. Furthermore we double the magnitude for efficiency purposes,
+counting on amortization.  
 
 *Verification:* Generate random number a, and verify that a < split(a, inf) and split(-inf, a) < a.
 
@@ -260,6 +259,8 @@ upstream modules to split it evenly (without any additional knowledge).
 
 **Coverage**: trisect
 
+TODO research how this optimized trisection is done properly - there are occurrencies, where this has cause progress to
+stop / approach zero from above without jumping into negatives
 
 ## String conversions
 
@@ -268,9 +269,11 @@ upstream modules to split it evenly (without any additional knowledge).
 We can construct Floats from integers or strings, using static method Floats.valueOf.
 
 
-## Embedding of integers
+## Embedding of integers and floats
 
 **Coverage:** valueOf(Long)
+
+**Coverage:** valueOf(Double)
 
 
 ## Special values
@@ -298,3 +301,7 @@ BigInteger store sign separately to magnitude, which is an array of integers. It
 
 - Implementation using MPFR.
 - Implementation using doubles (caveat rounding modes in Java)
+  Note: rounding modes for double in Matlab have been done using JNI just switching the mode in c. This disregards
+  Java convention that the code should run identically on all machines. It is also suprising that this just works, i.e.
+  JRE doesn't never changes rounding mode.
+
