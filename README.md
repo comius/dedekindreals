@@ -14,10 +14,17 @@
 [![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=comius_dedekindreals&metric=sqale_index)](https://sonarcloud.io/dashboard?id=comius_dedekindreals)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=comius_dedekindreals&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=comius_dedekindreals)
 
-A Java library for computing with Dedekind Reals, based on [Marshall](https://github.com/andrejbauer/marshall).
+A Java/Scala library for computing with Dedekind Reals, based on [Marshall](https://github.com/andrejbauer/marshall).
 
 The project is build using maven, and developed in Scala IDE (Eclipse).
 
+# References
+
+ - [Marshall](https://github.com/andrejbauer/marshall)
+ - [MarshallB](https://github.com/psg-mit/marshall)
+ - [Abstract Stone Duality (ASD)](http://www.paultaylor.eu/ASD/)
+ - [Dedekind reals in ASD](http://www.paultaylor.eu/ASD/analysis#dedras)
+ - [Efficient computations with Dedekind reals](http://math.andrej.com/2008/08/24/efficient-computation-with-dedekind-reals/)
 
 # How to start
 
