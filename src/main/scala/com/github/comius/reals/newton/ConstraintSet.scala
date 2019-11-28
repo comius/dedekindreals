@@ -254,22 +254,22 @@ object ConstraintSet {
   abstract sealed trait Constraint
 
   /** Everything within the domain. */
-  case object All extends Constraint
+  final case object All extends Constraint
 
   /** Nothing within the domain. */
-  case object None extends Constraint
+  final case object None extends Constraint
 
   /**
    * More than x.
    * @param x the endpoint
    */
-  case class MoreThan(val x: D.T) extends Constraint with RealConstraint
+  final case class MoreThan(val x: D.T) extends Constraint with RealConstraint
 
   /**
    * Less than x.
    * @param x the endpoint
    */
-  case class LessThan(val x: D.T) extends Constraint with RealConstraint
+  final case class LessThan(val x: D.T) extends Constraint with RealConstraint
 
   // Check if constraint lies within the domain. If not sanitizes it.
   private def sanitizeConstraint(domain: Interval, constraint: Constraint): Constraint = constraint match {
@@ -345,7 +345,7 @@ object ConstraintSet {
    *
    * @param the domain
    */
-  case class ConstraintSetAll(override val domain: Interval) extends ConstraintSet(domain) {
+  final case class ConstraintSetAll(override val domain: Interval) extends ConstraintSet(domain) {
     override def supremum(): D.T = domain.u
     override def infimum(): D.T = domain.d
   }
@@ -355,7 +355,7 @@ object ConstraintSet {
    *
    * @param the domain
    */
-  case class ConstraintSetNone(override val domain: Interval) extends ConstraintSet(domain) {
+  final case class ConstraintSetNone(override val domain: Interval) extends ConstraintSet(domain) {
     override def supremum(): D.T = domain.d
     override def infimum(): D.T = domain.u
   }
@@ -366,11 +366,11 @@ object ConstraintSet {
    * @param domain the domain
    * @param constraints the list of constraints
    */
-  case class ConstraintSetList(override val domain: Interval, constraints: List[RealConstraint])
+  final case class ConstraintSetList(override val domain: Interval, constraints: List[RealConstraint])
     extends ConstraintSet(domain) {
 
     // Verifies the list is not empty
-    require(constraints.size > 0, "empty constraint set")
+    require(!constraints.isEmpty, "empty constraint set")
 
     // Verifies the constraints are ordered and contain exchanging LessThan, MoreThan
     require(

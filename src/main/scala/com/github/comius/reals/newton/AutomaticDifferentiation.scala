@@ -38,14 +38,14 @@ object AutomaticDifferentiation {
   case object Up extends IntervalRoundMode
 
   def liftr(op: (A, A, RoundingContext) => A)(x: Real, y: Real)(implicit ctx: Context[VarDomain], variables: Set[String],
-                                                                roundMode: IntervalRoundMode): A = {
+    roundMode: IntervalRoundMode): A = {
     val l1 = evalr(x)
     val l2 = evalr(y)
     op(l1, l2, ctx.roundingContext)
   }
 
   def cutdiff(f: Formula, z: String, zv: Interval)(implicit ctx: Context[VarDomain], variables: Set[String],
-                                                   roundMode: IntervalRoundMode): Interval = f match {
+    roundMode: IntervalRoundMode): Interval = f match {
     case Less(a, b) => {
 
       val l = Sub(a, b)
@@ -60,16 +60,16 @@ object AutomaticDifferentiation {
   }
 
   def evalr(expr: Real)(implicit ctx: Context[VarDomain], variables: Set[String],
-                        roundMode: IntervalRoundMode): (Interval, Interval) = {
+    roundMode: IntervalRoundMode): (Interval, Interval) = {
 
     expr match {
       case Cut(z, a, b, l, u) =>
         val t1 = ApproximateNewton.estimate(l)(ctx, z, Interval(a, b))
         val t2 = ApproximateNewton.estimate(u)(ctx, z, Interval(a, b))
         val a3 = t1.lower.supremum()
-        val b3 = t2.lower.infimum()        
+        val b3 = t2.lower.infimum()
         (Interval(a3, b3), cutdiff(l, z, Interval(a, b)))
-      case Const(a)            => (Interval(a, a), Interval.ZERO)
+      case Const(a) => (Interval(a, a), Interval.ZERO)
       case Add(x, y) =>
         liftr((a, b, r) => (a._1.add(b._1, r), a._2.add(b._2, r)))(x, y)
       case Sub(x, y) =>
@@ -81,7 +81,6 @@ object AutomaticDifferentiation {
           .divide(b._1.multiply(b._1, r), r.swap())))(x, y) // TODO rounding
       case Integrate(x, a, b, e) =>
         val xm = a.split(b)
-        val xmi = Interval(xm, xm)
         val i8 = Interval(D.valueOf(8), D.valueOf(8))
 
         val rc = ctx.roundingContext
@@ -100,12 +99,12 @@ object AutomaticDifferentiation {
           case (Down, ExistsDomain(a, b)) =>
             val m = a.split(b); Interval(m, m)
           case (Down, ForallDomain(a, b)) => Interval(a, b)
-          case (Down, CutDomain(a, b))    => Interval(a, b)
-          case (Down, WholeDomain(a, b))  => Interval(a, b)
-          case (Up, ExistsDomain(a, b))   => Interval(b, a)
+          case (Down, CutDomain(a, b)) => Interval(a, b)
+          case (Down, WholeDomain(a, b)) => Interval(a, b)
+          case (Up, ExistsDomain(a, b)) => Interval(b, a)
           case (Up, ForallDomain(a, b)) =>
             val m = a.split(b); Interval(m, m)
-          case (Up, CutDomain(a, b))   => Interval(b, a)
+          case (Up, CutDomain(a, b)) => Interval(b, a)
           case (Up, WholeDomain(a, b)) => Interval(b, a)
         }, if (variables.contains(name)) Interval.ONE else Interval.ZERO)
     }
@@ -138,7 +137,7 @@ object AutomaticDifferentiation {
    * @return approximation (lower and upper given with intervals)
    */
   def approximate(expr: Real)(implicit ctx: Context[VarDomain]): Approximation[Interval] = expr match {
-    case Cut(_, a, b, _, _)  => Approximation(Interval(a, b), Interval(b, a))
+    case Cut(_, a, b, _, _) => Approximation(Interval(a, b), Interval(b, a))
     case Integrate(x, a, b, e) =>
       val xm = a.split(b)
       val i8 = Interval(D.valueOf(8), D.valueOf(8))
@@ -146,7 +145,7 @@ object AutomaticDifferentiation {
       val lower = {
         val rc = ctx.roundingContext
 
-        val l1 = evalr(e)(ctx + (x, CutDomain(xm, xm)), Set(), Down)
+        val l1 = evalr(e)(ctx + (x, CutDomain(xm, xm)), Set.empty, Down)
         val dl1 = evalr(e)(ctx + (x, CutDomain(a, b)), Set(x), Down)
         val ddl1 = dl1._2.subtract(dl1._2, rc)
         val ba = Interval(b, b).subtract(Interval(a, a), rc)
@@ -155,7 +154,7 @@ object AutomaticDifferentiation {
       }
       val upper = {
         val rc = ctx.roundingContext.swap
-        val l1 = evalr(e)(ctx + (x, CutDomain(xm, xm)), Set(), Up)
+        val l1 = evalr(e)(ctx + (x, CutDomain(xm, xm)), Set.empty, Up)
         val dl1 = evalr(e)(ctx + (x, CutDomain(a, b)), Set(x), Up)
 
         val ddl1 = dl1._2.subtract(dl1._2, rc)
@@ -166,7 +165,7 @@ object AutomaticDifferentiation {
 
       Approximation(lower, upper)
 
-    case Const(a)  => Approximation(Interval(a, a), Interval(a, a))
+    case Const(a) => Approximation(Interval(a, a), Interval(a, a))
     case Add(x, y) => lift(_.add(_, _))(x, y)
     case Sub(x, y) => lift(_.subtract(_, _))(x, y)
     case Mul(x, y) => lift(_.multiply(_, _))(x, y)
@@ -183,7 +182,7 @@ object AutomaticDifferentiation {
    * @return approximation
    */
   def approximate(domain: VarDomain): Approximation[Interval] = domain match {
-    case CutDomain(a, b)   => Approximation(Interval(a, b), Interval(b, a))
+    case CutDomain(a, b) => Approximation(Interval(a, b), Interval(b, a))
     case WholeDomain(a, b) => Approximation(Interval(a, b), Interval(b, a))
     case ExistsDomain(a, b) =>
       val m = a.split(b)

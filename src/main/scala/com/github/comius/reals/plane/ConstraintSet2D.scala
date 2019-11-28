@@ -25,7 +25,7 @@ import com.github.comius.reals.plane.ConstraintSet2D.ConvexHull
  * @param yi interval in second axis
  * @param hull list of convex hulls
  */
-case class ConstraintSet2D private (xi: Interval, yi: Interval, hulls: List[ConvexHull]) {
+final case class ConstraintSet2D private (xi: Interval, yi: Interval, hulls: List[ConvexHull]) {
 
   def split(constraints: List[Line]): ConstraintSet2D = {
     ConstraintSet2D(xi, yi, hulls.map(_.split(constraints)._1))
@@ -74,7 +74,7 @@ object ConstraintSet2D {
       Line(D.ZERO, xi.d, D.ZERO, D.ONE, D.ZERO)))))
   }
 
-  case class ConvexHull private (constraints: List[Line]) {
+  final case class ConvexHull private (constraints: List[Line]) {
 
     def split(llines: List[Line]): (ConvexHull, List[List[Line]]) = {
       def filterDuplicate[A](l: List[A]): List[A] = {
@@ -123,7 +123,7 @@ object ConstraintSet2D {
     }
 
     def isIn(p: Point): Boolean = {
-      if (constraints.isEmpty) false else constraints.forall(_.inside(p) > 0)
+      !constraints.isEmpty && constraints.forall(_.inside(p) > 0)
     }
 
     override def toString(): String = {

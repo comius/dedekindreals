@@ -11,7 +11,7 @@ package com.github.comius.reals.plane
 import com.github.comius.floats.Floats.{ impl => D }
 import java.math.MathContext
 
-case class Line(f0: D.T, xm: D.T, ym: D.T, dfxi: D.T, dfyi: D.T) {
+final case class Line(f0: D.T, xm: D.T, ym: D.T, dfxi: D.T, dfyi: D.T) {
   def inside(p: Point): Int = {
     val u = MathContext.UNLIMITED
     // fmxmy + (x - mx) dfxi + (y - my) dfyi

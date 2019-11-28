@@ -10,4 +10,4 @@ package com.github.comius.reals.plane
 
 import com.github.comius.floats.Floats.{ impl => D }
 
-case class Point(x: D.T, y: D.T)
+final case class Point(x: D.T, y: D.T)

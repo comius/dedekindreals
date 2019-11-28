@@ -36,7 +36,7 @@ object Approximate2D extends Approximations {
     val pointContext = ctx + (xs, CutDomain(mx, mx)) + (ys, CutDomain(my, my))
     val intContext = ctx + (xs, CutDomain(xi.d, xi.u)) + (ys, CutDomain(yi.d, yi.u))
 
-    val lfmxmy = AutomaticDifferentiation.evalr(f)(pointContext, Set(), Down)._1
+    val lfmxmy = AutomaticDifferentiation.evalr(f)(pointContext, Set.empty, Down)._1
     val ldfxi = AutomaticDifferentiation.evalr(f)(intContext, Set(xs), Down)._2
     val ldfyi = AutomaticDifferentiation.evalr(f)(intContext, Set(ys), Down)._2
 
@@ -44,7 +44,7 @@ object Approximate2D extends Approximations {
       for (ldx <- List(ldfxi.d, ldfxi.u); ldy <- List(ldfyi.d, ldfyi.u))
         yield Line(lfmxmy.d, mx, my, ldx, ldy)
 
-    val ufmxmy = AutomaticDifferentiation.evalr(f)(pointContext, Set(), Up)._1
+    val ufmxmy = AutomaticDifferentiation.evalr(f)(pointContext, Set.empty, Up)._1
     val udfxi = AutomaticDifferentiation.evalr(f)(intContext, Set(xs), Up)._2
     val udfyi = AutomaticDifferentiation.evalr(f)(intContext, Set(ys), Up)._2
 

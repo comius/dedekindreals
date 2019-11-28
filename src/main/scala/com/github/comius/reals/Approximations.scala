@@ -13,14 +13,14 @@ trait Approximations {
 
 }
 
-case class Approximation[T](lower: T, upper: T)
+final case class Approximation[T](lower: T, upper: T)
 
 sealed trait VarDomain {
   val lower: D.T
   val upper: D.T
 }
 
-case class WholeDomain(lower: D.T, upper: D.T) extends VarDomain
-case class ExistsDomain(lower: D.T, upper: D.T) extends VarDomain
-case class CutDomain(lower: D.T, upper: D.T) extends VarDomain
-case class ForallDomain(lower: D.T, upper: D.T) extends VarDomain
+final case class WholeDomain(lower: D.T, upper: D.T) extends VarDomain
+final case class ExistsDomain(lower: D.T, upper: D.T) extends VarDomain
+final case class CutDomain(lower: D.T, upper: D.T) extends VarDomain
+final case class ForallDomain(lower: D.T, upper: D.T) extends VarDomain

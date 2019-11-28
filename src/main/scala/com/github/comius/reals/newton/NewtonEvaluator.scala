@@ -1,3 +1,11 @@
+/*
+ * Dedekind Reals - Java Library for computing with Dedekind Reals
+ * Copyright (c) 2019 Ivo List
+ *
+ * This software is distributed under the terms found
+ * in file LICENSE.txt that is included with this distribution.
+ */
+
 package com.github.comius.reals
 
 import com.github.comius.reals.syntax.Cut
@@ -13,18 +21,18 @@ import com.github.comius.reals.newton.ConstraintSet
 import com.github.comius.reals.newton.ConstraintSet.ConstraintSetNone
 import com.github.comius.reals.newton.ConstraintSet.ConstraintSetAll
 
-object NewtonEvaluator extends Evaluator {  
-  
+object NewtonEvaluator extends Evaluator {
+
   def approximate(formula: Formula)(implicit ctx: Context[VarDomain]): Approximation[Boolean] = {
     AproximateSimple.approximate(formula)
   }
-  
+
   def approximate1(
-    f:  Formula,
+    f: Formula,
     x0: (String, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet] = f match {
-    case Exists(x, a, b, phi) =>      
+    case Exists(x, a, b, phi) =>
       approximate1(phi, x0)(ctx + (x -> WholeDomain(a, b)))
-      
+
     case Forall(x, a, b, phi) =>
       approximate1(phi, x0)(ctx + (x -> WholeDomain(a, b)))
 
@@ -45,7 +53,7 @@ object NewtonEvaluator extends Evaluator {
       val i = x0._2
       Approximation(ConstraintSet(i, c.b), ConstraintSet(i, !c.b))
   }
-  
+
   def toIntervals(a: Approximation[ConstraintSet]): List[Interval] = {
     val is = a.lower.union(a.upper).complement().toIntervals()
 
@@ -58,7 +66,7 @@ object NewtonEvaluator extends Evaluator {
       else List(i)
     }
   }
-  
+
   def refineCut(cut: Cut)(implicit ctx: Context[VarDomain]): Cut = {
     val Cut(x, a, b, l, u) = cut
 
@@ -82,31 +90,31 @@ object NewtonEvaluator extends Evaluator {
   def refineExists(exists: Exists)(implicit ctx: Context[VarDomain]): Formula = {
     val Exists(x, a, b, phi) = exists
     val phi2 = refine(phi)(ctx + (x -> WholeDomain(a, b)))
-    if (phi2.isInstanceOf[ConstFormula])
-      phi2
-    else {
-      // Compute new intervals from approximation in 1D
-      val a1 = approximate1(phi, x -> Interval(a, b))
+    phi2 match {
+      case _: ConstFormula => phi2
+      case _ =>
+        // Compute new intervals from approximation in 1D
+        val a1 = approximate1(phi, x -> Interval(a, b))
 
-      val ints = toIntervals(a1)
-      // println("Exists " + phi + "> " + ints)
-      ints.map { i => Exists(x, i.d, i.u, phi2) }
-        .reduceOption[Formula](Or(_, _)).getOrElse(ConstFormula(!a1.lower.isInstanceOf[ConstraintSetNone]))
+        val ints = toIntervals(a1)
+        // println("Exists " + phi + "> " + ints)
+        ints.map { i => Exists(x, i.d, i.u, phi2) }
+          .reduceOption[Formula](Or(_, _)).getOrElse(ConstFormula(!a1.lower.isInstanceOf[ConstraintSetNone]))
     }
   }
 
   def refineForall(forall: Forall)(implicit ctx: Context[VarDomain]): Formula = {
     val Forall(x, a, b, phi) = forall
     val phi2 = refine(phi)(ctx + (x -> WholeDomain(a, b)))
-    if (phi2.isInstanceOf[ConstFormula])
-      phi2
-    else {
-      // Compute new intervals from approximation in 1D
-      val a1 = approximate1(phi, x -> Interval(a, b))
-      val ints = toIntervals(a1)
-      // println("forall " + phi + "> " + ints)
-      ints.map { i => Forall(x, i.d, i.u, phi2) }
-        .reduceOption[Formula](And(_, _)).getOrElse(ConstFormula(a1.lower.isInstanceOf[ConstraintSetAll]))
+    phi2 match {
+      case _: ConstFormula => phi2
+      case _ =>
+        // Compute new intervals from approximation in 1D
+        val a1 = approximate1(phi, x -> Interval(a, b))
+        val ints = toIntervals(a1)
+        // println("forall " + phi + "> " + ints)
+        ints.map { i => Forall(x, i.d, i.u, phi2) }
+          .reduceOption[Formula](And(_, _)).getOrElse(ConstFormula(a1.lower.isInstanceOf[ConstraintSetAll]))
     }
   }
 }

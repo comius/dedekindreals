@@ -46,7 +46,7 @@ sealed trait Formula {
  *
  * @param a the value of the constant
  */
-case class Const(a: D.T) extends Real {
+final case class Const(a: D.T) extends Real {
   override def toString: String = a.toString
 }
 
@@ -55,21 +55,21 @@ case class Const(a: D.T) extends Real {
  *
  * @param name name of the variable.
  */
-case class Var(name: String) extends Real {
+final case class Var(name: String) extends Real {
   override def toString: String = name.toString
 }
 
 /** Addition. */
-case class Add(x: Real, y: Real) extends Real
+final case class Add(x: Real, y: Real) extends Real
 
 /** Subtraction. */
-case class Sub(x: Real, y: Real) extends Real
+final case class Sub(x: Real, y: Real) extends Real
 
 /** Multiplication. */
-case class Mul(x: Real, y: Real) extends Real
+final case class Mul(x: Real, y: Real) extends Real
 
 /** Division. */
-case class Div(x: Real, y: Real) extends Real
+final case class Div(x: Real, y: Real) extends Real
 
 /** Cut. */
 case class Cut(x: String, a: D.T, b: D.T, lower: Formula, upper: Formula) extends Real {
@@ -79,16 +79,16 @@ case class Cut(x: String, a: D.T, b: D.T, lower: Formula, upper: Formula) extend
 }
 
 /** Integration. */
-case class Integrate(x: String, a: D.T, b: D.T, expr: Real) extends Real
+final case class Integrate(x: String, a: D.T, b: D.T, expr: Real) extends Real
 
 /* Constructors for Formula: constants, logical operations, forall, exists. */
 
-case class ConstFormula(b: Boolean) extends Formula
-case class Less(x: Real, y: Real) extends Formula
-case class And(x: Formula, y: Formula) extends Formula
-case class Or(x: Formula, y: Formula) extends Formula
-case class Forall(x: String, a: D.T, b: D.T, phi: Formula) extends Formula
-case class Exists(x: String, a: D.T, b: D.T, phi: Formula) extends Formula
+final case class ConstFormula(b: Boolean) extends Formula
+final case class Less(x: Real, y: Real) extends Formula
+final case class And(x: Formula, y: Formula) extends Formula
+final case class Or(x: Formula, y: Formula) extends Formula
+final case class Forall(x: String, a: D.T, b: D.T, phi: Formula) extends Formula
+final case class Exists(x: String, a: D.T, b: D.T, phi: Formula) extends Formula
 
 /**
  * Helper class that provides implicit conversions for integers to constants.
@@ -115,24 +115,24 @@ object Real {
   implicit def str2Var(name: String): Var = {
     Var(name)
   }
-  
-  def exists(x: String, a: D.T, b: D.T, phi: Real => Formula) = {
-    Exists(x,a,b,phi(Var(x)))
+
+  def exists(x: String, a: D.T, b: D.T, phi: Real => Formula): Formula = {
+    Exists(x, a, b, phi(Var(x)))
   }
-  
-  def forall(x: String, a: D.T, b: D.T, phi: Real => Formula) = {
-    Forall(x,a,b,phi(Var(x)))
+
+  def forall(x: String, a: D.T, b: D.T, phi: Real => Formula): Formula = {
+    Forall(x, a, b, phi(Var(x)))
   }
-  
-  def cut(x: String, a: D.T, b: D.T, lower: Real => Formula, upper: Real => Formula) = {
+
+  def cut(x: String, a: D.T, b: D.T, lower: Real => Formula, upper: Real => Formula): Real = {
     Cut(x, a, b, lower(Var(x)), upper(Var(x)))
   }
-  
-  def cut(x: String, lower: Real => Formula, upper: Real => Formula) = {
+
+  def cut(x: String, lower: Real => Formula, upper: Real => Formula): Real = {
     Cut(x, D.negInf, D.posInf, lower(Var(x)), upper(Var(x)))
   }
-  
-  def integrate(x: String, a: D.T, b: D.T, expr: Real => Real) = {
+
+  def integrate(x: String, a: D.T, b: D.T, expr: Real => Real): Real = {
     Integrate(x, a, b, expr(Var(x)))
   }
 }

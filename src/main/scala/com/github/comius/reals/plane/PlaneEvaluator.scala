@@ -31,12 +31,12 @@ import com.github.comius.reals.plane.Approximate2D
 import com.github.comius.reals.plane.ConstraintSet2D
 import com.github.comius.reals.newton.AutomaticDifferentiation
 
-object PlaneEvaluator extends Evaluator {  
-  
+object PlaneEvaluator extends Evaluator {
+
   def approximate(formula: Formula)(implicit ctx: Context[VarDomain]): Approximation[Boolean] = {
     approximate0(formula)
   }
-  
+
   import AproximateSimple._
   import com.github.comius.floats.Floats.{ impl => D }
 
@@ -56,36 +56,36 @@ object PlaneEvaluator extends Evaluator {
   def refineExists(exists: Exists)(implicit ctx: Context[VarDomain]): Formula = {
     val Exists(x, a, b, phi) = exists
     val phi2 = refine(phi)(ctx + (x -> WholeDomain(a, b)))
-    if (phi2.isInstanceOf[ConstFormula])
-      phi2
-    else {
-      // Compute new intervals from approximation in 1D
-      val a1 = approximate1(phi, x -> Interval(a, b))
+    phi2 match {
+      case _: ConstFormula => phi2
+      case _ =>
+        // Compute new intervals from approximation in 1D
+        val a1 = approximate1(phi, x -> Interval(a, b))
 
-      val ints = toIntervals(a1)
-      // println("Exists " + phi + "> " + ints)
-      ints.map { i => Exists(x, i.d, i.u, phi2) }
-        .reduceOption[Formula](Or(_, _)).getOrElse(ConstFormula(!a1.lower.isInstanceOf[ConstraintSetNone]))
+        val ints = toIntervals(a1)
+        // println("Exists " + phi + "> " + ints)
+        ints.map { i => Exists(x, i.d, i.u, phi2) }
+          .reduceOption[Formula](Or(_, _)).getOrElse(ConstFormula(!a1.lower.isInstanceOf[ConstraintSetNone]))
     }
   }
-  
+
   def refineForall(forall: Forall)(implicit ctx: Context[VarDomain]): Formula = {
     val Forall(x, a, b, phi) = forall
     val phi2 = refine(phi)(ctx + (x -> WholeDomain(a, b)))
-    if (phi2.isInstanceOf[ConstFormula])
-      phi2
-    else {
-      // Compute new intervals from approximation in 1D
-      val a1 = approximate1(phi, x -> Interval(a, b))
-      val ints = toIntervals(a1)
-      // println("forall " + phi + "> " + ints)
-      ints.map { i => Forall(x, i.d, i.u, phi2) }
-        .reduceOption[Formula](And(_, _)).getOrElse(ConstFormula(a1.lower.isInstanceOf[ConstraintSetAll]))
-        }
+    phi2 match {
+      case _: ConstFormula => phi2
+      case _ =>
+        // Compute new intervals from approximation in 1D
+        val a1 = approximate1(phi, x -> Interval(a, b))
+        val ints = toIntervals(a1)
+        // println("forall " + phi + "> " + ints)
+        ints.map { i => Forall(x, i.d, i.u, phi2) }
+          .reduceOption[Formula](And(_, _)).getOrElse(ConstFormula(a1.lower.isInstanceOf[ConstraintSetAll]))
+    }
   }
-        
+
   def approximate2(f: Formula, x0: (String, Interval),
-                   y0: (String, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet2D] = f match {
+    y0: (String, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet2D] = f match {
     case Less(x, y) =>
       Approximate2D.estimate(Less(x, y), x0, y0)
 
@@ -93,7 +93,7 @@ object PlaneEvaluator extends Evaluator {
       val Approximation(l1, u1) = approximate2(x, x0, y0)
       val Approximation(l2, u2) = approximate2(y, x0, y0)
       Approximation(l1.intersection(l2), u1.union(u2))
-    
+
     case Or(x, y) =>
       val Approximation(l1, u1) = approximate2(x, x0, y0)
       val Approximation(l2, u2) = approximate2(y, x0, y0)
@@ -102,7 +102,7 @@ object PlaneEvaluator extends Evaluator {
   }
 
   def approximate1(
-    f:  Formula,
+    f: Formula,
     x0: (String, Interval))(implicit ctx: Context[VarDomain]): Approximation[ConstraintSet] = f match {
     case Exists(x, a, b, phi) =>
       val Approximation(l, u) = approximate2(phi, x0, x -> Interval(a, b))

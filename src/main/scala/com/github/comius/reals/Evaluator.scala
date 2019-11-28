@@ -1,3 +1,11 @@
+/*
+ * Dedekind Reals - Java Library for computing with Dedekind Reals
+ * Copyright (c) 2019 Ivo List
+ *
+ * This software is distributed under the terms found
+ * in file LICENSE.txt that is included with this distribution.
+ */
+
 package com.github.comius.reals
 
 import com.github.comius.reals.syntax.Cut
@@ -19,9 +27,9 @@ import com.github.comius.reals.newton.AutomaticDifferentiation
 
 trait Evaluator {
   import com.github.comius.floats.Floats.{ impl => D }
-    
+
   def approximate(formula: Formula)(implicit ctx: Context[VarDomain]): Approximation[Boolean]
-    
+
   def refineCut(cut: Cut)(implicit ctx: Context[VarDomain]): Cut
   def refineExists(exists: Exists)(implicit ctx: Context[VarDomain]): Formula
   def refineForall(forall: Forall)(implicit ctx: Context[VarDomain]): Formula
@@ -78,8 +86,7 @@ trait Evaluator {
     case Div(x, y) => Div(refine(x), refine(y))
     case x => x
   }
-  
-  
+
   def eval(expr: Real, precision: Int): Unit = {
     var rexpr = expr
     val dprec = 200 // precision *2
@@ -103,7 +110,7 @@ trait Evaluator {
         println(s"Total time: ${currentTime - evalStart} ms")
         println(l)
         return ;
-      }      
+      }
       rexpr = refine(rexpr)(Context[VarDomain](new RoundingContext(0, dprec)))
     }
   }
@@ -111,7 +118,7 @@ trait Evaluator {
   def eval(expr: Formula, maxSteps: Int): Unit = {
     var rexpr = expr
     val dprec = 200 // precision *2
-    val evalStart = System.currentTimeMillis() 
+    val evalStart = System.currentTimeMillis()
     var iterationStart = evalStart
 
     println("\nEvaluating: " + expr)
@@ -125,7 +132,7 @@ trait Evaluator {
       println(s"Loop: ${i}: Dyadic precision: ${dprec}, current value: ${l}, expr ${rexpr.toString}, time ${currentTime - iterationStart}")
       iterationStart = currentTime
       if (l.lower == l.upper) {
-        println(s"Total time: ${currentTime - evalStart} ms") 
+        println(s"Total time: ${currentTime - evalStart} ms")
         println(l)
         return ;
       }

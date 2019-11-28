@@ -17,7 +17,6 @@ import org.scalacheck.Properties
 import com.github.comius.RoundingContext
 import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.floats.FloatsSpec.gen01Float
-import com.github.comius.reals.plane.Point
 import com.github.comius.reals.syntax.Const
 import com.github.comius.reals.syntax.Real.bigDecimal2Const
 import com.github.comius.reals.syntax.Real.int2BigDecimal

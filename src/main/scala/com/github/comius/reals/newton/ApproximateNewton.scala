@@ -48,9 +48,8 @@ object ApproximateNewton extends Approximations {
     case Less(x, y) =>
 
       val xm = i.d.split(i.u)
-      val xi = Interval(xm, xm)
       // value at the middle point, we don't need interval
-      val a @ (Interval(lf, _), _) = AutomaticDifferentiation.evalr(Sub(y, x))(ctx + (x0, CutDomain(xm,xm)), Set(), Down)
+      val a @ (Interval(lf, _), _) = AutomaticDifferentiation.evalr(Sub(y, x))(ctx + (x0, CutDomain(xm,xm)), Set.empty, Down)
       // derivative over the whole interval
       val b @ (_, Interval(ld, ud)) = AutomaticDifferentiation.evalr(Sub(y, x))(ctx + (x0, CutDomain(i.d, i.u)), Set(x0), Down)
 
@@ -78,7 +77,7 @@ object ApproximateNewton extends Approximations {
       val lwr = ConstraintSet(Interval(i.d, i.u), xm, lowerRay(lf, ud), lowerRay(lf, ld))
 
       // value at the middle point, we don't need interval
-      val (Interval(uf, _), _) = AutomaticDifferentiation.evalr(Sub(y, x))(ctx + (x0, CutDomain(xm, xm)), Set(), Up)
+      val (Interval(uf, _), _) = AutomaticDifferentiation.evalr(Sub(y, x))(ctx + (x0, CutDomain(xm, xm)), Set.empty, Up)
       // derivative over the whole interval
       val (_, Interval(uld, uud)) = AutomaticDifferentiation.evalr(Sub(y, x))(ctx + (x0, CutDomain(i.d, i.u)), Set(x0), Up)
 

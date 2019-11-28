@@ -122,7 +122,7 @@ class ApproximationsTest {
    * Test universal quantifier lower and upper approximation.
    */
   @Test
-  def testForall() = {
+  def testForall(): Unit = {
     test(Forall("x", 2, 4, Const(0) < "x"), true)
     test(Forall("x", 2, 4, Const(1) < "x"), true)
     testna(Forall("x", 2, 4, Const(2) < "x"))
