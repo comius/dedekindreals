@@ -88,7 +88,7 @@ pseudo-cuts) to intervals, ⊕ : IR × IR → IR.
 
 *Lemma 12.1* Kaucher multiplication [a,z] ≡ [d,u] ⊗ [e,t] is defined by
 
-<pre>
+```
                   d ≤ 0             0 ≤ d  
 [d,u]⊗[e,t]  u ≤ 0    u ≥ 0    u ≤ 0    u ≥ 0  
         
@@ -97,7 +97,7 @@ pseudo-cuts) to intervals, ⊕ : IR × IR → IR.
         
 e ≤ 0 0 ≤ t [dt, de]  [p,q]    [0,0]   [ue, ut] 
       t ≤ 0 [ut, de] [ue, de] [ut, dt] [ue, dt]
-</pre>
+```
 
 where p ≡ min(dt,ue) ≤ 0 and q ≡ max(de,ut) ≥ 0. It agrees with ordinary multiplication in Q
 when d = u and e = t, and with Moore’s operation (Definition 2.3) when d ≤ u and e ≤ t. Also,
@@ -120,12 +120,12 @@ This denotes the interval [−∞,+∞].
 More generally, the reciprocal of a general (and possibly back-to-front) interval with endpoints
 is given by
 
-<pre>
-[d,u]<sup>−1</sup>    d < 0    d = 0    d > 0
-u < 0   [u<sup>−1</sup>, d<sup>−1</sup>] [u<sup>−1</sup>, −∞]  [+∞,−∞]
-u = 0    [−∞,+∞]  [−∞,+∞]  [+∞, d<sup>−1</sup>]
-u > 0    [−∞,+∞]  [−∞,+∞]  [u<sup>−1</sup>, d<sup>−1</sup>],
-</pre>
+```
+[d,u]⁻¹    d < 0    d = 0    d > 0
+u < 0   [u⁻¹, d⁻¹] [u⁻¹, −∞] [+∞,−∞]
+u = 0    [−∞,+∞]  [−∞,+∞]   [+∞, d⁻¹]
+u > 0    [−∞,+∞]  [−∞,+∞]   [u⁻¹, d⁻¹],
+```
 
 # Intervals
 
