@@ -22,6 +22,7 @@ import com.github.comius.reals.syntax.Const
 import java.math.MathContext
 import com.github.comius.reals.syntax.Var
 
+// scalastyle:off magic.number
 object Examples {
   import Real._
   import com.github.comius.floats.Floats.{ impl => D }
@@ -43,7 +44,9 @@ object Examples {
 
     val a = Const(77617.0)
     val b = Const(33096.0)
-    eval.eval(Const(333.75) * b * b * b * b * b * b + a * a * (11 * a * a * b * b - b * b * b * b * b * b - 121 * b * b * b * b - 2) + Const(5.5) * b * b * b * b * b * b * b * b + a / (2 * b), 10)
+    eval.eval(Const(333.75) * b * b * b * b * b * b + a * a * 
+        (11 * a * a * b * b - b * b * b * b * b * b - 121 * b * b * b * b - 2) + 
+        Const(5.5) * b * b * b * b * b * b * b * b + a / (2 * b), 10)
 
     eval.eval(cut("x", 1, 2, x => x < 1 + 1 / x, x => 1 + 1 / x < x), 10)
     eval.eval(cut("x", 0, 2, x => cut("y", 0, 2, y => y < x, y => x < y) < 1, x => 1 < x), 10)

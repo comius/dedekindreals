@@ -26,6 +26,7 @@ import com.github.comius.reals.syntax.Var
  *
  * Environment: no specific test environment needs to be set up. Java/Scala provide everything in default installation.
  */
+// scalastyle:off magic.number
 class ApproximationsTest {
   // Imports implicit conversions to Dyadic, to formulas.
   import com.github.comius.reals.syntax.Real._
