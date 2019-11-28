@@ -127,7 +127,7 @@ object ConstraintSet2D {
     }
 
     override def toString(): String = {
-      constraints.mkString("RegionPlot[{", " && ", s"},{x,-5,5},{y,-5,5}]")
+      constraints.mkString("RegionPlot[{", " && ", "},{x,-5,5},{y,-5,5}]")
     }
 
     def projectExists(xi: Interval, r: RoundingContext): ConstraintSet = {
