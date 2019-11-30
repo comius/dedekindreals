@@ -78,7 +78,7 @@ trait Evaluator {
       val m = a.split(b)
       val le = refine(e)(ctx + (x -> CutDomain(a, m)))
       val ue = refine(e)(ctx + (x -> CutDomain(m, b)))
-      RealBinaryFunction(Integrate(x, a, m, le), Integrate(x, m, b, ue), Add)  //TODO
+      RealBinaryFunction(Integrate(x, a, m, le), Integrate(x, m, b, ue), Add)
     case RealBinaryFunction(x, y, e) => RealBinaryFunction(refine(x), refine(y), e)
     case RealFunction(x, e) => RealFunction(refine(x), e)
     case x => x

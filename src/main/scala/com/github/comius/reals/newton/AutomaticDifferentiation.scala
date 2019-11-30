@@ -25,7 +25,6 @@ import com.github.comius.reals.syntax.Formula
 import com.github.comius.reals.syntax.Less
 import com.github.comius.reals.WholeDomain
 import com.github.comius.interval.BinaryFunctionEvaluator
-import com.github.comius.interval.BinaryFunctionEvaluator
 import com.github.comius.reals.syntax.RealBinaryFunction
 import com.github.comius.reals.syntax.RealFunction
 

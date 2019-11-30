@@ -1,3 +1,11 @@
+/*
+ * Dedekind Reals - Java Library for computing with Dedekind Reals
+ * Copyright (c) 2019 Ivo List
+ *
+ * This software is distributed under the terms found
+ * in file LICENSE.txt that is included with this distribution.
+ */
+
 package com.github.comius.interval
 
 import com.github.comius.RoundingContext
@@ -55,7 +63,7 @@ case object Div extends BinaryFunctionEvaluator {
   }
 }
 
-case class Pow(n: Int) extends FunctionEvaluator {
+final case class Pow(n: Int) extends FunctionEvaluator {
   override val name = ("(", s")^$n")
   override def eval(a: Interval, r: RoundingContext): Interval = {
     var re = Interval.ONE
@@ -72,6 +80,6 @@ case class Pow(n: Int) extends FunctionEvaluator {
       re = Mul.evalp(re, a, r)
     }
     re
-    //TODO optimize multiplications, interval powers, proper derivative, negative powers
+    // TODO optimize multiplications, interval powers, proper derivative, negative powers
   }
 }
