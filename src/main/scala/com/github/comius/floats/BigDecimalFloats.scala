@@ -56,8 +56,8 @@ object BigDecimalFloats extends Floats {
 
     override def divide(b: BigDecimalFloat, mc: MathContext): BigDecimalFloat = {
       (this, b) match {
-        case (Number(x), ZERO)            => throw new ArithmeticException("Division by zero.")
-        case (Number(x), Number(y))       => Number(x.divide(y, mc))
+        case (Number(x), ZERO) => throw new ArithmeticException("Division by zero.")
+        case (Number(x), Number(y)) => Number(x.divide(y, mc))
         case (PosInf | NegInf, Number(a)) => BigDecimalFloats.signToInfty(signum() * a.signum())
         case (Number(_), NegInf | PosInf) => BigDecimalFloats.ZERO
         case (PosInf | NegInf,
@@ -67,11 +67,11 @@ object BigDecimalFloats extends Floats {
 
     override def compareTo(b: BigDecimalFloat): Int = {
       (this, b) match {
-        case (Number(x), Number(y))              => x.compareTo(y)
+        case (Number(x), Number(y)) => x.compareTo(y)
         // comparing infinities might be a problem in some cases, but we use them in min/max functions
         case (PosInf, PosInf) | (NegInf, NegInf) => 0
-        case (PosInf, _) | (_, NegInf)           => 1
-        case (NegInf, _) | (_, PosInf)           => -1
+        case (PosInf, _) | (_, NegInf) => 1
+        case (NegInf, _) | (_, PosInf) => -1
       }
     }
 
@@ -137,27 +137,21 @@ object BigDecimalFloats extends Floats {
       case (NegInf, Number(x)) =>
         extrapolate(x.negate).negate
       case (NegInf, PosInf) => BigDecimalFloats.ZERO
-      case _                => throw new ArithmeticException(s"Splitting interval: ${this}, ${b}")
+      case _ => throw new ArithmeticException(s"Splitting interval: ${this}, ${b}")
     }
 
-  //  @tailrec
+    @tailrec
+    private def trisectSearchPrecision(m: BigDecimalFloat, b: BigDecimalFloat)(precision: Int): (BigDecimalFloat, BigDecimalFloat) = {
+      val eps = valueOfEpsilon(precision)
+      val a2 = m.subtract(eps, new MathContext(precision, RoundingMode.FLOOR))
+      val b2 = m.add(eps, new MathContext(precision, RoundingMode.CEILING))
+      if (this.compareTo(a2) < 0 && b2.compareTo(b) < 0) (a2, b2) else trisectSearchPrecision(m, b)(precision + 1)
+    }
+
     override def trisect(b: BigDecimalFloat, precision: Int): (BigDecimalFloat, BigDecimalFloat) = {
       (this, b) match {
-          case (Number(x), Number(y)) =>
-            val Number(m) = interpolate(x,y)
-            (interpolate(x,m), interpolate(m,y))
-            // TODO
-    /*    case (Number(x), Number(y)) =>
-          val c1 = split(b)
-          // Note: we're one-sided / always up. Perhaps improve by eveness test to determine side.
-          val c2 = c1.add(valueOfEpsilon(precision), new MathContext(precision, RoundingMode.CEILING))
-          if (c2.compareTo(b) < 0) {
-            (c1, c2)
-          } else {
-            // we need to increase precision (or throw exception)
-            val newPrecision = math.max(math.max(x.scale(), y.scale), precision + 1)
-            trisect(b, newPrecision) // a bit lazy way to do it
-          }*/
+        case (Number(x), Number(y)) =>
+          trisectSearchPrecision(interpolate(x, y), b)(precision)
         case (Number(x), PosInf) =>
           val Number(xe) = extrapolate(x)
           (Number(xe), extrapolate(xe))
@@ -184,7 +178,7 @@ object BigDecimalFloats extends Floats {
     // TODO sanitize
     Number(BigDecimal.valueOf(d))
   }
-  
+
   override def valueOf(s: String, mc: MathContext): BigDecimalFloat = {
     Number(new BigDecimal(s, mc))
   }
@@ -245,7 +239,7 @@ object BigDecimalFloats extends Floats {
     override def equals(b: Any): Boolean = {
       b match {
         case number: Number => number.x.compareTo(x) == 0
-        case _              => false
+        case _ => false
       }
     }
 
