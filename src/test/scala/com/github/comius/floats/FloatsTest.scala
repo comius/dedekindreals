@@ -136,5 +136,91 @@ class FloatsTest {
     val divide = (a: Int, b: Int) => if (isInf(a) && isInf(b)) throw new ArithmeticException() else a / b;
     testLimits((a, b) => a.divide(b, new MathContext(precision, RoundingMode.CEILING)), divide, " / ");
   }
+  
+  def getPrec(a: Int): Int = {
+    var p = 10 
+    if (a==0) return p;
+     var aa = a
+     while ((aa % 2) == 0) {
+       aa = aa/2
+       p = p-1;
+     }
+     return p
+  }
+  
+  /**
+   * Empirical tests of trisection.
+   * 
+   * First test splits at 1/4 and 1/4 - assumption is that we can keep precision lower, to be more efficient.
+   * 
+   * Second test splits at 1/2-eps and 1/2+eps - assumption is that we are more efficient by having less iterations.
+   * 
+   * Third test splits at 2 numbers with lowest precision, at least it tries.
+   * 
+   * Conclusion: Second test always wins by having less iteration, because other tests have tail iterations with highest
+   * precision, which don't balance with initial iterations at lower precision.
+   */
+  def testTrisection(): Unit = {
+    val s = Integer.parseInt("00001010100", 2);
+    var a = 0
+    var b = Integer.parseInt("100000000000", 2);
+    var i0 = 0;
+    var psum = 0;
+    while (b-a>2) {
+      var a1 = (3*a+b)/4
+      var b1 = (a+3*b)/4
+      
+      if (a1<s) a = a1;
+      if (s<b1) b = b1;
+      println(s" iteration $i0 precision $a1 $b1 ${getPrec(a1)} ${getPrec(b1)}")
+      psum += getPrec(a1) + getPrec(b1);
+      i0+=1
+    }
+    println(s"$a $b $s")
+    println(psum);
+  }
+  
+  def testTrisection2(): Unit = {
+    val s = Integer.parseInt("00001010100", 2);
+    var a = 0
+    var b = Integer.parseInt("100000000000", 2);
+    var i = 0;
+    var psum = 0;
+    while (b-a>2) {
+      val a1 = (a+b)/2-1
+      val b1 = (a+b)/2+1
+      if (a1<s) a = a1;
+      if (s<b1) b = b1;
+      println(s" iteration $i precision $a1 $b1  ${getPrec(a1)} ${getPrec(b1)}")
+      psum += getPrec(a1) + getPrec(b1);
+      i+=1
+    }
+    println(s"$a $b $s")
+    println(psum);
+  }
+  
+  def testTrisection3(): Unit = {
+    val s = Integer.parseInt("00001010100", 2);
+    var a = 0
+    var b = Integer.parseInt("100000000000", 2);
+    var i0 = 0;
+    var psum = 0;
+    var p = b
+    while (b-a>2) {
+      var a1 = (a+b)/2
+      var b1 = (a+b)/2
+      while (a1-p<=a && b1+p>=b) p/=2
+      a1 = a1 - p
+      b1 = b1 + p
+      
+      if (a1<s) a = a1;
+      if (s<b1) b = b1;
+      println(s" iteration $i0 precision $a1 $b1 ${getPrec(a1)} ${getPrec(b1)} $p")
+      psum += getPrec(a1) + getPrec(b1);
+      i0+=1
+    }
+    println(s"$a $b $s")
+    println(psum);
+  }
 }
 
