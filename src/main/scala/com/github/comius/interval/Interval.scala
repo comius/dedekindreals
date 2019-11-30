@@ -6,7 +6,7 @@
  * in file LICENSE.txt that is included with this distribution.
  */
 
-package com.github.comius.reals
+package com.github.comius.interval
 
 import java.math.MathContext
 import java.math.RoundingMode

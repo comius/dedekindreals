@@ -21,7 +21,7 @@ import com.github.comius.reals.syntax.Const
 import com.github.comius.reals.syntax.Real.bigDecimal2Const
 import com.github.comius.reals.syntax.Real.int2BigDecimal
 import com.github.comius.reals.syntax.Real.int2Const
-import com.github.comius.reals.Interval
+import com.github.comius.interval.Interval
 import com.github.comius.reals.Context
 import com.github.comius.reals.VarDomain
 import com.github.comius.reals.Approximation

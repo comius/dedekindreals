@@ -12,7 +12,7 @@ import org.junit.Test
 
 import com.github.comius.RoundingContext
 import com.github.comius.reals.Context
-import com.github.comius.reals.Interval
+import com.github.comius.interval.Interval
 import com.github.comius.reals.syntax.Const
 import com.github.comius.reals.syntax.Integrate
 import com.github.comius.reals.newton.AutomaticDifferentiation.Down

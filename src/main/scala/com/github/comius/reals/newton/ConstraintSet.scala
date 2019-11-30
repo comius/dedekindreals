@@ -12,7 +12,7 @@ import scala.annotation.tailrec
 import scala.collection.mutable.Builder
 
 import com.github.comius.floats.Floats.{ impl => D }
-import com.github.comius.reals.Interval
+import com.github.comius.interval.Interval
 
 /**
  * A Constrains set on the given domain.

@@ -9,15 +9,15 @@
 package com.github.comius.reals.syntax
 
 import com.github.comius.floats.Floats.{ impl => D }
-import com.github.comius.reals.Interval
+import com.github.comius.interval.Interval
 import java.math.MathContext
-import com.github.comius.reals.FunctionEvaluator
-import com.github.comius.reals.BinaryFunctionEvaluator
-import com.github.comius.reals.Add
-import com.github.comius.reals.Sub
-import com.github.comius.reals.Mul
-import com.github.comius.reals.Div
-import com.github.comius.reals.Pow
+import com.github.comius.interval.FunctionEvaluator
+import com.github.comius.interval.BinaryFunctionEvaluator
+import com.github.comius.interval.Add
+import com.github.comius.interval.Sub
+import com.github.comius.interval.Mul
+import com.github.comius.interval.Div
+import com.github.comius.interval.Pow
 
 /* Our syntax is made of Reals and Formulas */
 

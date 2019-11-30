@@ -14,7 +14,7 @@ import com.github.comius.reals.Context
 import com.github.comius.reals.CutDomain
 import com.github.comius.reals.ExistsDomain
 import com.github.comius.reals.ForallDomain
-import com.github.comius.reals.Interval
+import com.github.comius.interval.Interval
 import com.github.comius.reals.VarDomain
 import com.github.comius.reals.newton.ConstraintSet.All
 import com.github.comius.reals.newton.ConstraintSet.Constraint

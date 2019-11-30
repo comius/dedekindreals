@@ -17,7 +17,7 @@ import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.floats.FloatsSpec
 import com.github.comius.reals.Approximation
 import com.github.comius.reals.Context
-import com.github.comius.reals.Interval
+import com.github.comius.interval.Interval
 import com.github.comius.reals.TestUtil.forall
 import com.github.comius.reals.syntax.Const
 import com.github.comius.reals.syntax.Real

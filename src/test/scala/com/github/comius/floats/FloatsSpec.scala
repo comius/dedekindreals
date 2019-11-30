@@ -20,7 +20,7 @@ import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
 
 import com.github.comius.floats.Floats.{ impl => D }
-import com.github.comius.reals.Interval
+import com.github.comius.interval.Interval
 
 /**
  * Unit tests for Floats - property based.

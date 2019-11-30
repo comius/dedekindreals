@@ -8,7 +8,7 @@
 
 package com.github.comius.reals.plane
 
-import com.github.comius.reals.Interval
+import com.github.comius.interval.Interval
 import com.github.comius.RoundingContext
 import com.github.comius.reals.newton.ConstraintSet
 import com.github.comius.reals.newton.ConstraintSet.ConstraintSetNone

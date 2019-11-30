@@ -11,7 +11,7 @@ package com.github.comius.reals.plane
 import org.junit.Test
 import com.github.comius.RoundingContext
 import com.github.comius.reals.VarDomain
-import com.github.comius.reals.Interval
+import com.github.comius.interval.Interval
 import com.github.comius.reals.Context
 import com.github.comius.reals.plane.ConstraintSet2D.ConvexHull
 import com.github.comius.reals.syntax.Var

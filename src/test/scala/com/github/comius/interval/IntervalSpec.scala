@@ -23,6 +23,7 @@ import com.github.comius.RoundingContext
 import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.floats.FloatsSpec
 import com.github.comius.reals.TestUtil.forall
+import com.github.comius.interval.Interval
 
 /**
  * Unit tests for Intervals.

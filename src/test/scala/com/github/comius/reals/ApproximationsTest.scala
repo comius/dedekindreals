@@ -20,6 +20,7 @@ import com.github.comius.reals.syntax.Formula
 import com.github.comius.reals.syntax.Real
 import com.github.comius.reals.newton.AutomaticDifferentiation
 import com.github.comius.reals.syntax.Var
+import com.github.comius.interval.Interval
 
 /**
  * Unit tests for Approximations - simple.

@@ -20,6 +20,7 @@ import com.github.comius.reals.syntax.Less
 import com.github.comius.reals.newton.ConstraintSet
 import com.github.comius.reals.newton.ConstraintSet.ConstraintSetNone
 import com.github.comius.reals.newton.ConstraintSet.ConstraintSetAll
+import com.github.comius.interval.Interval
 
 object NewtonEvaluator extends Evaluator {
 

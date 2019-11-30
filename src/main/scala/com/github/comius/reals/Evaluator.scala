@@ -22,6 +22,7 @@ import com.github.comius.RoundingContext
 import com.github.comius.reals.newton.AutomaticDifferentiation
 import com.github.comius.reals.syntax.RealBinaryFunction
 import com.github.comius.reals.syntax.RealFunction
+import com.github.comius.interval.Add
 
 trait Evaluator {
   import com.github.comius.floats.Floats.{ impl => D }

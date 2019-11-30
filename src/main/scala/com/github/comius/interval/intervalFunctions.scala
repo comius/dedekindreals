@@ -1,4 +1,4 @@
-package com.github.comius.reals
+package com.github.comius.interval
 
 import com.github.comius.RoundingContext
 

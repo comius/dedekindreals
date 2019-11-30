@@ -26,6 +26,7 @@ import com.github.comius.reals.syntax.Real
 import com.github.comius.reals.plane.Approximate2D
 import com.github.comius.reals.plane.ConstraintSet2D
 import com.github.comius.reals.newton.AutomaticDifferentiation
+import com.github.comius.interval.Interval
 
 object PlaneEvaluator extends Evaluator {
 

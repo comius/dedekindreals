@@ -10,7 +10,7 @@ package com.github.comius.reals.newton
 
 import com.github.comius.RoundingContext
 import com.github.comius.reals.Context
-import com.github.comius.reals.Interval
+import com.github.comius.interval.Interval
 import com.github.comius.reals.syntax.Const
 import com.github.comius.reals.syntax.Cut
 import com.github.comius.reals.syntax.Integrate
@@ -24,8 +24,8 @@ import com.github.comius.reals.CutDomain
 import com.github.comius.reals.syntax.Formula
 import com.github.comius.reals.syntax.Less
 import com.github.comius.reals.WholeDomain
-import com.github.comius.reals.BinaryFunctionEvaluator
-import com.github.comius.reals.BinaryFunctionEvaluator
+import com.github.comius.interval.BinaryFunctionEvaluator
+import com.github.comius.interval.BinaryFunctionEvaluator
 import com.github.comius.reals.syntax.RealBinaryFunction
 import com.github.comius.reals.syntax.RealFunction
 

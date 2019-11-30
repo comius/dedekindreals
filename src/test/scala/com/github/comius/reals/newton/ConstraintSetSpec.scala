@@ -17,7 +17,7 @@ import org.scalacheck.Properties
 
 import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.floats.FloatsSpec
-import com.github.comius.reals.Interval
+import com.github.comius.interval.Interval
 import com.github.comius.reals.newton.ConstraintSet.ConstraintSetAll
 import com.github.comius.reals.newton.ConstraintSet.ConstraintSetList
 import com.github.comius.reals.newton.ConstraintSet.ConstraintSetNone

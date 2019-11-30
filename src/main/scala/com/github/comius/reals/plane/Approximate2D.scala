@@ -12,7 +12,7 @@ import com.github.comius.reals.Approximation
 import com.github.comius.reals.Approximations
 import com.github.comius.reals.Context
 import com.github.comius.reals.CutDomain
-import com.github.comius.reals.Interval
+import com.github.comius.interval.Interval
 import com.github.comius.reals.VarDomain
 import com.github.comius.reals.newton.AutomaticDifferentiation
 import com.github.comius.reals.newton.AutomaticDifferentiation.Down
