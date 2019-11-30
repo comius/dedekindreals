@@ -40,7 +40,7 @@ object Examples {
   }
 
   def main(args: Array[String]): Unit = {
-    val eval: Evaluator = PlaneEvaluator
+    val eval: Evaluator = SimpleEvaluator
 
     val a = Const(77617.0)
     val b = Const(33096.0)

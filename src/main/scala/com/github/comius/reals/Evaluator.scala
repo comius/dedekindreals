@@ -18,12 +18,10 @@ import com.github.comius.reals.syntax.And
 import com.github.comius.reals.syntax.Or
 import com.github.comius.reals.syntax.Real
 import com.github.comius.reals.syntax.Integrate
-import com.github.comius.reals.syntax.Add
-import com.github.comius.reals.syntax.Sub
-import com.github.comius.reals.syntax.Mul
-import com.github.comius.reals.syntax.Div
 import com.github.comius.RoundingContext
 import com.github.comius.reals.newton.AutomaticDifferentiation
+import com.github.comius.reals.syntax.RealBinaryFunction
+import com.github.comius.reals.syntax.RealFunction
 
 trait Evaluator {
   import com.github.comius.floats.Floats.{ impl => D }
@@ -79,11 +77,9 @@ trait Evaluator {
       val m = a.split(b)
       val le = refine(e)(ctx + (x -> CutDomain(a, m)))
       val ue = refine(e)(ctx + (x -> CutDomain(m, b)))
-      Add(Integrate(x, a, m, le), Integrate(x, m, b, ue))
-    case Add(x, y) => Add(refine(x), refine(y))
-    case Sub(x, y) => Sub(refine(x), refine(y))
-    case Mul(x, y) => Mul(refine(x), refine(y))
-    case Div(x, y) => Div(refine(x), refine(y))
+      RealBinaryFunction(Integrate(x, a, m, le), Integrate(x, m, b, ue), Add)  //TODO
+    case RealBinaryFunction(x, y, e) => RealBinaryFunction(refine(x), refine(y), e)
+    case RealFunction(x, e) => RealFunction(refine(x), e)
     case x => x
   }
 

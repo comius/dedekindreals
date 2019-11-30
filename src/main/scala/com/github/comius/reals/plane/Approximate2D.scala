@@ -18,7 +18,6 @@ import com.github.comius.reals.newton.AutomaticDifferentiation
 import com.github.comius.reals.newton.AutomaticDifferentiation.Down
 import com.github.comius.reals.newton.AutomaticDifferentiation.Up
 import com.github.comius.reals.syntax.Less
-import com.github.comius.reals.syntax.Sub
 
 object Approximate2D extends Approximations {
   // given f and search space, returns new lower and upper approximation and new search space (one iteration)
@@ -29,7 +28,7 @@ object Approximate2D extends Approximations {
     val (ys, yi) = y0
 
     val Less(x, y) = lss
-    val f = Sub(y, x)
+    val f = y - x
     val mx = xi.d.split(yi.u)
     val my = yi.d.split(yi.u)
 

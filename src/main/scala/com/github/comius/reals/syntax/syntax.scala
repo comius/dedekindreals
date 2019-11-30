@@ -11,6 +11,13 @@ package com.github.comius.reals.syntax
 import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.reals.Interval
 import java.math.MathContext
+import com.github.comius.reals.FunctionEvaluator
+import com.github.comius.reals.BinaryFunctionEvaluator
+import com.github.comius.reals.Add
+import com.github.comius.reals.Sub
+import com.github.comius.reals.Mul
+import com.github.comius.reals.Div
+import com.github.comius.reals.Pow
 
 /* Our syntax is made of Reals and Formulas */
 
@@ -21,11 +28,12 @@ import java.math.MathContext
  * syntax.
  */
 sealed trait Real {
-  def +(other: Real): Real = Add(this, other) // scalastyle:ignore method.name
-  def -(other: Real): Real = Sub(this, other) // scalastyle:ignore method.name
-  def *(other: Real): Real = Mul(this, other) // scalastyle:ignore method.name
-  def /(other: Real): Real = Div(this, other) // scalastyle:ignore method.name
+  def +(other: Real): Real = RealBinaryFunction(this, other, Add) // scalastyle:ignore method.name
+  def -(other: Real): Real = RealBinaryFunction(this, other, Sub) // scalastyle:ignore method.name
+  def *(other: Real): Real = RealBinaryFunction(this, other, Mul) // scalastyle:ignore method.name
+  def /(other: Real): Real = RealBinaryFunction(this, other, Div) // scalastyle:ignore method.name
   def <(other: Real): Less = Less(this, other) // scalastyle:ignore method.name
+  def **(other: Int): Real = RealFunction(this, Pow(other)) // scalastyle:ignore method.name
 }
 
 /**
@@ -59,17 +67,11 @@ final case class Var(name: String) extends Real {
   override def toString: String = name.toString
 }
 
-/** Addition. */
-final case class Add(x: Real, y: Real) extends Real
+/** Unary functions. */
+final case class RealFunction(x: Real, e: FunctionEvaluator) extends Real
 
-/** Subtraction. */
-final case class Sub(x: Real, y: Real) extends Real
-
-/** Multiplication. */
-final case class Mul(x: Real, y: Real) extends Real
-
-/** Division. */
-final case class Div(x: Real, y: Real) extends Real
+/** Binary functions. */
+final case class RealBinaryFunction(x: Real, y: Real, e: BinaryFunctionEvaluator) extends Real
 
 /** Cut. */
 case class Cut(x: String, a: D.T, b: D.T, lower: Formula, upper: Formula) extends Real {

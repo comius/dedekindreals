@@ -11,14 +11,10 @@ package com.github.comius.reals.newton
 import com.github.comius.RoundingContext
 import com.github.comius.reals.Context
 import com.github.comius.reals.Interval
-import com.github.comius.reals.syntax.Add
 import com.github.comius.reals.syntax.Const
 import com.github.comius.reals.syntax.Cut
-import com.github.comius.reals.syntax.Div
 import com.github.comius.reals.syntax.Integrate
-import com.github.comius.reals.syntax.Mul
 import com.github.comius.reals.syntax.Real
-import com.github.comius.reals.syntax.Sub
 import com.github.comius.reals.syntax.Var
 import com.github.comius.reals.VarDomain
 import com.github.comius.reals.Approximation
@@ -28,6 +24,10 @@ import com.github.comius.reals.CutDomain
 import com.github.comius.reals.syntax.Formula
 import com.github.comius.reals.syntax.Less
 import com.github.comius.reals.WholeDomain
+import com.github.comius.reals.BinaryFunctionEvaluator
+import com.github.comius.reals.BinaryFunctionEvaluator
+import com.github.comius.reals.syntax.RealBinaryFunction
+import com.github.comius.reals.syntax.RealFunction
 
 object AutomaticDifferentiation {
   import com.github.comius.floats.Floats.{ impl => D }
@@ -37,18 +37,11 @@ object AutomaticDifferentiation {
   case object Down extends IntervalRoundMode
   case object Up extends IntervalRoundMode
 
-  def liftr(op: (A, A, RoundingContext) => A)(x: Real, y: Real)(implicit ctx: Context[VarDomain], variables: Set[String],
-    roundMode: IntervalRoundMode): A = {
-    val l1 = evalr(x)
-    val l2 = evalr(y)
-    op(l1, l2, ctx.roundingContext)
-  }
-
   def cutdiff(f: Formula, z: String, zv: Interval)(implicit ctx: Context[VarDomain], variables: Set[String],
     roundMode: IntervalRoundMode): Interval = f match {
     case Less(a, b) => {
 
-      val l = Sub(a, b)
+      val l = a - b
       val dfdz = evalr(l)(ctx + (z, CutDomain(zv.d, zv.u)), variables - z, roundMode)._2
       val dfdx = evalr(l)(ctx + (z, CutDomain(zv.d, zv.u)), variables, roundMode)._2
       val r = dfdz.divide(dfdx, ctx.roundingContext).negate
@@ -70,15 +63,13 @@ object AutomaticDifferentiation {
         val b3 = t2.lower.infimum()
         (Interval(a3, b3), cutdiff(l, z, Interval(a, b)))
       case Const(a) => (Interval(a, a), Interval.ZERO)
-      case Add(x, y) =>
-        liftr((a, b, r) => (a._1.add(b._1, r), a._2.add(b._2, r)))(x, y)
-      case Sub(x, y) =>
-        liftr((a, b, r) => (a._1.subtract(b._1, r), a._2.subtract(b._2, r)))(x, y)
-      case Mul(x, y) =>
-        liftr((a, b, r) => (a._1.multiply(b._1, r), a._1.multiply(b._2, r).add(b._1.multiply(a._2, r), r)))(x, y)
-      case Div(x, y) =>
-        liftr((a, b, r) => (a._1.divide(b._1, r), a._2.multiply(b._1, r).subtract(b._2.multiply(a._1, r.swap), r.swap)
-          .divide(b._1.multiply(b._1, r), r.swap())))(x, y) // TODO rounding
+      case RealBinaryFunction(x, y, e) =>
+        val l1 = evalr(x)
+        val l2 = evalr(y)
+        e.evalp(l1, l2, ctx.roundingContext)
+      case RealFunction(x, e) =>
+        val l1 = evalr(x)
+        e.evalp(l1, ctx.roundingContext)
       case Integrate(x, a, b, e) =>
         val xm = a.split(b)
         val i8 = Interval(D.valueOf(8), D.valueOf(8))
@@ -109,25 +100,6 @@ object AutomaticDifferentiation {
         }, if (variables.contains(name)) Interval.ONE else Interval.ZERO)
     }
   }
-
-  /**
-   * Lifts a binary operation on intervals to 'approximating two expressions and returning an approximation'.
-   *
-   * Type: (Interval -> Interval -> RoundingContext -> Interval) -> Expression -> Expression -> Context-> Approximation
-   *
-   * @param op the operation on Intervals
-   * @param x first expression to be approximated
-   * @param y second expression to be approximated
-   * @param ctx context in which approximation is done
-   * @return approx(x) op approx(y)
-   */
-  private def lift(op: (Interval, Interval, RoundingContext) => Interval)(
-    x: Real, y: Real)(implicit ctx: Context[VarDomain]) =
-    {
-      val Approximation(l1, u1) = approximate(x)
-      val Approximation(l2, u2) = approximate(y)
-      Approximation(op(l1, l2, ctx.roundingContext), op(u1, u2, ctx.roundingContext.swap))
-    }
 
   /**
    * Approximates an expression using intervals.
@@ -166,10 +138,13 @@ object AutomaticDifferentiation {
       Approximation(lower, upper)
 
     case Const(a) => Approximation(Interval(a, a), Interval(a, a))
-    case Add(x, y) => lift(_.add(_, _))(x, y)
-    case Sub(x, y) => lift(_.subtract(_, _))(x, y)
-    case Mul(x, y) => lift(_.multiply(_, _))(x, y)
-    case Div(x, y) => lift(_.divide(_, _))(x, y)
+    case RealBinaryFunction(x, y, e) =>
+      val Approximation(l1, u1) = approximate(x)
+      val Approximation(l2, u2) = approximate(y)
+      Approximation(e.eval(l1, l2, ctx.roundingContext), e.eval(u1, u2, ctx.roundingContext.swap))
+    case RealFunction(x, e) =>
+      val Approximation(l1, u1) = approximate(x)
+      Approximation(e.eval(l1, ctx.roundingContext), e.eval(u1, ctx.roundingContext.swap))
     case Var(name) =>
       val Some(value) = ctx.vars.get(name)
       approximate(value)
