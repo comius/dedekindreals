@@ -44,9 +44,8 @@ object Examples {
 
     val a = Const(77617.0)
     val b = Const(33096.0)
-    eval.eval(Const(333.75) * b * b * b * b * b * b + a * a *
-      (11 * a * a * b * b - b * b * b * b * b * b - 121 * b * b * b * b - 2) +
-      Const(5.5) * b * b * b * b * b * b * b * b + a / (2 * b), 10)
+    eval.eval(Const(333.75) * b \** 6 + a \** 2 * (11 * a \** 2 * b \** 2 - b \** 6 - 121 * b \** 4 - 2) +
+      Const(5.5) * b \** 8 + a / (2 * b), 10)
 
     eval.eval(cut("x", 1, 2, x => x < 1 + 1 / x, x => 1 + 1 / x < x), 10)
     eval.eval(cut("x", 0, 2, x => cut("y", 0, 2, y => y < x, y => x < y) < 1, x => 1 < x), 10)

@@ -33,13 +33,13 @@ sealed trait Real {
   def *(other: Real): Real = RealBinaryFunction(this, other, Mul) // scalastyle:ignore method.name
   def /(other: Real): Real = RealBinaryFunction(this, other, Div) // scalastyle:ignore method.name
   def <(other: Real): Less = Less(this, other) // scalastyle:ignore method.name
-  def **(other: Int): Real = RealFunction(this, Pow(other)) // scalastyle:ignore method.name
+  def \**(other: Int): Real = RealFunction(this, Pow(other)) // scalastyle:ignore method.name
 }
 
 /**
  * Formulas.
  *
- * Logic operators are defined here to ease writing expressione. The operators just compose expressions together
+ * Logic operators are defined here to ease writing expressions. The operators just compose expressions together
  * into a syntax tree.
  */
 sealed trait Formula {
@@ -68,10 +68,19 @@ final case class Var(name: String) extends Real {
 }
 
 /** Unary functions. */
-final case class RealFunction(x: Real, e: FunctionEvaluator) extends Real
+final case class RealFunction(x: Real, e: FunctionEvaluator) extends Real {
+  override def toString(): String = {
+    s"${e.name._1}$x${e.name._2}"
+  }
+}
 
 /** Binary functions. */
-final case class RealBinaryFunction(x: Real, y: Real, e: BinaryFunctionEvaluator) extends Real
+final case class RealBinaryFunction(x: Real, y: Real, e: BinaryFunctionEvaluator) extends Real {
+  override def toString(): String = {
+    val n = e.name
+    s"${n._1}$x${n._2}$y${n._3}"
+  }
+}
 
 /** Cut. */
 case class Cut(x: String, a: D.T, b: D.T, lower: Formula, upper: Formula) extends Real {
