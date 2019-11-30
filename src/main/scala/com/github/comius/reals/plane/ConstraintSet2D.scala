@@ -123,7 +123,7 @@ object ConstraintSet2D {
     }
 
     def isIn(p: Point): Boolean = {
-      !constraints.isEmpty && constraints.forall(_.inside(p) > 0)
+      constraints.nonEmpty && constraints.forall(_.inside(p) > 0)
     }
 
     override def toString(): String = {

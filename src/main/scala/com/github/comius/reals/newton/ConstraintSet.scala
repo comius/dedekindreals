@@ -370,7 +370,7 @@ object ConstraintSet {
     extends ConstraintSet(domain) {
 
     // Verifies the list is not empty
-    require(!constraints.isEmpty, "empty constraint set")
+    require(constraints.nonEmpty, "empty constraint set")
 
     // Verifies the constraints are ordered and contain exchanging LessThan, MoreThan
     require(

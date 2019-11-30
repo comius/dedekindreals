@@ -141,7 +141,6 @@ class FloatsTest {
 
   def getPrec(a: Int): Int = {
     var p = 10
-    if (a == 0) return p;
     var aa = a
     while ((aa % 2) == 0) {
       aa = aa / 2
