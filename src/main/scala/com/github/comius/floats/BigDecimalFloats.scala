@@ -175,8 +175,13 @@ object BigDecimalFloats extends Floats {
   }
 
   override def valueOf(d: Double): BigDecimalFloat = {
-    // TODO sanitize
-    Number(BigDecimal.valueOf(d))
+    if (java.lang.Double.isFinite(d)) {
+      Number(BigDecimal.valueOf(d))
+    } else if (java.lang.Double.isInfinite(d)) {
+      if (d > 0) PosInf else NegInf
+    } else {
+      throw new ArithmeticException("Cannot represent NaN value.")
+    }
   }
 
   override def valueOf(s: String, mc: MathContext): BigDecimalFloat = {
