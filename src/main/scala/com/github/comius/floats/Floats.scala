@@ -242,7 +242,7 @@ trait Floats {
    * @return T
    */
   def valueOf(d: Double): T
-  
+
   /**
    * Constructs T from a String, with rounding according to the context settings.
    *
