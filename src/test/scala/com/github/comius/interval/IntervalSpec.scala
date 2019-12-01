@@ -83,7 +83,23 @@ class IntervalSpec extends Properties("Interval") {
       (i2.u.compareTo(i1.u) > 0 || (i1.u == i2.u && !i1.u.isRegularNumber()))
   }
 
+  private def approx2(i1: Interval, i2: Interval) = {
+    i1.d.compareTo(i2.d) < 0 && i2.u.compareTo(i1.u) < 0
+  }
+
+  private def leq(i1: Interval, i2: Interval) = {
+    i1.d.compareTo(i2.d) <= 0 && i2.u.compareTo(i1.u) <= 0
+  }
+
+  def makeApprox(i: Interval, eps: D.T, inf: D.T): Interval = {
+    Interval(
+      if (!i.d.isPosInf) i.d.subtract(eps, mc) else inf,
+      if (!i.u.isNegInf) i.u.add(eps, mc) else inf.negate())
+  }
+
   val bigPrecision = 500
+  val inf = D.valueOfEpsilon(-10)
+  val bigInf = D.valueOfEpsilon(-500)
   private val eps = D.valueOfEpsilon(bigPrecision) // small eps
   private val eps2 = D.valueOfEpsilon(precision) // big eps
   private val mc = new MathContext(0, RoundingMode.UNNECESSARY)
@@ -100,30 +116,21 @@ class IntervalSpec extends Properties("Interval") {
    *
    * @return property, that tests this
    */
-  def checkExtensionRight(op: (Interval, Interval) => Interval)(x: Interval, y: Interval): Prop =
+  def checkExtensionOuter(op: (Interval, Interval) => Interval)(x: Interval, y: Interval): Prop =
     {
       val xy = op(x, y)
+      val w = makeApprox(xy, eps2, inf)
 
-      val xp = Interval(x.d.subtract(eps, mc), x.u.add(eps, mc))
-
-      // When 0 is in the interval we need to approximate it with infinities:
-      val yp = if (op == divide) {
-        if (y.d.compareTo(D.ZERO) < 0 && D.ZERO.compareTo(y.u) < 0) {
-          Interval(D.negInf, D.posInf)
-        } else if (y.d.compareTo(D.ZERO) >= 0 && D.ZERO.compareTo(y.u) >= 0) {
-          Interval(D.posInf, D.negInf)
-        } else {
-          Interval(y.d.subtract(eps, mc), y.u.add(eps, mc))
-        }
-      } else {
-        Interval(y.d.subtract(eps, mc), y.u.add(eps, mc))
-      }
+      val xp = makeApprox(x, eps, bigInf)
+      val yp = makeApprox(y, eps, bigInf)
 
       val xpyp = op(xp, yp)
-      val eps3 =
-        if (op == divide) D.valueOfEpsilon(-hugePrecision) else eps2 // We need huge EPS because for division
-      val w = Interval(xy.d.subtract(eps3, mc), xy.u.add(eps3, mc)) // xy >> w
-      approx(xpyp, w) :| s" not $xp*$yp=$xpyp >> $w, $x*$y=$xy >> $w"
+
+      //
+      (
+        leq(xpyp, xy) :| s"not monotone $xp*$yp=$xpyp <= $x*$y=$xy"
+        && (!approx2(w, xy) || approx2(w, xpyp)) :| s" not $w << $xp*$yp=$xpyp <= $x*$y=$xy"
+        )
     }
 
   /**
@@ -175,11 +182,11 @@ class IntervalSpec extends Properties("Interval") {
   for ((opDesc, op) <- Map("Add" -> add, "Subtract" -> subtract, "Multiply" -> multiply, "Divide" -> divide)) {
 
     // Tests extension in (=>) direction with arbitrary random intervals.
-    property(s"${opDesc}ExtensionToRight") = forAll(checkExtensionRight(op)(_, _))
+    property(s"${opDesc}ExtensionOuter") = forAll(checkExtensionOuter(op)(_, _))
 
     // Tests extension in (=>) direction with ALL special intervals (endpoints are special values).
-    property(s"${opDesc}ExtensionToRightSpecialValues") =
-      forall(specialIntervals, specialIntervals)(checkExtensionRight(op)(_, _))
+    property(s"${opDesc}ExtensionOuterSpecialValues") =
+      forall(specialIntervals, specialIntervals)(checkExtensionOuter(op)(_, _))
 
     // Tests extension in (<=) direction with arbitrary random intervals.
     property(s"${opDesc}ExtensionToLeft") = forAll(checkExtensionLeft(op)(_, _))
