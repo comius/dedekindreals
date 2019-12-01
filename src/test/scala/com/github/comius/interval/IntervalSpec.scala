@@ -97,7 +97,7 @@ class IntervalSpec extends Properties("Interval") {
    *
    * @param op The operation to test.
    * @param x First operand
-   * @param y Second operant
+   * @param y Second operand
    *
    * @return property, that tests this
    */
