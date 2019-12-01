@@ -10,7 +10,7 @@ package com.github.comius.reals
 
 import com.github.comius.RoundingContext
 
-final case class Context[T](roundingContext: RoundingContext, vars: Map[String, T] = Map[String, T]()) {
+final case class Context[T](roundingContext: RoundingContext, vars: Map[String, T] = Map.empty[String, T]) {
   def +(p: (String, T)): Context[T] = copy(vars = vars + p) // scalastyle:ignore method.name
 
   def +(s: String, v: T): Context[T] = copy(vars = vars + ((s, v))) // scalastyle:ignore method.name

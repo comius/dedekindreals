@@ -168,8 +168,8 @@ class FloatsTest {
     var i0 = 0;
     var psum = 0;
     while (b - a > 2) {
-      var a1 = (3 * a + b) / 4
-      var b1 = (a + 3 * b) / 4
+      val a1 = (3 * a + b) / 4
+      val b1 = (a + 3 * b) / 4
 
       if (a1 < s) a = a1;
       if (s < b1) b = b1;

@@ -8,7 +8,7 @@
 
 package com.github.comius.reals
 
-import com.github.comius.RoundingContext
+
 import com.github.comius.reals.newton.ApproximateNewton
 import com.github.comius.reals.newton.ConstraintSet
 import com.github.comius.reals.newton.ConstraintSet.ConstraintSetAll
@@ -19,10 +19,8 @@ import com.github.comius.reals.syntax.Cut
 import com.github.comius.reals.syntax.Exists
 import com.github.comius.reals.syntax.Forall
 import com.github.comius.reals.syntax.Formula
-import com.github.comius.reals.syntax.Integrate
 import com.github.comius.reals.syntax.Less
 import com.github.comius.reals.syntax.Or
-import com.github.comius.reals.syntax.Real
 import com.github.comius.reals.plane.Approximate2D
 import com.github.comius.reals.plane.ConstraintSet2D
 import com.github.comius.reals.newton.AutomaticDifferentiation
@@ -33,10 +31,7 @@ object PlaneEvaluator extends Evaluator {
   def approximate(formula: Formula)(implicit ctx: Context[VarDomain]): Approximation[Boolean] = {
     approximate0(formula)
   }
-
-  import AproximateSimple._
-  import com.github.comius.floats.Floats.{ impl => D }
-
+  
   def toIntervals(a: Approximation[ConstraintSet]): List[Interval] = {
     val is = a.lower.union(a.upper).complement().toIntervals()
 

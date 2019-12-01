@@ -6,7 +6,7 @@
  * in file LICENSE.txt that is included with this distribution.
  */
 
-package com.github.comius.reals
+package com.github.comius.interval
 import java.math.MathContext
 import java.math.RoundingMode
 
@@ -14,7 +14,7 @@ import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.Prop
-import org.scalacheck.Prop.BooleanOperators
+import org.scalacheck.Prop.propBoolean
 import org.scalacheck.Prop.exists
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
@@ -23,7 +23,6 @@ import com.github.comius.RoundingContext
 import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.floats.FloatsSpec
 import com.github.comius.reals.TestUtil.forall
-import com.github.comius.interval.Interval
 
 /**
  * Unit tests for Intervals.
@@ -234,18 +233,18 @@ class IntervalSpec extends Properties("Interval") {
           approx(op(x), w) :| s"${op(x)}<<${w}"))
     }
 
-  property(s"inverseExtensionToRight") =
+  property("inverseExtensionToRight") =
     forAll(checkExtensionRight((_: Interval).inverse(rh))(_))
 
   // Tests extension in (<=) direction with arbitrary random intervals.
-  property(s"inverseExtensionToLeft") =
+  property("inverseExtensionToLeft") =
     forAll(checkExtensionLeft((_: Interval).inverse(rh))(_))
 
-  property(s"inverseExtensionToLeftOnSpecial") =
+  property("inverseExtensionToLeftOnSpecial") =
     Prop.all((for { i <- specialIntervals }
       yield checkExtensionLeft((_: Interval).inverse(rh))(i)): _*)
 
-  property(s"inverseExtensionToRightOnSpecial") =
+  property("inverseExtensionToRightOnSpecial") =
     Prop.all((for { i <- specialIntervals }
       yield checkExtensionRight((_: Interval).inverse(rh))(i)): _*)
 

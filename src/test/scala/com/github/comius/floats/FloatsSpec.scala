@@ -15,7 +15,7 @@ import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
-import org.scalacheck.Prop.BooleanOperators
+import org.scalacheck.Prop.propBoolean
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
 
@@ -39,7 +39,7 @@ class FloatsSpec extends Properties("Floats") {
   /*
    * Testing linearity.
    */
-  property(s"linearity") = forAll {
+  property("linearity") = forAll {
     (a: D.T, b: D.T) =>
       // Verifies compareTo and equals don't throw exception and terminates
       a.compareTo(b)
@@ -53,7 +53,7 @@ class FloatsSpec extends Properties("Floats") {
   /*
    * Testing transitivity.
    */
-  property(s"transitivity") = forAll {
+  property("transitivity") = forAll {
     (a: D.T, b: D.T, c: D.T) =>
       implicit val ordering = Ordering[D.T] { _.compareTo(_) }
       val s = List(a, b, c).sorted
@@ -65,7 +65,7 @@ class FloatsSpec extends Properties("Floats") {
   /*
    * Testing min and max.
    */
-  property(s"MinMax") = forAll {
+  property("MinMax") = forAll {
     (a: D.T, b: D.T) =>
       val min = a.min(b)
       val max = a.max(b)
@@ -81,7 +81,7 @@ class FloatsSpec extends Properties("Floats") {
   /*
    * Testing signum.
    */
-  property(s"signum") = forAll {
+  property("signum") = forAll {
     // Verifies consistency with compareTo zero.
     (a: D.T) => a.signum() == a.compareTo(D.ZERO)
   }
@@ -89,7 +89,7 @@ class FloatsSpec extends Properties("Floats") {
   /*
    * Testing negation.
    */
-  property(s"negate") = forAll(FloatsSpec.genRegularFloat) {
+  property("negate") = forAll(FloatsSpec.genRegularFloat) {
     (a: D.T) =>
       // Verifies a + (-a) == 0
       a.negate.add(a, MathContext.UNLIMITED) == D.ZERO
@@ -135,7 +135,7 @@ class FloatsSpec extends Properties("Floats") {
 
                   // Verifies result rounded up - ULP is below precise result.
                   (cUp.subtract(D.valueOfEpsilon(precision), rDown).compareTo(precise) <= 0)
-                  :| s"Subtracting ULP is not below precise result" &&
+                  :| "Subtracting ULP is not below precise result" &&
 
                   // Verifies result rounded down is below precise result.
                   (cDown.compareTo(precise) <= 0)
@@ -143,7 +143,7 @@ class FloatsSpec extends Properties("Floats") {
 
                   // Verifies result rounded down + ULP is above precise result.
                   (cDown.add(D.valueOfEpsilon(precision), rUp).compareTo(precise) >= 0)
-                  :| s"Adding ULP is not above precise result")
+                  :| "Adding ULP is not above precise result")
               }
             propList.reduce(_ && _)
           }

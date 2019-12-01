@@ -8,7 +8,6 @@
 
 package com.github.comius.reals.newton
 
-import com.github.comius.RoundingContext
 import com.github.comius.reals.Context
 import com.github.comius.interval.Interval
 import com.github.comius.reals.syntax.Const

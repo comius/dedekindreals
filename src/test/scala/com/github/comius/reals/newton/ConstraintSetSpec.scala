@@ -11,7 +11,7 @@ package com.github.comius.reals.newton
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
-import org.scalacheck.Prop.BooleanOperators
+import org.scalacheck.Prop.propBoolean
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
 

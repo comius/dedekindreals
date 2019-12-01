@@ -8,24 +8,14 @@
 
 package com.github.comius.reals
 
-import com.github.comius.reals.syntax.Real
-
-import com.github.comius.reals.syntax.Integrate
-
-import com.github.comius.reals.syntax.Forall
-
-import com.github.comius.reals.syntax.Exists
-
-import com.github.comius.reals.syntax.Cut
-
 import com.github.comius.reals.syntax.Const
-import java.math.MathContext
-import com.github.comius.reals.syntax.Var
+import com.github.comius.reals.syntax.Integrate
+import com.github.comius.reals.syntax.Real
 
 // scalastyle:off magic.number
 object Examples {
-  import Real._
   import com.github.comius.floats.Floats.{ impl => D }
+  import com.github.comius.reals.syntax.Real._
 
   // Definition of inverse using only multiplication.
   def inverse(x: Real): Real = {

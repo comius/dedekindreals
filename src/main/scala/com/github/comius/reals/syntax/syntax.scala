@@ -10,7 +10,6 @@ package com.github.comius.reals.syntax
 
 import com.github.comius.floats.Floats.{ impl => D }
 import com.github.comius.interval.Interval
-import java.math.MathContext
 import com.github.comius.interval.FunctionEvaluator
 import com.github.comius.interval.BinaryFunctionEvaluator
 import com.github.comius.interval.Add

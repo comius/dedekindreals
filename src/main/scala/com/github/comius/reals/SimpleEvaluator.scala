@@ -9,7 +9,6 @@
 package com.github.comius.reals
 
 import com.github.comius.reals.syntax.Cut
-import com.github.comius.reals.newton.ApproximateNewton
 import com.github.comius.reals.syntax.Exists
 import com.github.comius.reals.syntax.Formula
 import com.github.comius.reals.syntax.ConstFormula
