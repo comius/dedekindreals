@@ -16,6 +16,6 @@ final case class Context[T](roundingContext: RoundingContext, vars: Map[String, 
   def +(s: String, v: T): Context[T] = copy(vars = vars + ((s, v))) // scalastyle:ignore method.name
 
   def mapValues[B](f: T => B): Context[B] =
-    Context(roundingContext, vars.mapValues(f))
+    Context(roundingContext, vars.mapValues(f).toMap)
 
 }

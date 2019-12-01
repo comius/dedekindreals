@@ -74,7 +74,7 @@ class ScalaCheckJUnitPropertiesRunner(suiteClass: java.lang.Class[Properties]) e
   }
 
   // we'll use this one to report status to the console, and we'll chain it with our custom reporter
-  val consoleReporter = new ConsoleReporter(1, 0)
+  val consoleReporter = ConsoleReporter(1)
 
   /**
    * Run this <code>Suite</code> of tests, reporting results to the passed <code>RunNotifier</code>.
