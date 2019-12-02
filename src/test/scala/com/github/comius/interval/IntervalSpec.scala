@@ -97,6 +97,12 @@ class IntervalSpec extends Properties("Interval") {
       if (!i.u.isNegInf) i.u.add(eps, mc) else inf.negate())
   }
 
+  def makeUpperApprox(i: Interval, eps: D.T, inf: D.T): Interval = {
+    Interval(
+      if (!i.d.isNegInf) i.d.add(eps, mc) else inf,
+      if (!i.u.isPosInf) i.u.subtract(eps, mc) else inf.negate())
+  }
+
   val bigPrecision = 500
   val inf = D.valueOfEpsilon(-10)
   val bigInf = D.valueOfEpsilon(-500)
@@ -131,42 +137,41 @@ class IntervalSpec extends Properties("Interval") {
   /**
    * Checks extension property in (<=). The operation on values operands approximate is also approximated by the result.
    *
-   * Some special logic is added to find proper approximation when dividing and there is a 0 in the interval.
-   *
    * @param op The operation to test.
    * @param x First operand
    * @param y Second operand
    *
    * @return property, that tests this
    */
-  def checkExtensionLeft(op: (Interval, Interval) => Interval)(xp: Interval, yp: Interval): Prop =
+  def checkExtensionInner(op: (Interval, Interval) => Interval)(xp: Interval, yp: Interval): Prop =
     {
       val xpyp = op(xp, yp)
-      // Go a bit below xp op yp, this handles a special case when result is precise, i.e [0,0]
-      val w = Interval(xpyp.d.subtract(eps2, mc), xpyp.u.add(eps2, mc))
-      assert(approx(xpyp, w))
+      val w = makeApprox(xpyp, eps2, inf)
 
-      // Compute intervals only a bit above xp,yp
-      def liftD(x: D.T) = if (!x.isNegInf) x else FloatsSpec.genRegularFloat.sample.get
-      def liftU(x: D.T) = if (!x.isPosInf) x else FloatsSpec.genRegularFloat.sample.get
+      val x = makeUpperApprox(xp, eps, inf)
+      val y = makeUpperApprox(yp, eps, inf)
 
-      val x = Interval(liftD(xp.d.add(eps, mc)), liftU(xp.u.subtract(eps, mc)))
-      val y = Interval(liftD(yp.d.add(eps, mc)), liftU(yp.u.subtract(eps, mc)))
+      val xy = op(x, y)
 
       // Verify intervals approximated by xp and yp that are 'only a bit above'
-      (approx(op(x, y), w) :| s" not ${op(x, y)} >> ${w}" &&
+      leq(xpyp, xy) :| s"not monotone $xpyp <= $xy" &&
+        !approx2(w, xpyp) ||
+        (approx2(w, xy) :| s" not $w << $xy" &&
 
-        // Verify for all intervals x,y generated randomly, approximated by xp and yp
-        forAll(approxInterval(xp))((x: Interval) =>
-          forAll(approxInterval(yp))((y: Interval) =>
-            approx(op(x, y), w) :| s"not ${op(x, y)}<<${w}")))
+          // Verify for all intervals x,y generated randomly, approximated by xp and yp
+          forAll(approxInterval(xp))((x: Interval) =>
+            forAll(approxInterval(yp))((y: Interval) => {
+              val xy = op(x, y)
+              leq(xpyp, xy) :| s"not monotone $xpyp <= $xy" &&
+                approx2(w, xy) :| s"not $w << $xy"
+            })))
     }
 
   /*
    * Tests extension property for all binary arithmetic operations.
    */
   private val rinf = new RoundingContext(0, 0)
-  private val hugePrecision = 1000
+  private val hugePrecision = 100
   private val rh = new RoundingContext(0, hugePrecision)
 
   private val add: (Interval, Interval) => Interval = _.add(_, rinf)
@@ -184,11 +189,11 @@ class IntervalSpec extends Properties("Interval") {
       forall(specialIntervals, specialIntervals)(checkExtensionOuter(op)(_, _))
 
     // Tests extension in (<=) direction with arbitrary random intervals.
-    property(s"${opDesc}ExtensionToLeft") = forAll(checkExtensionLeft(op)(_, _))
+    property(s"${opDesc}ExtensionInner") = forAll(checkExtensionInner(op)(_, _))
 
     // Tests extension in (<=) direction with ALL special intervals (endpoints are special values).
-    property(s"${opDesc}ExtensionToLeftSpecialValues") =
-      forall(specialIntervals, specialIntervals)(checkExtensionLeft(op)(_, _))
+    property(s"${opDesc}ExtensionInnerSpecialValues") =
+      forall(specialIntervals, specialIntervals)(checkExtensionInner(op)(_, _))
 
   }
 
@@ -208,25 +213,26 @@ class IntervalSpec extends Properties("Interval") {
         && (!approx2(w, xy) || approx2(w, xpyp)) :| s" not $w << $xp=$xpyp <= $x=$xy")
     }
 
-  def checkExtensionLeft(op: Interval => Interval)(xp: Interval): Prop =
+  def checkExtensionInner(op: Interval => Interval)(xp: Interval): Prop =
     {
       val xpyp = op(xp)
-      // Go a bit below op xp, this handles a special case when result is precise, i.e [0,0]
-      val w = Interval(xpyp.d.subtract(eps2, mc), xpyp.u.add(eps2, mc))
-      assert(approx(xpyp, w))
+      val w = makeApprox(xpyp, eps2, inf)
 
-      // Compute intervals only a bit above xp,yp
-      def liftD(x: D.T) = if (!x.isNegInf) x else FloatsSpec.genRegularFloat.sample.get
-      def liftU(x: D.T) = if (!x.isPosInf) x else FloatsSpec.genRegularFloat.sample.get
+      val x = makeUpperApprox(xp, eps, inf)
 
-      val x = Interval(liftD(xp.d.add(eps, mc)), liftU(xp.u.subtract(eps, mc)))
+      val xy = op(x)
 
-      // Verify intervals approximated by xp that are 'only a bit above'
-      (approx(op(x), w) :| s" not ${op(x)} >> ${w}" &&
+      // Verify intervals approximated by xp and yp that are 'only a bit above'
+      leq(xpyp, xy) :| s"not monotone $xpyp <= $xy" &&
+        !approx2(w, xpyp) ||
+        (approx2(w, xy) :| s" not $w << $xy" &&
 
-        // Verify for all intervals x generated randomly, approximated by xp
-        forAll(approxInterval(xp))((x: Interval) =>
-          approx(op(x), w) :| s"${op(x)}<<${w}"))
+          // Verify for all intervals x,y generated randomly, approximated by xp and yp
+          forAll(approxInterval(xp))((x: Interval) => {
+            val xy = op(x)
+            leq(xpyp, xy) :| s"not monotone $xpyp <= $xy" &&
+              approx2(w, xy) :| s"not $w << $xy"
+          }))
     }
 
   property("inverseExtensionOuter") =
@@ -234,11 +240,11 @@ class IntervalSpec extends Properties("Interval") {
 
   // Tests extension in (<=) direction with arbitrary random intervals.
   property("inverseExtensionToLeft") =
-    forAll(checkExtensionLeft((_: Interval).inverse(rh))(_))
+    forAll(checkExtensionInner((_: Interval).inverse(rh))(_))
 
   property("inverseExtensionToLeftOnSpecial") =
     Prop.all((for { i <- specialIntervals }
-      yield checkExtensionLeft((_: Interval).inverse(rh))(i)): _*)
+      yield checkExtensionInner((_: Interval).inverse(rh))(i)): _*)
 
   property("inverseExtensionOuterOnSpecial") =
     Prop.all((for { i <- specialIntervals }
