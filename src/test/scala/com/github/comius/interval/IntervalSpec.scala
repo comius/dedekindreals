@@ -70,20 +70,15 @@ class IntervalSpec extends Properties("Interval") {
   }
 
   /**
-   * Checks that interval {@code i2} approximates interval {@code i1}.
+   * Checks that interval {@code i1} approximates interval {@code i2}.
    *
    * Special case are infinite endpoints which approximate them-selves.
    *
    * @param i1 interval
    * @param i2 interval
-   * @return {@code i1} >> {@code i2}
+   * @return {@code i1} << {@code i2}
    */
   private def approx(i1: Interval, i2: Interval) = {
-    (i1.d.compareTo(i2.d) > 0 || (i1.d == i2.d && !i1.d.isRegularNumber())) &&
-      (i2.u.compareTo(i1.u) > 0 || (i1.u == i2.u && !i1.u.isRegularNumber()))
-  }
-
-  private def approx2(i1: Interval, i2: Interval) = {
     i1.d.compareTo(i2.d) < 0 && i2.u.compareTo(i1.u) < 0
   }
 
@@ -91,13 +86,13 @@ class IntervalSpec extends Properties("Interval") {
     i1.d.compareTo(i2.d) <= 0 && i2.u.compareTo(i1.u) <= 0
   }
 
-  def makeApprox(i: Interval, eps: D.T, inf: D.T): Interval = {
+  private def makeApprox(i: Interval, eps: D.T, inf: D.T): Interval = {
     Interval(
       if (!i.d.isPosInf) i.d.subtract(eps, mc) else inf,
       if (!i.u.isNegInf) i.u.add(eps, mc) else inf.negate())
   }
 
-  def makeUpperApprox(i: Interval, eps: D.T, inf: D.T): Interval = {
+  private def makeUpperApprox(i: Interval, eps: D.T, inf: D.T): Interval = {
     Interval(
       if (!i.d.isNegInf) i.d.add(eps, mc) else inf,
       if (!i.u.isPosInf) i.u.subtract(eps, mc) else inf.negate())
@@ -131,7 +126,7 @@ class IntervalSpec extends Properties("Interval") {
       val xpyp = op(xp, yp)
 
       (leq(xpyp, xy) :| s"not monotone $xp*$yp=$xpyp <= $x*$y=$xy"
-        && (!approx2(w, xy) || approx2(w, xpyp)) :| s" not $w << $xp*$yp=$xpyp <= $x*$y=$xy")
+        && (!approx(w, xy) || approx(w, xpyp)) :| s" not $w << $xp*$yp=$xpyp <= $x*$y=$xy")
     }
 
   /**
@@ -155,15 +150,15 @@ class IntervalSpec extends Properties("Interval") {
 
       // Verify intervals approximated by xp and yp that are 'only a bit above'
       leq(xpyp, xy) :| s"not monotone $xpyp <= $xy" &&
-        !approx2(w, xpyp) ||
-        (approx2(w, xy) :| s" not $w << $xy" &&
+        !approx(w, xpyp) ||
+        (approx(w, xy) :| s" not $w << $xy" &&
 
           // Verify for all intervals x,y generated randomly, approximated by xp and yp
           forAll(approxInterval(xp))((x: Interval) =>
             forAll(approxInterval(yp))((y: Interval) => {
               val xy = op(x, y)
               leq(xpyp, xy) :| s"not monotone $xpyp <= $xy" &&
-                approx2(w, xy) :| s"not $w << $xy"
+                approx(w, xy) :| s"not $w << $xy"
             })))
     }
 
@@ -210,7 +205,7 @@ class IntervalSpec extends Properties("Interval") {
       val xpyp = op(xp)
 
       (leq(xpyp, xy) :| s"not monotone $xp=$xpyp <= $x=$xy"
-        && (!approx2(w, xy) || approx2(w, xpyp)) :| s" not $w << $xp=$xpyp <= $x=$xy")
+        && (!approx(w, xy) || approx(w, xpyp)) :| s" not $w << $xp=$xpyp <= $x=$xy")
     }
 
   def checkExtensionInner(op: Interval => Interval)(xp: Interval): Prop =
@@ -224,14 +219,14 @@ class IntervalSpec extends Properties("Interval") {
 
       // Verify intervals approximated by xp and yp that are 'only a bit above'
       leq(xpyp, xy) :| s"not monotone $xpyp <= $xy" &&
-        !approx2(w, xpyp) ||
-        (approx2(w, xy) :| s" not $w << $xy" &&
+        !approx(w, xpyp) ||
+        (approx(w, xy) :| s" not $w << $xy" &&
 
           // Verify for all intervals x,y generated randomly, approximated by xp and yp
           forAll(approxInterval(xp))((x: Interval) => {
             val xy = op(x)
             leq(xpyp, xy) :| s"not monotone $xpyp <= $xy" &&
-              approx2(w, xy) :| s"not $w << $xy"
+              approx(w, xy) :| s"not $w << $xy"
           }))
     }
 
