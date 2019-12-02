@@ -108,8 +108,6 @@ class IntervalSpec extends Properties("Interval") {
    * Checks extension property in (=>).
    * There is an approximation of each operand that is also approximation of the result.
    *
-   * Some special logic is added to find proper approximation when dividing and there is a 0 in the interval.
-   *
    * @param op The operation to test.
    * @param x First operand
    * @param y Second operand
@@ -126,11 +124,8 @@ class IntervalSpec extends Properties("Interval") {
 
       val xpyp = op(xp, yp)
 
-      //
-      (
-        leq(xpyp, xy) :| s"not monotone $xp*$yp=$xpyp <= $x*$y=$xy"
-        && (!approx2(w, xy) || approx2(w, xpyp)) :| s" not $w << $xp*$yp=$xpyp <= $x*$y=$xy"
-        )
+      (leq(xpyp, xy) :| s"not monotone $xp*$yp=$xpyp <= $x*$y=$xy"
+        && (!approx2(w, xy) || approx2(w, xpyp)) :| s" not $w << $xp*$yp=$xpyp <= $x*$y=$xy")
     }
 
   /**
@@ -200,23 +195,17 @@ class IntervalSpec extends Properties("Interval") {
   /*
    * Tests extension property on inverse.
    */
-  def checkExtensionRight(op: Interval => Interval)(x: Interval): Prop =
+  def checkExtensionOuter(op: Interval => Interval)(x: Interval): Prop =
     {
       val xy = op(x)
+      val w = makeApprox(xy, eps2, inf)
 
-      val xp =
-        if (x.d.compareTo(D.ZERO) < 0 && D.ZERO.compareTo(x.u) < 0) {
-          Interval(D.negInf, D.posInf)
-        } else if (x.d.compareTo(D.ZERO) >= 0 && D.ZERO.compareTo(x.u) >= 0) {
-          Interval(D.posInf, D.negInf)
-        } else {
-          Interval(x.d.subtract(eps, mc), x.u.add(eps, mc))
-        }
+      val xp = makeApprox(x, eps, bigInf)
 
       val xpyp = op(xp)
-      val eps3 = D.valueOfEpsilon(-hugePrecision)
-      val w = Interval(xy.d.subtract(eps3, mc), xy.u.add(eps3, mc)) // xy >> w
-      approx(xpyp, w) :| s" not ${xpyp} >> ${w} ${xpyp.d.compareTo(w.d)} ${w.u.compareTo(xpyp.u)}"
+
+      (leq(xpyp, xy) :| s"not monotone $xp=$xpyp <= $x=$xy"
+        && (!approx2(w, xy) || approx2(w, xpyp)) :| s" not $w << $xp=$xpyp <= $x=$xy")
     }
 
   def checkExtensionLeft(op: Interval => Interval)(xp: Interval): Prop =
@@ -240,8 +229,8 @@ class IntervalSpec extends Properties("Interval") {
           approx(op(x), w) :| s"${op(x)}<<${w}"))
     }
 
-  property("inverseExtensionToRight") =
-    forAll(checkExtensionRight((_: Interval).inverse(rh))(_))
+  property("inverseExtensionOuter") =
+    forAll(checkExtensionOuter((_: Interval).inverse(rh))(_))
 
   // Tests extension in (<=) direction with arbitrary random intervals.
   property("inverseExtensionToLeft") =
@@ -251,9 +240,9 @@ class IntervalSpec extends Properties("Interval") {
     Prop.all((for { i <- specialIntervals }
       yield checkExtensionLeft((_: Interval).inverse(rh))(i)): _*)
 
-  property("inverseExtensionToRightOnSpecial") =
+  property("inverseExtensionOuterOnSpecial") =
     Prop.all((for { i <- specialIntervals }
-      yield checkExtensionRight((_: Interval).inverse(rh))(i)): _*)
+      yield checkExtensionOuter((_: Interval).inverse(rh))(i)): _*)
 
 }
 
